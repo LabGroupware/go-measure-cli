@@ -16,16 +16,12 @@ linters:
     - errorlint
     # Check exhaustiveness of enum switch statements
     - exhaustive
-    # Checks for pointers to enclosing loop variables
-    - exportloopref
     # Finds forced type assertions
     - forcetypeassert
     # Gofumpt checks whether code was gofumpt-ed
     - gofumpt
     # Goimports does everything that gofmt does. Additionally it checks unused imports
     - goimports
-    # An analyzer to detect magic numbers
-    - gomnd
     # Inspects source code for security problems
     - gosec
     # It will give you some patterns of code that you don't need
@@ -69,10 +65,9 @@ issues:
     - path: _test\.go
       linters:
         - wrapcheck
-    - path: magefiles/
+    - path: cmd/
       linters:
-        - deadcode
-
+        - revive
 linters-settings:
   gofumpt:
     extra-rules: true

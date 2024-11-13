@@ -2,6 +2,7 @@
 
 ## Setup
 ``` sh
-asdf add golang
+asdf plugin add golang
+asdf plugin add golangci-lint
 asdf install
 ```

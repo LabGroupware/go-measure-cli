@@ -1,0 +1,27 @@
+lang: "ja"
+logging:
+  output:
+    - type: "stdout"
+      format: "json"
+      level: "debug"
+    # - type: "file"
+    #   filename: "logs/app.log"
+    #   format: "text"
+    #   level: "info"
+    # - type: "tcp"
+    #   address: "127.0.0.1:5000"
+    #   format: "json"
+    #   level: "warn"
+clock:
+  fake: 
+    enable: true
+    time: "2021-01-01T00:00:00Z"
+  format: "2006-01-02T15:04:05Z"
+auth:
+  client_id: "register_client"
+  client_secret: "register_client_secret"
+  redirect_host: "http://localhost"
+  redirect_port: "9800"
+  redirect_path: "/auth/callback"
+  auth_url: "http://localhost:8090/oauth2/authorize"
+  token_url: "http://localhost:8090/oauth2/token"
