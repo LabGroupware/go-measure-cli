@@ -2,6 +2,8 @@ package app
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/LabGroupware/go-measure-tui/internal/app/i18n"
@@ -10,6 +12,7 @@ import (
 	"github.com/LabGroupware/go-measure-tui/internal/clock/fakeclock"
 	"github.com/LabGroupware/go-measure-tui/internal/config"
 	"github.com/LabGroupware/go-measure-tui/internal/logger"
+	"gopkg.in/yaml.v3"
 )
 
 // Container holds the dependencies for the application
@@ -84,7 +87,68 @@ func (c *Container) Init(cfg config.Config) error {
 		return fmt.Errorf("failed to setup logger: %w", err)
 	}
 
+	// ----------------------------------------
+	// Set AuthToken
+	// ----------------------------------------
+	if _, err := os.Stat(cfg.Credential.Path); os.IsNotExist(err) {
+		fmt.Println("credential file does not exist. creating a new one.")
+		defaultAuth := auth.AuthToken{
+			AccessToken:  "",
+			RefreshToken: "",
+			TokenType:    "",
+			Expiry:       time.Time{},
+		}
+		if err := createFileWithDefaultConfig(cfg.Credential.Path, &defaultAuth); err != nil {
+			return fmt.Errorf("failed to create credential file: %w", err)
+		}
+	}
+	tokenInfo, err := readAuthTokenConfig(cfg.Credential.Path)
+	if err != nil {
+		return fmt.Errorf("failed to read config: %w", err)
+	}
+	c.AuthToken = &tokenInfo
+
 	return nil
+}
+
+type savable interface {
+	Save(encoder *yaml.Encoder) error
+}
+
+func createFileWithDefaultConfig(filename string, defaultConf savable) error {
+	if err := os.MkdirAll(filepath.Dir(filename), 0755); err != nil {
+		return fmt.Errorf("failed to create directories: %w", err)
+	}
+	file, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY, 0o600)
+	if err != nil {
+		fmt.Println(err)
+		return fmt.Errorf("failed to open file: %w", err)
+	}
+	defer file.Close()
+
+	encoder := yaml.NewEncoder(file)
+	defer encoder.Close()
+
+	if err := defaultConf.Save(encoder); err != nil {
+		return fmt.Errorf("failed to save config: %w", err)
+	}
+	return nil
+}
+
+func readAuthTokenConfig(filename string) (auth.AuthToken, error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		return auth.AuthToken{}, fmt.Errorf("failed to open file: %w", err)
+	}
+	defer file.Close()
+
+	var authToken auth.AuthToken
+	decoder := yaml.NewDecoder(file)
+	if err := authToken.Load(decoder); err != nil {
+		return auth.AuthToken{}, fmt.Errorf("failed to load config: %w", err)
+	}
+
+	return authToken, nil
 }
 
 // Close closes the Container

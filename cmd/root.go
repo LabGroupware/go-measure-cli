@@ -1,6 +1,6 @@
 /*
 Package cmd provides the command line interface for the application
-Copyright © 2024 NAME HERE <EMAIL ADDRESS>
+Copyright © 2024 NAME HERE k.hayashi@cresplanex.com
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -102,35 +102,6 @@ func initConfig() {
 	var cfg config.Config
 	if err := viper.Unmarshal(&cfg, func(m *mapstructure.DecoderConfig) {
 		m.DecodeHook = mapstructure.ComposeDecodeHookFunc(
-			// func(
-			// 	f reflect.Type,
-			// 	t reflect.Type,
-			// 	data any,
-			// ) (any, error) {
-			// 	if t != reflect.TypeOf(config.DebugLevel) {
-			// 		return data, nil
-			// 	}
-			// 	if f.Kind() != reflect.String {
-			// 		return config.DefaultLogLevel, nil
-			// 	}
-
-			// 	var asString string
-			// 	var ok bool
-			// 	if asString, ok = data.(string); !ok {
-			// 		return config.DefaultLogLevel, nil
-			// 	}
-			// 	if asString == "" {
-			// 		return config.DefaultLogLevel, nil
-			// 	}
-
-			// 	switch config.LogLevel(asString) {
-			// 	case config.DebugLevel, config.InfoLevel, config.WarnLevel, config.ErrorLevel, config.CriticalLevel:
-			// 		return config.LogLevel(asString), nil
-			// 	default:
-			// 		fmt.Printf("Invalid log level: %s\nInstead, using the default log level: %s\n", asString, config.DefaultLogLevel)
-			// 		return config.DefaultLogLevel, nil
-			// 	}
-			// },
 			mapstructure.StringToIPNetHookFunc(),
 			mapstructure.StringToIPHookFunc(),
 			mapstructure.StringToTimeHookFunc(time.RFC3339),
@@ -145,6 +116,15 @@ func initConfig() {
 	if err := container.Init(cfg); err != nil {
 		fmt.Printf("Error initializing container: %v\n", err)
 		os.Exit(1)
+	}
+
+	if expire := container.AuthToken.IsExpired(); expire {
+		fmt.Println("Token has expired. Refreshing token...")
+		if err := container.AuthToken.Refresh(ctx, createOAuthConfig(), container.Config.Credential.Path); err != nil {
+			fmt.Printf("Failed to refresh token: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Println("Token refreshed.")
 	}
 
 	// container.Logger.Info(ctx, "Container initialized",

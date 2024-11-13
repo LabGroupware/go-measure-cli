@@ -25,3 +25,5 @@ auth:
   redirect_path: "/auth/callback"
   auth_url: "http://localhost:8090/oauth2/authorize"
   token_url: "http://localhost:8090/oauth2/token"
+credential:
+  path: ".credentials/credential.yaml"

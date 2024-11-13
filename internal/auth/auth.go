@@ -3,29 +3,40 @@ package auth
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"time"
 
 	"golang.org/x/oauth2"
+	"gopkg.in/yaml.v3"
 )
 
 const (
 	loginWaitTime = 60 * time.Second
 )
 
-var (
-	state = "random-state-string"
-)
-
 // StartOAuthFlow starts the OAuth flow
 func StartOAuthFlow(
-	ctx context.Context, oauthConf oauth2.Config, redirectPort, redirectPath string) (*AuthToken, error) {
+	ctx context.Context,
+	oauthConf oauth2.Config,
+	redirectPort,
+	redirectPath,
+	credentialFilePath string,
+) (*AuthToken, error) {
 	var authToken *AuthToken
 	var ok bool
+	var err error
+	var state string
+
+	if state, err = generateState(32); err != nil {
+		return nil, fmt.Errorf("failed to generate state: %w", err)
+	}
 
 	authURL := oauthConf.AuthCodeURL(state, oauth2.AccessTypeOffline)
 
@@ -38,6 +49,18 @@ func StartOAuthFlow(
 		fmt.Printf("\n+-----------------------------------------------------------+\n\n")
 	}
 
+	if err := os.MkdirAll(filepath.Dir(credentialFilePath), 0755); err != nil {
+		return nil, fmt.Errorf("failed to create log directories: %w", err)
+	}
+	file, err := os.OpenFile(credentialFilePath, os.O_CREATE|os.O_WRONLY, 0o600)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open file: %w", err)
+	}
+	defer file.Close()
+
+	encoder := yaml.NewEncoder(file)
+	defer encoder.Close()
+
 	forceTimeout := make(chan bool, 1)
 
 	server := &http.Server{
@@ -46,8 +69,12 @@ func StartOAuthFlow(
 	http.HandleFunc(redirectPath, handlerCallbackFactory(ctx, oauthConf, func(token *oauth2.Token) {
 		fmt.Println("Received token from OAuth server.")
 		authToken = NewAuthToken(token.AccessToken, token.RefreshToken, token.TokenType, token.Expiry)
+		if err := authToken.Save(encoder); err != nil {
+			fmt.Println("Failed to write token to file: ", err)
+			return
+		}
 		ok = true
-	}, forceTimeout))
+	}, forceTimeout, state))
 
 	go func() {
 		fmt.Println("Waiting for authentication Callback...", fmt.Sprintf(":%s%s", redirectPort, redirectPath))
@@ -81,6 +108,7 @@ func handlerCallbackFactory(
 	oauthConf oauth2.Config,
 	setter func(token *oauth2.Token),
 	shutdownFlag chan<- bool,
+	state string,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Query().Get("state") != state {
@@ -114,4 +142,15 @@ func openBrowser(url string) error {
 	}
 
 	return fmt.Errorf("failed to open browser: %v", err)
+}
+
+func generateState(length int) (string, error) {
+	bytes := make([]byte, length)
+	_, err := rand.Read(bytes)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate random bytes: %w", err)
+	}
+
+	// Base64エンコードして文字列に変換
+	return base64.URLEncoding.EncodeToString(bytes), nil
 }
