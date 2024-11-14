@@ -9,4 +9,5 @@ type Config struct {
 	Auth       AuthConfig       `mapstructure:"auth"`
 	Credential CredentialConfig `mapstructure:"credential"`
 	Web        WebConfig        `mapstructure:"web"`
+	View       ViewConfig       `mapstructure:"view"`
 }

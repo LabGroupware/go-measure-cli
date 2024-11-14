@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/LabGroupware/go-measure-tui/internal/auth"
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"golang.org/x/oauth2"
 )
@@ -43,10 +44,12 @@ var loginCmd = &cobra.Command{
 			container.Config.Auth.RedirectPath,
 			container.Config.Credential.Path,
 		); err != nil {
-			fmt.Printf("Failed to start OAuth flow: %v\n", err)
+			red := color.New(color.FgRed).SprintFunc()
+			fmt.Println(red(fmt.Sprintf("Failed to start OAuth flow: %v", err)))
 			os.Exit(1)
 		} else {
-			fmt.Printf("Successfully authenticated\n")
+			green := color.New(color.FgGreen).SprintFunc()
+			fmt.Println(green("Successfully authenticated"))
 			container.AuthToken = authToken
 		}
 	},

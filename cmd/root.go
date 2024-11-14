@@ -31,6 +31,7 @@ import (
 
 	"github.com/LabGroupware/go-measure-tui/internal/app"
 	"github.com/LabGroupware/go-measure-tui/internal/config"
+	"github.com/fatih/color"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -119,12 +120,15 @@ func initConfig() {
 	}
 
 	if expire := container.AuthToken.IsExpired(); expire {
-		fmt.Println("Token has expired. Refreshing token...")
+		yellow := color.New(color.FgYellow).SprintFunc()
+		fmt.Println(yellow("Token has expired. Refreshing token..."))
 		if err := container.AuthToken.Refresh(ctx, createOAuthConfig(), container.Config.Credential.Path); err != nil {
-			fmt.Printf("Failed to refresh token: %v\n", err)
+			red := color.New(color.FgRed).SprintFunc()
+			fmt.Println(red(fmt.Sprintf("Failed to refresh token: %v", err)))
 			fmt.Println("You may need to re-authenticate, if want to access the credential API.")
 		} else {
-			fmt.Println("Token refreshed.")
+			green := color.New(color.FgGreen).SprintFunc()
+			fmt.Println(green("Successfully refreshed token"))
 		}
 	}
 

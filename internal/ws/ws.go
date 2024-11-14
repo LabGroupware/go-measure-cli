@@ -20,10 +20,15 @@ func NewWebSocket() *WebSocket {
 }
 
 // Connect connects to a remote server using the WebSocket protocol
-func (ws *WebSocket) Connect(addr string) (<-chan struct{}, error) {
-	headers := http.Header{}
-	conn, _, err := websocket.DefaultDialer.Dial(addr, headers)
+func (ws *WebSocket) Connect(addr, accessToken string) (<-chan struct{}, error) {
+	headers := http.Header{
+		"Authorization": []string{fmt.Sprintf("Bearer %s", accessToken)},
+	}
+	conn, res, err := websocket.DefaultDialer.Dial(addr, headers)
 	if err != nil {
+		if res != nil && res.StatusCode == http.StatusUnauthorized {
+			return nil, fmt.Errorf("unauthorized: %w", err)
+		}
 		return nil, fmt.Errorf("failed to connect to WebSocket server: %w", err)
 	}
 	ws.conn = conn
@@ -40,6 +45,10 @@ func (ws *WebSocket) Connect(addr string) (<-chan struct{}, error) {
 			var msg Message
 			err := ws.conn.ReadJSON(&msg)
 			if err != nil {
+				if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
+					fmt.Println("WebSocket connection closed")
+					return
+				}
 				fmt.Printf("failed to read message: %v\n", err)
 				return
 			}

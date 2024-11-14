@@ -1,13 +1,13 @@
 lang: "ja"
 logging:
   output:
-    - type: "stdout"
-      format: "json"
+    # - type: "stdout"
+    #   format: "json"
+    #   level: "debug"
+    - type: "file"
+      filename: "logs/app.log"
+      format: "text"
       level: "debug"
-    # - type: "file"
-    #   filename: "logs/app.log"
-    #   format: "text"
-    #   level: "info"
     # - type: "tcp"
     #   address: "127.0.0.1:5000"
     #   format: "json"
@@ -31,3 +31,15 @@ credential:
 web:
   websocket:
     url: "ws://localhost:8110/ws"
+
+view:
+  color:
+    primary: "#007bff"
+    secondary: "#6c757d"
+    success: "#28a745"
+    danger: "#dc3545"
+    warning: "#ffc107"
+    info: "#17a2b8"
+    light: "#f8f9fa"
+    dark: "#343a40"
+  theme: "dark"
