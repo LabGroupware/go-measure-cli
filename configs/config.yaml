@@ -27,3 +27,7 @@ auth:
   token_url: "http://localhost:8090/oauth2/token"
 credential:
   path: ".credentials/credential.yaml"
+
+web:
+  websocket:
+    url: "ws://localhost:8110/ws"

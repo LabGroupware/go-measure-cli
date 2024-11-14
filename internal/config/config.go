@@ -8,4 +8,5 @@ type Config struct {
 	Clock      ClockConfig      `mapstructure:"clock"`
 	Auth       AuthConfig       `mapstructure:"auth"`
 	Credential CredentialConfig `mapstructure:"credential"`
+	Web        WebConfig        `mapstructure:"web"`
 }

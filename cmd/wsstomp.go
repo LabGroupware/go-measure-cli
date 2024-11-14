@@ -4,27 +4,85 @@ Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"fmt"
+	"log"
+	"net/http"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
+	"github.com/gorilla/websocket"
 	"github.com/rivo/tview"
 	"github.com/spf13/cobra"
 )
 
-// stompCmd represents the stomp command
-var stompCmd = &cobra.Command{
-	Use:   "stomp",
-	Short: "Connect to a remote server using STOMP",
-	Long: `Responds to the stomp command. This command is used to connect to a remote server using STOMP.
-	For example:
-	STOMP connection to a remote server.`,
+// wsstompCmd represents the wsstomp command
+var wsstompCmd = &cobra.Command{
+	Use:   "wsstomp",
+	Short: "Connect to a remote server using STOMP over WebSocket",
+	Long: `Read messages from a remote server using the STOMP protocol over WebSocket.
+This command connects to a remote server using the WebSocket protocol and sends STOMP frames to read messages.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		startTview()
+		// STOMPサーバーのアドレスとポート
+		serverAddr := "ws://localhost:8120/ws"
+
+		// WebSocket接続の作成
+		headers := http.Header{}
+		headers.Add("Sec-WebSocket-Protocol", "v12.stomp") // STOMPプロトコルを指定
+		conn, _, err := websocket.DefaultDialer.Dial(serverAddr, headers)
+		if err != nil {
+			log.Fatalf("WebSocket接続に失敗しました: %v", err)
+		}
+		defer conn.Close()
+
+		fmt.Println("WebSocket接続が成功しました")
+
+		// STOMP CONNECTフレームを送信
+		connectFrame := "CONNECT\naccept-version:1.2\nhost:localhost\n\n\x00"
+		err = conn.WriteMessage(websocket.TextMessage, []byte(connectFrame))
+		if err != nil {
+			log.Fatalf("STOMP CONNECTフレームの送信に失敗しました: %v", err)
+		}
+		fmt.Println("STOMP CONNECTフレームを送信しました")
+
+		// サーバーからの応答を受信
+		_, message, err := conn.ReadMessage()
+		if err != nil {
+			log.Fatalf("サーバーからの応答の受信に失敗しました: %v", err)
+		}
+		fmt.Printf("サーバーからの応答: %s\n", message)
+
+		// STOMP SENDフレームを送信（メッセージ送信）
+		destination := "/topic/example"
+		body := "Hello, WebSocket STOMP!"
+		sendFrame := fmt.Sprintf("SEND\ndestination:%s\ncontent-type:text/plain\n\n%s\x00", destination, body)
+		err = conn.WriteMessage(websocket.TextMessage, []byte(sendFrame))
+		if err != nil {
+			log.Fatalf("STOMP SENDフレームの送信に失敗しました: %v", err)
+		}
+		fmt.Println("STOMP SENDフレームを送信しました")
+
+		// STOMP SUBSCRIBEフレームを送信（メッセージ購読）
+		subscribeFrame := fmt.Sprintf("SUBSCRIBE\ndestination:%s\nid:sub-0\nack:auto\n\n\x00", destination)
+		err = conn.WriteMessage(websocket.TextMessage, []byte(subscribeFrame))
+		if err != nil {
+			log.Fatalf("STOMP SUBSCRIBEフレームの送信に失敗しました: %v", err)
+		}
+		fmt.Println("STOMP SUBSCRIBEフレームを送信しました")
+
+		// メッセージを受信
+		for {
+			_, message, err := conn.ReadMessage()
+			if err != nil {
+				log.Fatalf("メッセージの受信に失敗しました: %v", err)
+			}
+			fmt.Printf("受信したメッセージ: %s\n", message)
+		}
 	},
 }
 
 func init() {
-	connectCmd.AddCommand(stompCmd)
+	connectCmd.AddCommand(wsstompCmd)
 }
 
 func startTview() {

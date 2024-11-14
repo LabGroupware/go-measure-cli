@@ -122,9 +122,10 @@ func initConfig() {
 		fmt.Println("Token has expired. Refreshing token...")
 		if err := container.AuthToken.Refresh(ctx, createOAuthConfig(), container.Config.Credential.Path); err != nil {
 			fmt.Printf("Failed to refresh token: %v\n", err)
-			os.Exit(1)
+			fmt.Println("You may need to re-authenticate, if want to access the credential API.")
+		} else {
+			fmt.Println("Token refreshed.")
 		}
-		fmt.Println("Token refreshed.")
 	}
 
 	// container.Logger.Info(ctx, "Container initialized",

@@ -5,6 +5,7 @@ go 1.23.3
 require (
 	github.com/BurntSushi/toml v1.4.0
 	github.com/gdamore/tcell/v2 v2.7.1
+	github.com/gorilla/websocket v1.5.3
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/nicksnyder/go-i18n/v2 v2.4.1
 	github.com/rivo/tview v0.0.0-20241103174730-c76f7879f592
