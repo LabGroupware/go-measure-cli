@@ -46,10 +46,10 @@ func createOutputView() *tview.TextView {
 	return codeView
 }
 
-func consoleOutput(s string) {
+func ConsoleOutput(s string) {
 	outputBroadcast.broadcast(outputValue{value: s, cmd: outputCmdTypeWrite})
 }
 
-func clearOutput() {
+func ClearOutput() {
 	outputBroadcast.broadcast(outputValue{cmd: outputCmdTypeClear})
 }

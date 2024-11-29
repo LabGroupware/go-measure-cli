@@ -43,6 +43,10 @@ func (t *AuthToken) Refresh(ctx context.Context, config *oauth2.Config, credenti
 	}
 	defer file.Close()
 
+	if err := file.Truncate(0); err != nil {
+		return fmt.Errorf("failed to truncate file: %w", err)
+	}
+
 	encoder := yaml.NewEncoder(file)
 	defer encoder.Close()
 

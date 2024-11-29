@@ -1,0 +1,16 @@
+package job
+
+import (
+	"github.com/LabGroupware/go-measure-tui/internal/job/jobaction"
+	"github.com/LabGroupware/go-measure-tui/internal/job/jobdata"
+)
+
+type AddUsersOrganizationJobBeganData JobBeganData[jobaction.AddUsersOrganizationAction]
+type AddUsersOrganizationJobProcessedData JobProcessedData[jobaction.AddUsersOrganizationAction, jobdata.AddUsersOrganizationResultData]
+type AddUsersOrganizationJobSuccessData JobSuccessData[jobdata.AddUsersOrganizationResultData, jobaction.AddUsersOrganizationAction]
+type AddUsersOrganizationJobFailedData JobFailedData[jobaction.AddUsersOrganizationAction]
+
+type CreateOrganizationJobBeganData JobBeganData[jobaction.CreateOrganizationAction]
+type CreateOrganizationJobProcessedData JobProcessedData[jobaction.CreateOrganizationAction, jobdata.CreateOrganizationResultData]
+type CreateOrganizationJobSuccessData JobSuccessData[jobdata.CreateOrganizationResultData, jobaction.CreateOrganizationAction]
+type CreateOrganizationJobFailedData JobFailedData[jobaction.CreateOrganizationAction]

@@ -102,11 +102,11 @@ func createPrimitive() (tview.Primitive, error) {
 		time.Sleep(100 * time.Microsecond)
 		for _, b := range welcomeMsg {
 			time.Sleep(100 * time.Millisecond)
-			consoleOutput(string(b))
+			ConsoleOutput(string(b))
 			requestDraw()
 		}
 		time.Sleep(100 * time.Millisecond)
-		consoleOutput("\n")
+		ConsoleOutput("\n")
 		requestDraw()
 	}()
 

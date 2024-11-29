@@ -8,8 +8,10 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/LabGroupware/go-measure-tui/internal/job"
 	"github.com/LabGroupware/go-measure-tui/internal/logger"
 	"github.com/LabGroupware/go-measure-tui/internal/views"
+	"github.com/LabGroupware/go-measure-tui/internal/ws"
 	"github.com/fatih/color"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -26,14 +28,22 @@ to be made to the website. It then displays the average time taken to make the r
 
 This command is used to measure the performance of a website by providing the URL and the number of requests to be made to the website.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// wSock := ws.NewWebSocket()
-		// done, err := wSock.Connect(container.Config.Web.WebSocket.Url, container.AuthToken.AccessToken)
-		// if err != nil {
-		// red := color.New(color.FgRed).SprintFunc()
-		// 	fmt.Println(red(fmt.Sprintf("failed to connect to WebSocket server: %v", err)))
-		// 	return
-		// }
-		// defer wSock.Close()
+		wSock := ws.NewWebSocket()
+		wsEventHandler := ws.NewDetailEventResponseMessageHandler()
+		wsEventHandler.RegisterHandleFunc(
+			job.UserProfileCreatedJobBegin,
+			ws.EventHandlerAdapter[ws.EventResponseMessageWithData[job.CreateUserProfileJobSuccessData]]{
+				Handler: CreateUserProfileJobBeganHandler{},
+			},
+		)
+		wSock.EventMsgHandler = wsEventHandler.HandleMessage
+		done, err := wSock.Connect(container.Config.Web.WebSocket.Url, container.AuthToken.AccessToken)
+		if err != nil {
+			red := color.New(color.FgRed).SprintFunc()
+			fmt.Println(red(fmt.Sprintf("failed to connect to WebSocket server: %v", err)))
+			return
+		}
+		defer wSock.Close()
 
 		interrupt := make(chan os.Signal, 1)
 		signal.Notify(interrupt, os.Interrupt)
@@ -51,19 +61,19 @@ This command is used to measure the performance of a website by providing the UR
 		go func() {
 			for {
 				select {
-				// case <-done:
-				// 	fmt.Println("WebSocket connection closed")
-				// 	app.Stop()
-				// 	green := color.New(color.FgGreen).SprintFunc()
-				// 	fmt.Println(green("Successfully application closed"))
-				// 	return
+				case <-done:
+					fmt.Println("WebSocket connection closed")
+					app.Stop()
+					green := color.New(color.FgGreen).SprintFunc()
+					fmt.Println(green("Successfully application closed"))
+					return
 				case <-interrupt:
 					fmt.Println("Interrupt signal received")
-					// if err := wSock.SendCloseMessage(); err != nil {
-					// 	red := color.New(color.FgRed).SprintFunc()
-					// 	fmt.Println(red(fmt.Sprintf("failed to send close message: %v", err)))
-					// 	return
-					// }
+					if err := wSock.SendCloseMessage(); err != nil {
+						red := color.New(color.FgRed).SprintFunc()
+						fmt.Println(red(fmt.Sprintf("failed to send close message: %v", err)))
+						return
+					}
 					app.Stop()
 					return
 				}
@@ -83,4 +93,14 @@ This command is used to measure the performance of a website by providing the UR
 
 func init() {
 	connectCmd.AddCommand(webCmd)
+}
+
+type CreateUserProfileJobBeganHandler struct{}
+
+func (h CreateUserProfileJobBeganHandler) Handle(
+	ws *ws.WebSocket,
+	data ws.EventResponseMessageWithData[job.CreateUserProfileJobSuccessData],
+	raw []byte,
+) {
+	views.ConsoleOutput("Handling CreateUserProfileJobBegan:" + data.Data.JobID)
 }

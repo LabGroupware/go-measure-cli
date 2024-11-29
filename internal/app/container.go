@@ -90,14 +90,14 @@ func (c *Container) Init(cfg config.Config) error {
 	// ----------------------------------------
 	// Set AuthToken
 	// ----------------------------------------
+	defaultAuth := auth.AuthToken{
+		AccessToken:  "",
+		RefreshToken: "",
+		TokenType:    "",
+		Expiry:       time.Time{},
+	}
 	if _, err := os.Stat(cfg.Credential.Path); os.IsNotExist(err) {
 		fmt.Println("credential file does not exist. creating a new one.")
-		defaultAuth := auth.AuthToken{
-			AccessToken:  "",
-			RefreshToken: "",
-			TokenType:    "",
-			Expiry:       time.Time{},
-		}
 		if err := createFileWithDefaultConfig(cfg.Credential.Path, &defaultAuth); err != nil {
 			return fmt.Errorf("failed to create credential file: %w", err)
 		}
@@ -141,6 +141,12 @@ func readAuthTokenConfig(filename string) (auth.AuthToken, error) {
 		return auth.AuthToken{}, fmt.Errorf("failed to open file: %w", err)
 	}
 	defer file.Close()
+
+	if fileStat, err := file.Stat(); err != nil {
+		return auth.AuthToken{}, fmt.Errorf("failed to get file stat: %w", err)
+	} else if fileStat.Size() == 0 {
+		return auth.AuthToken{}, nil
+	}
 
 	var authToken auth.AuthToken
 	decoder := yaml.NewDecoder(file)
