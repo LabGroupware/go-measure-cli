@@ -31,3 +31,5 @@ mage_output_file.go
 
 logs
 .credentials
+
+bench/

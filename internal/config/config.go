@@ -10,4 +10,5 @@ type Config struct {
 	Credential CredentialConfig `mapstructure:"credential"`
 	Web        WebConfig        `mapstructure:"web"`
 	View       ViewConfig       `mapstructure:"view"`
+	Batch      BatchConfig      `mapstructure:"batch"`
 }

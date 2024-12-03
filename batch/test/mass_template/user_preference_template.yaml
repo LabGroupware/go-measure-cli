@@ -1,0 +1,27 @@
+type: MassQuery
+data:
+  requests:
+    - endpointType: FindUserPreference
+      interval: 1s
+      awaitPrevResponse: false
+      queryParam:
+        with: []
+      pathVariables:
+        userPreferenceId: 12345
+      break:
+        time: 2m
+        count: 10
+        sysError: true
+        parseError: true
+        statusCode:
+          op: ne
+          value: 200
+        # responseBody:
+        #   jmesPath: "data.teams[?length(users) >= `5`] | length(@) >= `1`"
+      # dataOutput:
+      #   jmesPath: "jobId"
+      # excludeStatusFilter:
+      #   op: in
+      #   value: 400,401,403,404
+      # dataOutputFilter:
+      #   jmesPath: "data[?code != '000.000']"

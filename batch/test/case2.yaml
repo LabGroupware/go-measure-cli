@@ -1,0 +1,31 @@
+type: MassQuery
+data:
+  requests:
+    - endpointType: GetTeams
+      interval: 1s
+      awaitPrevResponse: false
+      queryParam:
+        limit: [10]
+        offset: [0]
+        cursor: [""]
+        pagination: ["offset"]
+        sortField: ["name"]
+        sortOrder: ["asc"]
+        withCount: [true]
+        hasIsDefaultFilter: [false]
+        filterIsDefault: [false]
+        hasOrganizationFilter: [false]
+        filterOrganizationIDs: []
+        hasUserFilter: [false]
+        filterUserIDs: []
+        userFilterType: ["all"]
+        with:
+          - users
+      pathVariables: {}
+      break:
+        time: 2m
+        count: 5
+      # dataOutput:
+      #   jmesPath: "code"
+      # dataOutputFilter:
+      #   jmesPath: "code == '0002:0003'"

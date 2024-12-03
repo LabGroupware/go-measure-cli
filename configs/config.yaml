@@ -1,9 +1,9 @@
 lang: "ja"
 logging:
   output:
-    # - type: "stdout"
-    #   format: "json"
-    #   level: "debug"
+    - type: "stdout"
+      format: "text"
+      level: "debug"
     - type: "file"
       filename: "logs/app.log"
       format: "text"
@@ -25,12 +25,22 @@ auth:
   redirect_path: "/auth/callback"
   auth_url: "http://localhost:8090/oauth2/authorize"
   token_url: "http://localhost:8090/oauth2/token"
+  # auth_url: "https://auth.state.api.cresplanex.org/oauth2/authorize"
+  # token_url: "https://auth.state.api.cresplanex.org/oauth2/token"
 credential:
   path: ".credentials/credential.yaml"
 
 web:
+  api:
+    url: "http://localhost:8100"
+    # url: "https://web.api.state.api.cresplanex.org"
   websocket:
     url: "ws://localhost:8110/ws"
+    # url: "wss://ws.state.api.cresplanex.org/ws"
+
+batch:
+  test:
+    path: "batch/test"
 
 view:
   color:

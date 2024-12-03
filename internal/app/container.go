@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -17,6 +18,7 @@ import (
 
 // Container holds the dependencies for the application
 type Container struct {
+	Ctx        context.Context
 	Clocker    clock.Clock
 	Translator i18n.Translation
 	Config     config.Config
@@ -31,6 +33,7 @@ func NewContainer() *Container {
 
 // Init initializes the Container
 func (c *Container) Init(cfg config.Config) error {
+	c.Ctx = context.Background()
 	var err error
 
 	// ----------------------------------------

@@ -1,0 +1,29 @@
+type: MassQuery
+data:
+  requests:
+    - endpointType: FindTeam
+      interval: 1s
+      awaitPrevResponse: true
+      queryParam:
+        with:
+          - users
+          - users.userPreference
+      pathVariables:
+        teamId: 12345
+      break:
+        time: 10s
+        count: 10
+        sysError: true
+        parseError: true
+        statusCode:
+          op: eq
+          value: 404
+        responseBody:
+          jmesPath: "data.teams[?length(users) >= `5`]"
+      dataOutput:
+        jmesPath: "data.teams"
+      excludeStatusFilter:
+        op: in
+        value: 400,401,403
+      dataOutputFilter:
+        jmesPath: "data[?code != '000.000']"
