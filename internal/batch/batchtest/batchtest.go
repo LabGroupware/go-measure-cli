@@ -44,6 +44,8 @@ func BatchTest(container *app.Container) error {
 		if err := massquerybatch.MassQueryBatch(container, massQuery); err != nil {
 			return fmt.Errorf("failed to execute mass query: %v", err)
 		}
+	case "WaitSaga":
+		return fmt.Errorf("not implemented")
 	default:
 		return fmt.Errorf("unknown type")
 	}

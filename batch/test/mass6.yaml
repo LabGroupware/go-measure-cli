@@ -24,10 +24,14 @@ data:
           - users.userPreference
           - tasks
           - tasks.attachments
+          - tasks.chargeUser
       pathVariables: {}
       break:
         time: 2m
         count: 5
+        statusCode:
+          op: eq
+          value: 500
       # dataOutput:
       #   jmesPath: "code"
       # dataOutputFilter:

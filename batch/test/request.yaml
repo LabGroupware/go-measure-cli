@@ -1,4 +1,4 @@
-type: MassQuery
+type: WaitSaga
 data:
   requests:
     - endpointType: FindTeam
