@@ -21,6 +21,7 @@ type WriteData struct {
 	ResponseTime     int
 	StatusCode       string
 	Data             any
+	RawData          any
 }
 
 func (d WriteData) ToSlice() []string {
@@ -129,7 +130,7 @@ func runResponseHandler[Res any](
 			return
 		case v := <-resChan:
 			var mustWrite bool
-			var response interface{}
+			var response any
 			err := json.Unmarshal(v.ByteResponse, &response)
 			if err != nil {
 				ctr.Logger.Error(ctr.Ctx, "The response is not a valid JSON",
@@ -183,6 +184,7 @@ func runResponseHandler[Res any](
 					ResponseTime:     int(v.ResponseTime),
 					StatusCode:       strconv.Itoa(v.StatusCode),
 					Data:             data,
+					RawData:          response,
 				}
 				sentUid[uid] = struct{}{}
 				for {

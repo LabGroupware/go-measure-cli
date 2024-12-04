@@ -17,7 +17,7 @@ import (
 func executeRequest(
 	ctr *app.Container,
 	internalID int,
-	req PrefetchRequest,
+	req *PrefetchRequest,
 	globalErrChan <-chan struct{},
 	mapStore *sync.Map,
 	hasDep bool,
@@ -64,18 +64,26 @@ func executeRequest(
 	) error {
 		for _, replaceVar := range req.Vars {
 			jmesPathQuery := replaceVar.JMESPath
-			result, err := jmespath.Search(jmesPathQuery, data)
+			result, err := jmespath.Search(jmesPathQuery, data.RawData)
 			if err != nil {
 				ctr.Logger.Error(ctr.Ctx, "failed to search jmespath",
 					logger.Value("error", err), logger.Value("on", "runResponseHandler"))
 				return fmt.Errorf("failed to search jmespath: %v", err)
 			}
+			var ok bool
 			if result != nil {
+				if result, ok = result.(string); !ok {
+					ctr.Logger.Warn(ctr.Ctx, "result is not string",
+						logger.Value("on", "runResponseHandler"), logger.Value("result", result))
+				}
+			}
+
+			if ok {
 				mapStore.Store(replaceVar.ID, result)
 				ctr.Logger.Debug(ctr.Ctx, "store value",
 					logger.Value("id", replaceVar.ID), logger.Value("value", result), logger.Value("on", "runResponseHandler"))
 			} else {
-				ctr.Logger.Warn(ctr.Ctx, "result is nil",
+				ctr.Logger.Warn(ctr.Ctx, "result is invalid",
 					logger.Value("error", err), logger.Value("on", "runResponseHandler"))
 				switch replaceVar.OnError {
 				case "ignore":

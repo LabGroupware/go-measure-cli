@@ -12,7 +12,7 @@ import (
 
 type prefetchExecuteRequest struct {
 	id              string
-	request         PrefetchRequest
+	request         *PrefetchRequest
 	mustWaitChan    *[]<-chan struct{}
 	termChan        <-chan struct{}
 	selfBroadCaster *utils.Broadcaster[struct{}]

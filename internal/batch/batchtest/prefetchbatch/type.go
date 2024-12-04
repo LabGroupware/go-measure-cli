@@ -1,8 +1,8 @@
 package prefetchbatch
 
 type PrefetchConfig struct {
-	Enabled  bool              `yaml:"enabled"`
-	Requests []PrefetchRequest `yaml:"requests"`
+	Enabled  bool               `yaml:"enabled"`
+	Requests []*PrefetchRequest `yaml:"requests"`
 }
 
 type PrefetchRequest struct {
