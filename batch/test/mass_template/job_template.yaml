@@ -34,6 +34,9 @@ data:
       break:
         time: 2m
         count: 5
+        sysError: true
+        parseError: true
+        writeError: true
       dataOutput:
         jmesPath: "code"
       dataOutputFilter:

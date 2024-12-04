@@ -2,7 +2,6 @@ package queryreqbatch
 
 import (
 	"fmt"
-	"os"
 	"strconv"
 
 	"github.com/LabGroupware/go-measure-tui/internal/api/domain"
@@ -20,11 +19,11 @@ func (f FindTeamFactory) Factory(
 	ctr *app.Container,
 	id int,
 	request *ValidatedQueryRequest,
-	termChan chan<- struct{},
+	termChan chan<- TerminateType,
 	authToken *auth.AuthToken,
 	apiEndpoint string,
-	outputFile *os.File,
-) (queryreq.QueryExecutor, error) {
+	consumer ResponseDataConsumer,
+) (queryreq.QueryExecutor, func(), error) {
 	var ok bool
 	var teamId string
 
@@ -34,7 +33,7 @@ func (f FindTeamFactory) Factory(
 	}
 
 	if teamId, ok = request.PathVariables["teamId"]; !ok {
-		return nil, fmt.Errorf("teamId not found in pathVariables")
+		return nil, nil, fmt.Errorf("teamId not found in pathVariables")
 	}
 	if teamId == "*" {
 		teamId = testprompt.GenerateRandomString(10)
@@ -50,14 +49,19 @@ func (f FindTeamFactory) Factory(
 
 	resChan := make(chan queryreq.ResponseContent[response.ResponseDto[domain.TeamDto]])
 
-	runAsyncProcessing(ctr, id, request, termChan, resChan, outputFile)
+	resChanCloser := func() {
+		close(resChan)
+	}
+
+	runAsyncProcessing(ctr, id, request, termChan, resChan, consumer)
 
 	return queryreq.RequestContent[queryreq.FindTeamReq, response.ResponseDto[domain.TeamDto]]{
 		Req:          req,
 		Interval:     request.Interval,
 		ResponseWait: request.AwaitPrevResp,
 		ResChan:      resChan,
-	}, nil
+		CountLimit:   request.Break.Count,
+	}, resChanCloser, nil
 }
 
 type GetTeamsFactory struct{}
@@ -66,11 +70,11 @@ func (f GetTeamsFactory) Factory(
 	ctr *app.Container,
 	id int,
 	request *ValidatedQueryRequest,
-	termChan chan<- struct{},
+	termChan chan<- TerminateType,
 	authToken *auth.AuthToken,
 	apiEndpoint string,
-	outputFile *os.File,
-) (queryreq.QueryExecutor, error) {
+	consumer ResponseDataConsumer,
+) (queryreq.QueryExecutor, func(), error) {
 	req := queryreq.GetTeamsReq{
 		AuthToken:    authToken,
 		BaseEndpoint: apiEndpoint,
@@ -156,12 +160,17 @@ func (f GetTeamsFactory) Factory(
 
 	resChan := make(chan queryreq.ResponseContent[response.ListResponseDto[domain.TeamDto]])
 
-	runAsyncProcessing(ctr, id, request, termChan, resChan, outputFile)
+	resChanCloser := func() {
+		close(resChan)
+	}
+
+	runAsyncProcessing(ctr, id, request, termChan, resChan, consumer)
 
 	return queryreq.RequestContent[queryreq.GetTeamsReq, response.ListResponseDto[domain.TeamDto]]{
 		Req:          req,
 		Interval:     request.Interval,
 		ResponseWait: request.AwaitPrevResp,
 		ResChan:      resChan,
-	}, nil
+		CountLimit:   request.Break.Count,
+	}, resChanCloser, nil
 }

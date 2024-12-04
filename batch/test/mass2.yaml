@@ -25,6 +25,9 @@ data:
       break:
         time: 2m
         count: 5
+        sysError: true
+        parseError: true
+        writeError: true
         statusCode:
           op: eq
           value: 500

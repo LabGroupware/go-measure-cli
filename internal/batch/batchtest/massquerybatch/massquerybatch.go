@@ -19,7 +19,7 @@ func MassQueryBatch(ctr *app.Container, massQuery MassQuery) error {
 	threadExecutors := make([]*MassiveQueryThreadExecutor, concurrentCount)
 
 	timestamp := time.Now().Format("20060102_150405")
-	dirPath := fmt.Sprintf("./bench/batch/test%s", timestamp)
+	dirPath := fmt.Sprintf("%s/test_%s", ctr.Config.Batch.Test.MassQuery.Output, timestamp)
 	err = os.MkdirAll(dirPath, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("failed to create directory: %v", err)
@@ -48,19 +48,35 @@ func MassQueryBatch(ctr *app.Container, massQuery MassQuery) error {
 		endType := massQuery.Data.Requests[i].EndpointType
 		queryType := queryreqbatch.NewQueryTypeFromString(endType)
 		factor := queryreqbatch.TypeFactoryMap[queryType]
-		termChan := make(chan struct{})
+		termChan := make(chan queryreqbatch.TerminateType)
+		defer close(termChan)
 		validatedReq := &queryreqbatch.ValidatedQueryRequest{}
 		if err := queryreqbatch.ValidateQueryReq(ctr, request, validatedReq); err != nil {
 			return fmt.Errorf("failed to validate query request: %v", err)
 		}
-		executor, err := factor.Factory(
+		writeFunc := func(
+			ctr *app.Container,
+			id int,
+			data queryreqbatch.WriteData,
+		) error {
+			writer := csv.NewWriter(threadExecutors[i].outputFile)
+			ctr.Logger.Debug(ctr.Ctx, "Writing data to csv",
+				logger.Value("id", id), logger.Value("data", data), logger.Value("on", "runAsyncProcessing"))
+			if err := writer.Write(data.ToSlice()); err != nil {
+				ctr.Logger.Error(ctr.Ctx, "failed to write data to csv",
+					logger.Value("error", err), logger.Value("on", "runAsyncProcessing"))
+			}
+			writer.Flush()
+			return nil
+		}
+		executor, resCloser, err := factor.Factory(
 			ctr,
 			i+1,
 			validatedReq,
 			termChan,
 			ctr.AuthToken,
 			ctr.Config.Web.API.Url,
-			threadExecutors[i].outputFile,
+			writeFunc,
 		)
 		ctr.Logger.Info(ctr.Ctx, "created executor",
 			logger.Value("id", i+1), logger.Value("type", endType), logger.Value("executor", executor))
@@ -69,15 +85,16 @@ func MassQueryBatch(ctr *app.Container, massQuery MassQuery) error {
 		}
 		threadExecutors[i].RequestExecutor = executor
 		threadExecutors[i].TermChan = termChan
+		threadExecutors[i].responseChanCloser = resCloser
 	}
 
 	var wg sync.WaitGroup
 	var startChan = make(chan struct{})
-
 	for _, executor := range threadExecutors {
 		wg.Add(1)
 		go func(exec *MassiveQueryThreadExecutor) {
 			defer wg.Done()
+			defer exec.responseChanCloser()
 			if err := exec.Execute(ctr, startChan); err != nil {
 				ctr.Logger.Error(ctr.Ctx, "failed to execute query",
 					logger.Value("error", err), logger.Value("id", exec.ID))

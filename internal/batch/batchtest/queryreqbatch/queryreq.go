@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/LabGroupware/go-measure-tui/internal/api/request/queryreq"
 	"github.com/LabGroupware/go-measure-tui/internal/app"
 	"github.com/LabGroupware/go-measure-tui/internal/logger"
 )
@@ -22,6 +23,7 @@ type QueryRequest struct {
 		Count      *int    `yaml:"count"`
 		SysError   *bool   `yaml:"sysError"`
 		ParseError *bool   `yaml:"parseError"`
+		WriteError *bool   `yaml:"writeError"`
 		StatusCode *struct {
 			Op    *string `yaml:"op"`
 			Value *string `yaml:"value"`
@@ -64,14 +66,17 @@ func ValidateQueryReq(ctr *app.Container, req QueryRequest, validated *Validated
 		validated.Break.Time = breakTime
 	}
 	if req.Break.Count != nil {
-		validated.Break.Count.HasValue = true
-		validated.Break.Count.Value = *req.Break.Count
+		validated.Break.Count.Enabled = true
+		validated.Break.Count.Count = *req.Break.Count
 	}
 	if req.Break.SysError != nil {
 		validated.Break.SysError = *req.Break.SysError
 	}
 	if req.Break.ParseError != nil {
 		validated.Break.ParseError = *req.Break.ParseError
+	}
+	if req.Break.WriteError != nil {
+		validated.Break.WriteError = *req.Break.WriteError
 	}
 	op := "none"
 	value := "0"
@@ -284,17 +289,45 @@ func statusCodeMatherFactory(ctr *app.Container, op string, value string) (Statu
 }
 
 type ValidatedQueryRequestBreak struct {
-	Time  time.Duration
-	Count struct {
-		HasValue bool
-		Value    int
-	}
+	Time              time.Duration
+	Count             queryreq.RequestCountLimit
 	SysError          bool
 	ParseError        bool
+	WriteError        bool
 	StatusCodeMatcher StatusCodeMatcher
 	ResponseBody      struct {
 		HasValue bool
 		JMESPath string
+	}
+}
+
+func NewSimpleValidatedQueryRequestBreak(
+	timeout time.Duration,
+	count int,
+	statusesForTerm []int,
+	responseBody struct {
+		HasValue bool
+		JMESPath string
+	},
+) ValidatedQueryRequestBreak {
+	return ValidatedQueryRequestBreak{
+		Time: timeout,
+		Count: queryreq.RequestCountLimit{
+			Enabled: true,
+			Count:   count,
+		},
+		SysError:   true,
+		ParseError: true,
+		WriteError: true,
+		StatusCodeMatcher: func(statusCode int) bool {
+			for _, v := range statusesForTerm {
+				if statusCode == v {
+					return true
+				}
+			}
+			return false
+		},
+		ResponseBody: responseBody,
 	}
 }
 

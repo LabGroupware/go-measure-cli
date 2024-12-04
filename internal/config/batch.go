@@ -5,5 +5,10 @@ type BatchConfig struct {
 }
 
 type BatchTestConfig struct {
-	Path string `mapstructure:"path"`
+	Path      string               `mapstructure:"path"`
+	MassQuery BatchMassQueryConfig `mapstructure:"massquery"`
+}
+
+type BatchMassQueryConfig struct {
+	Output string `mapstructure:"output"`
 }

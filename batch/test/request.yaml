@@ -1,29 +1,70 @@
-type: WaitSaga
+type: MassQuery
+prefetch:
+  enabled: true
+  requests:
+    - id: fetchOneUser
+      endpointType: GetUsers
+      queryParam:
+        limit: [1]
+        offset: [0]
+        cursor: [""]
+        pagination: ["offset"]
+      pathVariables: {}
+      dependsOn: []
+      vars:
+        - id: userId
+          jmesPath: "data[0].id"
+          onError: "cancel" # cancel or random or ignore or empty
+    # - id: fetchRelationOrg
+    #   endpointType: GetOrganizations
+    #   queryParam:
+    #     limit: [1]
+    #     offset: [0]
+    #     pagination: ["offset"]
+    #     sortField: ["name"]
+    #     sortOrder: ["asc"]
+    #     hasUserFilter: [true]
+    #     filterUserIDs: ["{{userId}}"]
+    #     userFilterType: ["all"]
+    #     with: []
+    #   pathVariables: {}
+    #   dependsOn: ["fetchOneUser"]
+    #   vars:
+    #     - id: orgId
+    #       jmesPath: "data[0].id"
+    #       onError: "cancel"
 data:
   requests:
-    - endpointType: FindTeam
+    - endpointType: GetTeams
       interval: 1s
-      awaitPrevResponse: true
+      awaitPrevResponse: false
       queryParam:
-        with:
-          - users
-          - users.userPreference
-      pathVariables:
-        teamId: 12345
+        limit: [10]
+        offset: [0]
+        cursor: [""]
+        pagination: ["offset"]
+        sortField: ["name"]
+        sortOrder: ["asc"]
+        withCount: [true]
+        hasIsDefaultFilter: [false]
+        filterIsDefault: [false]
+        hasOrganizationFilter: [true]
+        filterOrganizationIDs: ["{{orgId}}"]
+        hasUserFilter: [true]
+        filterUserIDs: ["{{userId}}", "{{userId2}}"]
+        userFilterType: ["all"]
+        with: []
+      pathVariables: {}
       break:
-        time: 10s
-        count: 10
+        time: 2m
+        count: 3
         sysError: true
         parseError: true
+        writeError: true
         statusCode:
           op: eq
-          value: 404
-        responseBody:
-          jmesPath: "data.teams[?length(users) >= `5`]"
-      dataOutput:
-        jmesPath: "data.teams"
-      excludeStatusFilter:
-        op: in
-        value: 400,401,403
-      dataOutputFilter:
-        jmesPath: "data[?code != '000.000']"
+          value: 500
+      # dataOutput:
+      #   jmesPath: "code"
+      # dataOutputFilter:
+      #   jmesPath: "code == '0002:0003'"

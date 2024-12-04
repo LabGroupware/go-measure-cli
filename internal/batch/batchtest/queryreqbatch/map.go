@@ -1,8 +1,6 @@
 package queryreqbatch
 
 import (
-	"os"
-
 	"github.com/LabGroupware/go-measure-tui/internal/api/request/queryreq"
 	"github.com/LabGroupware/go-measure-tui/internal/app"
 	"github.com/LabGroupware/go-measure-tui/internal/auth"
@@ -13,11 +11,11 @@ type ExecutorFactory interface {
 		ctr *app.Container,
 		id int,
 		request *ValidatedQueryRequest,
-		termChan chan<- struct{},
+		termChan chan<- TerminateType,
 		authToken *auth.AuthToken,
 		apiEndpoint string,
-		outputFile *os.File,
-	) (queryreq.QueryExecutor, error)
+		consumer ResponseDataConsumer,
+	) (queryreq.QueryExecutor, func(), error)
 }
 
 var TypeFactoryMap = map[QueryType]ExecutorFactory{

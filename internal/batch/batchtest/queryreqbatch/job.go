@@ -2,7 +2,6 @@ package queryreqbatch
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/LabGroupware/go-measure-tui/internal/api/request/queryreq"
 	"github.com/LabGroupware/go-measure-tui/internal/api/response"
@@ -17,11 +16,11 @@ func (f FindJobFactory) Factory(
 	ctr *app.Container,
 	id int,
 	request *ValidatedQueryRequest,
-	termChan chan<- struct{},
+	termChan chan<- TerminateType,
 	authToken *auth.AuthToken,
 	apiEndpoint string,
-	outputFile *os.File,
-) (queryreq.QueryExecutor, error) {
+	consumer ResponseDataConsumer,
+) (queryreq.QueryExecutor, func(), error) {
 	var ok bool
 	var jobId string
 
@@ -31,7 +30,7 @@ func (f FindJobFactory) Factory(
 	}
 
 	if jobId, ok = request.PathVariables["jobId"]; !ok {
-		return nil, fmt.Errorf("jobId not found in pathVariables")
+		return nil, nil, fmt.Errorf("jobId not found in pathVariables")
 	}
 	if jobId == "*" {
 		jobId = testprompt.GenerateRandomString(10)
@@ -40,12 +39,17 @@ func (f FindJobFactory) Factory(
 
 	resChan := make(chan queryreq.ResponseContent[response.JobResponseDto])
 
-	runAsyncProcessing(ctr, id, request, termChan, resChan, outputFile)
+	resChanCloser := func() {
+		close(resChan)
+	}
+
+	runAsyncProcessing(ctr, id, request, termChan, resChan, consumer)
 
 	return queryreq.RequestContent[queryreq.GetJobReq, response.JobResponseDto]{
 		Req:          req,
 		Interval:     request.Interval,
 		ResponseWait: request.AwaitPrevResp,
 		ResChan:      resChan,
-	}, nil
+		CountLimit:   request.Break.Count,
+	}, resChanCloser, nil
 }

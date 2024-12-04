@@ -2,7 +2,6 @@ package queryreqbatch
 
 import (
 	"fmt"
-	"os"
 	"strconv"
 
 	"github.com/LabGroupware/go-measure-tui/internal/api/domain"
@@ -20,11 +19,11 @@ func (f FindFileObjectFactory) Factory(
 	ctr *app.Container,
 	id int,
 	request *ValidatedQueryRequest,
-	termChan chan<- struct{},
+	termChan chan<- TerminateType,
 	authToken *auth.AuthToken,
 	apiEndpoint string,
-	outputFile *os.File,
-) (queryreq.QueryExecutor, error) {
+	consumer ResponseDataConsumer,
+) (queryreq.QueryExecutor, func(), error) {
 	var ok bool
 	var fileObjectId string
 
@@ -34,7 +33,7 @@ func (f FindFileObjectFactory) Factory(
 	}
 
 	if fileObjectId, ok = request.PathVariables["fileObjectId"]; !ok {
-		return nil, fmt.Errorf("fileObjectId not found in pathVariables")
+		return nil, nil, fmt.Errorf("fileObjectId not found in pathVariables")
 	}
 	if fileObjectId == "*" {
 		fileObjectId = testprompt.GenerateRandomString(10)
@@ -50,14 +49,19 @@ func (f FindFileObjectFactory) Factory(
 
 	resChan := make(chan queryreq.ResponseContent[response.ResponseDto[domain.FileObjectDto]])
 
-	runAsyncProcessing(ctr, id, request, termChan, resChan, outputFile)
+	resChanCloser := func() {
+		close(resChan)
+	}
+
+	runAsyncProcessing(ctr, id, request, termChan, resChan, consumer)
 
 	return queryreq.RequestContent[queryreq.FindFileObjectReq, response.ResponseDto[domain.FileObjectDto]]{
 		Req:          req,
 		Interval:     request.Interval,
 		ResponseWait: request.AwaitPrevResp,
 		ResChan:      resChan,
-	}, nil
+		CountLimit:   request.Break.Count,
+	}, resChanCloser, nil
 }
 
 type GetFileObjectsFactory struct{}
@@ -66,11 +70,11 @@ func (f GetFileObjectsFactory) Factory(
 	ctr *app.Container,
 	id int,
 	request *ValidatedQueryRequest,
-	termChan chan<- struct{},
+	termChan chan<- TerminateType,
 	authToken *auth.AuthToken,
 	apiEndpoint string,
-	outputFile *os.File,
-) (queryreq.QueryExecutor, error) {
+	consumer ResponseDataConsumer,
+) (queryreq.QueryExecutor, func(), error) {
 	req := queryreq.GetFileObjectsReq{
 		AuthToken:    authToken,
 		BaseEndpoint: apiEndpoint,
@@ -128,12 +132,17 @@ func (f GetFileObjectsFactory) Factory(
 
 	resChan := make(chan queryreq.ResponseContent[response.ListResponseDto[domain.FileObjectDto]])
 
-	runAsyncProcessing(ctr, id, request, termChan, resChan, outputFile)
+	resChanCloser := func() {
+		close(resChan)
+	}
+
+	runAsyncProcessing(ctr, id, request, termChan, resChan, consumer)
 
 	return queryreq.RequestContent[queryreq.GetFileObjectsReq, response.ListResponseDto[domain.FileObjectDto]]{
 		Req:          req,
 		Interval:     request.Interval,
 		ResponseWait: request.AwaitPrevResp,
 		ResChan:      resChan,
-	}, nil
+		CountLimit:   request.Break.Count,
+	}, resChanCloser, nil
 }

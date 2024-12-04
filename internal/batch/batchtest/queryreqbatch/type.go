@@ -48,3 +48,43 @@ func NewQueryTypeFromString(s string) QueryType {
 		return 0
 	}
 }
+
+type TerminateType int
+
+const (
+	_ TerminateType = iota
+	ByContext
+	ByCount
+	BySystemError
+	ByCreateRequestError
+	ByParseResponseError
+	ByWriteError
+	ByTimeout
+	ByResponseBodyMatch
+	ByStatusCodeMatch
+)
+
+func (t TerminateType) String() string {
+	switch t {
+	case ByContext:
+		return "ByContext"
+	case ByCount:
+		return "ByCount"
+	case BySystemError:
+		return "BySystemError"
+	case ByCreateRequestError:
+		return "ByCreateRequestError"
+	case ByParseResponseError:
+		return "ByParseResponseError"
+	case ByWriteError:
+		return "ByWriteError"
+	case ByTimeout:
+		return "ByTimeout"
+	case ByResponseBodyMatch:
+		return "ByResponseBodyMatch"
+	case ByStatusCodeMatch:
+		return "ByStatusCodeMatch"
+	default:
+		return "Unknown"
+	}
+}

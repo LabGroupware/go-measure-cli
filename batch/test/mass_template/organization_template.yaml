@@ -18,6 +18,7 @@ data:
         count: 10
         sysError: true
         parseError: true
+        writeError: true
         statusCode:
           op: ne
           value: 200
@@ -58,6 +59,9 @@ data:
       break:
         time: 2m
         count: 5
+        sysError: true
+        parseError: true
+        writeError: true
       # dataOutput:
       #   jmesPath: "code"
       # dataOutputFilter:

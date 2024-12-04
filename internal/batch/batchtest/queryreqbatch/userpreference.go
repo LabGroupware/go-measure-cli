@@ -2,7 +2,6 @@ package queryreqbatch
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/LabGroupware/go-measure-tui/internal/api/domain"
 	"github.com/LabGroupware/go-measure-tui/internal/api/request/queryreq"
@@ -18,11 +17,11 @@ func (f FindUserPreferenceFactory) Factory(
 	ctr *app.Container,
 	id int,
 	request *ValidatedQueryRequest,
-	termChan chan<- struct{},
+	termChan chan<- TerminateType,
 	authToken *auth.AuthToken,
 	apiEndpoint string,
-	outputFile *os.File,
-) (queryreq.QueryExecutor, error) {
+	consumer ResponseDataConsumer,
+) (queryreq.QueryExecutor, func(), error) {
 	var ok bool
 	var userPreferenceId string
 
@@ -32,7 +31,7 @@ func (f FindUserPreferenceFactory) Factory(
 	}
 
 	if userPreferenceId, ok = request.PathVariables["userPreferenceId"]; !ok {
-		return nil, fmt.Errorf("userPreferenceId not found in pathVariables")
+		return nil, nil, fmt.Errorf("userPreferenceId not found in pathVariables")
 	}
 	if userPreferenceId == "*" {
 		userPreferenceId = testprompt.GenerateRandomString(10)
@@ -48,12 +47,17 @@ func (f FindUserPreferenceFactory) Factory(
 
 	resChan := make(chan queryreq.ResponseContent[response.ResponseDto[domain.UserPreferenceDto]])
 
-	runAsyncProcessing(ctr, id, request, termChan, resChan, outputFile)
+	resChanCloser := func() {
+		close(resChan)
+	}
+
+	runAsyncProcessing(ctr, id, request, termChan, resChan, consumer)
 
 	return queryreq.RequestContent[queryreq.FindUserPreferenceReq, response.ResponseDto[domain.UserPreferenceDto]]{
 		Req:          req,
 		Interval:     request.Interval,
 		ResponseWait: request.AwaitPrevResp,
 		ResChan:      resChan,
-	}, nil
+		CountLimit:   request.Break.Count,
+	}, resChanCloser, nil
 }

@@ -13,6 +13,7 @@ data:
         count: 10
         sysError: true
         parseError: true
+        writeError: true
         statusCode:
           op: ne
           value: 200

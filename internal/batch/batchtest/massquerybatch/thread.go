@@ -6,14 +6,16 @@ import (
 
 	"github.com/LabGroupware/go-measure-tui/internal/api/request/queryreq"
 	"github.com/LabGroupware/go-measure-tui/internal/app"
+	"github.com/LabGroupware/go-measure-tui/internal/batch/batchtest/queryreqbatch"
 	"github.com/LabGroupware/go-measure-tui/internal/logger"
 )
 
 type MassiveQueryThreadExecutor struct {
-	ID              int
-	outputFile      *os.File
-	RequestExecutor queryreq.QueryExecutor
-	TermChan        chan struct{}
+	ID                 int
+	outputFile         *os.File
+	RequestExecutor    queryreq.QueryExecutor
+	TermChan           chan queryreqbatch.TerminateType
+	responseChanCloser func()
 }
 
 func NewMassiveQueryThreadExecutor(
@@ -42,6 +44,9 @@ func (e *MassiveQueryThreadExecutor) Execute(ctr *app.Container, startChan <-cha
 	for {
 		select {
 		case <-ctr.Ctx.Done():
+			term <- struct{}{}
+			ctr.Logger.Info(ctr.Ctx, "Query End For Context",
+				logger.Value("QueryID", e.ID), logger.Value("OutputFile", e.outputFile.Name()))
 			return nil
 		case <-e.TermChan:
 			term <- struct{}{}

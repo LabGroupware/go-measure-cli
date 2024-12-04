@@ -2,7 +2,6 @@ package queryreqbatch
 
 import (
 	"fmt"
-	"os"
 	"strconv"
 
 	"github.com/LabGroupware/go-measure-tui/internal/api/domain"
@@ -20,11 +19,11 @@ func (f FindOrganizationFactory) Factory(
 	ctr *app.Container,
 	id int,
 	request *ValidatedQueryRequest,
-	termChan chan<- struct{},
+	termChan chan<- TerminateType,
 	authToken *auth.AuthToken,
 	apiEndpoint string,
-	outputFile *os.File,
-) (queryreq.QueryExecutor, error) {
+	consumer ResponseDataConsumer,
+) (queryreq.QueryExecutor, func(), error) {
 	var ok bool
 	var organizationId string
 
@@ -34,7 +33,7 @@ func (f FindOrganizationFactory) Factory(
 	}
 
 	if organizationId, ok = request.PathVariables["organizationId"]; !ok {
-		return nil, fmt.Errorf("organizationId not found in pathVariables")
+		return nil, nil, fmt.Errorf("organizationId not found in pathVariables")
 	}
 	if organizationId == "*" {
 		organizationId = testprompt.GenerateRandomString(10)
@@ -50,14 +49,19 @@ func (f FindOrganizationFactory) Factory(
 
 	resChan := make(chan queryreq.ResponseContent[response.ResponseDto[domain.OrganizationDto]])
 
-	runAsyncProcessing(ctr, id, request, termChan, resChan, outputFile)
+	resChanCloser := func() {
+		close(resChan)
+	}
+
+	runAsyncProcessing(ctr, id, request, termChan, resChan, consumer)
 
 	return queryreq.RequestContent[queryreq.FindOrganizationReq, response.ResponseDto[domain.OrganizationDto]]{
 		Req:          req,
 		Interval:     request.Interval,
 		ResponseWait: request.AwaitPrevResp,
 		ResChan:      resChan,
-	}, nil
+		CountLimit:   request.Break.Count,
+	}, resChanCloser, nil
 }
 
 type GetOrganizationsFactory struct{}
@@ -66,11 +70,11 @@ func (f GetOrganizationsFactory) Factory(
 	ctr *app.Container,
 	id int,
 	request *ValidatedQueryRequest,
-	termChan chan<- struct{},
+	termChan chan<- TerminateType,
 	authToken *auth.AuthToken,
 	apiEndpoint string,
-	outputFile *os.File,
-) (queryreq.QueryExecutor, error) {
+	consumer ResponseDataConsumer,
+) (queryreq.QueryExecutor, func(), error) {
 	req := queryreq.GetOrganizationsReq{
 		AuthToken:    authToken,
 		BaseEndpoint: apiEndpoint,
@@ -150,12 +154,17 @@ func (f GetOrganizationsFactory) Factory(
 
 	resChan := make(chan queryreq.ResponseContent[response.ListResponseDto[domain.OrganizationDto]])
 
-	runAsyncProcessing(ctr, id, request, termChan, resChan, outputFile)
+	resChanCloser := func() {
+		close(resChan)
+	}
+
+	runAsyncProcessing(ctr, id, request, termChan, resChan, consumer)
 
 	return queryreq.RequestContent[queryreq.GetOrganizationsReq, response.ListResponseDto[domain.OrganizationDto]]{
 		Req:          req,
 		Interval:     request.Interval,
 		ResponseWait: request.AwaitPrevResp,
 		ResChan:      resChan,
-	}, nil
+		CountLimit:   request.Break.Count,
+	}, resChanCloser, nil
 }

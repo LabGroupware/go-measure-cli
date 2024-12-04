@@ -32,7 +32,7 @@ credential:
 
 web:
   api:
-    url: "http://localhost:8100"
+    url: "http://localhost:810"
     # url: "https://web.api.state.api.cresplanex.org"
   websocket:
     url: "ws://localhost:8110/ws"
@@ -41,6 +41,8 @@ web:
 batch:
   test:
     path: "batch/test"
+    massquery:
+      output: "bench/batch/massquery"
 
 view:
   color:
