@@ -39,7 +39,11 @@ This command is used to measure the performance of a website by providing the UR
 			},
 		)
 		wSock.EventMsgHandler = wsEventHandler.HandleMessage
-		done, err := wSock.Connect(ctx, container)
+		done, err := wSock.Connect(ctx, container, ws.ConnectConfig{
+			DisconnectOnReadMsgError:       true,
+			DisconnectOnUnmarshalJSONError: true,
+			DisconnectOnParseMsgError:      true,
+		})
 		if err != nil {
 			red := color.New(color.FgRed).SprintFunc()
 			fmt.Println(red(fmt.Sprintf("failed to connect to WebSocket server: %v", err)))

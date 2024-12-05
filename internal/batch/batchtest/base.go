@@ -72,7 +72,6 @@ func baseExecute(
 
 	result := placeholderRegex.ReplaceAllStringFunc(content, func(match string) string {
 		key := placeholderRegex.FindStringSubmatch(match)[1]
-		fmt.Println(key)
 		if v, exists := store.Load(key); exists {
 			return v.(string)
 		}
@@ -136,7 +135,6 @@ func baseExecute(
 		); err != nil {
 			return fmt.Errorf("failed to execute random store value: %v", err)
 		}
-		fmt.Println(values)
 		store.Range(func(key, value interface{}) bool {
 			ctr.Logger.Debug(ctx, "current store value",
 				logger.Value("key", key), logger.Value("value", value))

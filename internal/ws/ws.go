@@ -38,8 +38,14 @@ func NewWebSocket() *WebSocket {
 	}
 }
 
+type ConnectConfig struct {
+	DisconnectOnReadMsgError       bool
+	DisconnectOnUnmarshalJSONError bool
+	DisconnectOnParseMsgError      bool
+}
+
 // Connect connects to a remote server using the WebSocket protocol
-func (ws *WebSocket) Connect(ctx context.Context, ctr *app.Container) (<-chan struct{}, error) {
+func (ws *WebSocket) Connect(ctx context.Context, ctr *app.Container, conf ConnectConfig) (<-chan struct{}, error) {
 	headers := http.Header{
 		"Authorization": []string{fmt.Sprintf("Bearer %s", ctr.AuthToken.AccessToken)},
 	}
@@ -60,6 +66,7 @@ func (ws *WebSocket) Connect(ctx context.Context, ctr *app.Container) (<-chan st
 
 	go func() {
 		defer close(done)
+		defer ws.conn.Close()
 		for {
 			var msg ResponseMessage
 			_, content, err := ws.conn.ReadMessage()
@@ -71,13 +78,17 @@ func (ws *WebSocket) Connect(ctx context.Context, ctr *app.Container) (<-chan st
 				}
 				ctr.Logger.Error(ctx, "failed to read message",
 					logger.Value("error", err))
-				return
+				if conf.DisconnectOnReadMsgError {
+					return
+				}
 			}
 			err = utils.UnmarshalJSON(content, &msg)
 			if err != nil {
 				ctr.Logger.Error(ctx, "failed to unmarshal JSON",
 					logger.Value("error", err))
-				return
+				if conf.DisconnectOnUnmarshalJSONError {
+					return
+				}
 			}
 			switch msg.Type {
 			case ResponseTypeCannotParseResponse:
@@ -86,7 +97,9 @@ func (ws *WebSocket) Connect(ctx context.Context, ctr *app.Container) (<-chan st
 				if err != nil {
 					ctr.Logger.Error(ctx, "failed to read CannotParseResponseMessage",
 						logger.Value("error", err))
-					return
+					if conf.DisconnectOnParseMsgError {
+						return
+					}
 				}
 				if ws.CannotParseMsgHandler != nil {
 					ws.CannotParseMsgHandler(ws, &cannotParse)
@@ -97,7 +110,9 @@ func (ws *WebSocket) Connect(ctx context.Context, ctr *app.Container) (<-chan st
 				if err != nil {
 					ctr.Logger.Error(ctx, "failed to read SubscribeResponseMessage",
 						logger.Value("error", err))
-					return
+					if conf.DisconnectOnParseMsgError {
+						return
+					}
 				}
 				if v, ok := ws.subscribeMsgMem.Memory[subscribe.MessageID]; ok {
 					if subscribe.Success {
@@ -114,7 +129,9 @@ func (ws *WebSocket) Connect(ctx context.Context, ctr *app.Container) (<-chan st
 				if err != nil {
 					ctr.Logger.Error(ctx, "failed to read UnsubscribeResponseMessage",
 						logger.Value("error", err))
-					return
+					if conf.DisconnectOnParseMsgError {
+						return
+					}
 				}
 				if v, ok := ws.unsubscribeMsgMem.Memory[unsubscribe.MessageID]; ok {
 					if unsubscribe.Success {
@@ -133,7 +150,9 @@ func (ws *WebSocket) Connect(ctx context.Context, ctr *app.Container) (<-chan st
 				if err != nil {
 					ctr.Logger.Error(ctx, "failed to read UnsupportedResponseMessage",
 						logger.Value("error", err))
-					return
+					if conf.DisconnectOnParseMsgError {
+						return
+					}
 				}
 				if ws.UnsupportedMsgHandler != nil {
 					ws.UnsupportedMsgHandler(ws, &unsupported)
@@ -144,7 +163,9 @@ func (ws *WebSocket) Connect(ctx context.Context, ctr *app.Container) (<-chan st
 				if err != nil {
 					ctr.Logger.Error(ctx, "failed to read EventResponseMessage",
 						logger.Value("error", err))
-					return
+					if conf.DisconnectOnParseMsgError {
+						return
+					}
 				}
 				if ws.EventMsgHandler != nil {
 					ws.EventMsgHandler(ws, &event, content)
@@ -154,6 +175,17 @@ func (ws *WebSocket) Connect(ctx context.Context, ctr *app.Container) (<-chan st
 	}()
 
 	return done, nil
+}
+
+func (ws *WebSocket) AllUnsubscribe() error {
+	var subscriptionIDs []string
+	for id := range ws.SubscribeMemory.Memory {
+		subscriptionIDs = append(subscriptionIDs, id)
+	}
+	if len(subscriptionIDs) == 0 {
+		return nil
+	}
+	return ws.SendUnsubscribeMessage(subscriptionIDs)
 }
 
 func (ws *WebSocket) SendSubscribeMessage(aggregateType AggregateType, aggregateIDs []string, eventTypes []EventType) error {

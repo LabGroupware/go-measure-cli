@@ -98,8 +98,6 @@ func (p *PrometheusMetricsBatchRequestConfig) FetcherFactory(ctx context.Context
 	queryParams.Add("query", p.Query)
 	fullURL.RawQuery = queryParams.Encode()
 
-	fmt.Println(fullURL.String())
-
 	ctr.Logger.Debug(ctx, "GET request to Prometheus query URL created",
 		logger.Value("url", fullURL.String()), logger.Value("on", "PrometheusMetricsBatchRequestConfig.FetcherFactory"))
 
