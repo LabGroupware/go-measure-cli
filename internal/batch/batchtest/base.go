@@ -100,13 +100,17 @@ func baseExecute(
 		return match
 	})
 
+	store.Range(func(key, value interface{}) bool {
+		fmt.Println(key, value)
+		return true
+	})
+
 	var yamlData map[string]interface{}
 
 	if err := yaml.Unmarshal([]byte(result), &yamlData); err != nil {
 		return fmt.Errorf("failed to parse as YAML: %w", err)
 	}
 
-	fmt.Println("===========================yamlData", yamlData)
 	ctr.Logger.Debug(ctx, "replaced content",
 		logger.Value("content", yamlData))
 

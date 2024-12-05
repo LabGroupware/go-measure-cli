@@ -21,7 +21,7 @@ func (p *RandomElementValueGenerator) Generate(ctx context.Context, ctr *app.Con
 	}
 
 	value := p.Values[rand.N(len(p.Values))]
-	store.Store(p.Key, fmt.Sprintf("%d", value))
+	store.Store(p.Key, fmt.Sprintf("%v", value))
 	return nil
 }
 

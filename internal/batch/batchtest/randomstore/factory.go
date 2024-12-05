@@ -19,4 +19,5 @@ var randomGeneratorFactoryMap = map[string]RandomGenerator{
 	"string":   &RandomStoreValueStringDataConfig{},
 	"bool":     &RandomStoreValueBoolDataConfig{},
 	"uuid":     &RandomStoreValueUUIDDataConfig{},
+	"datetime": &RandomStoreValueDatetimeDataConfig{},
 }

@@ -1,0 +1,13 @@
+type: OneExecute
+request:
+  endpointType: CreateUserProfile
+  queryParam: {}
+  pathVariables: {}
+  body:
+    userId: <..<userId_loopCount>..>
+    name: <..<name_loopCount>..>
+    email: <..<userEmail_loopCount>..>
+  outputs:
+    - id: createUserProfileJobId_<..<loopCount>..>
+      jmesPath: "data.jobId"
+      onError: "cancel" # cancel or random or ignore or empty

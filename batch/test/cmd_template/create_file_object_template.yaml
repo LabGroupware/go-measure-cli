@@ -1,0 +1,13 @@
+type: OneExecute
+request:
+  endpointType: CreateFileObject
+  queryParam: {}
+  pathVariables: {}
+  body:
+    bucketId: <..<bucketId_loopCount>..>
+    name: <..<name_loopCount>..>
+    path: <..<path_loopCount>..>
+  outputs:
+    - id: createFileObjectJobId_<..<loopCount>..>
+      jmesPath: "data.jobId"
+      onError: "cancel" # cancel or random or ignore or empty

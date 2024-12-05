@@ -1,0 +1,6 @@
+type: Pipeline
+concurrency: -1
+files:
+  - id: "insert_user"
+    file: "cmd_template/create_user_profile_template.yaml"
+    count: 30

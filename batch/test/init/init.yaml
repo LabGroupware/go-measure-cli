@@ -4,7 +4,9 @@ files:
   - id: "gen_value"
     file: "gen/gen_random.yaml"
   - id: "insert_1"
-    file: "init/insert_init_data.yaml"
+    file: "init/insert_init_data_1.yaml"
+  # - id: "wait_insert_1"
+  #   file: "init/insert_init_data_1.yaml"
   #   count: 10
   # - id: "pipeline_2"
   #   file: "mass2.yaml"
