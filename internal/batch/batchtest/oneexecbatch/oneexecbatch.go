@@ -1,4 +1,4 @@
-package onequerybatch
+package oneexecbatch
 
 import (
 	"context"
@@ -9,10 +9,10 @@ import (
 	"github.com/LabGroupware/go-measure-tui/internal/logger"
 )
 
-func OneQueryBatch(
+func OneExecuteBatch(
 	ctx context.Context,
 	ctr *app.Container,
-	conf OneQueryConfig,
+	conf OneExecuteConfig,
 	store *sync.Map,
 ) (map[string]string, error) {
 	newStore := sync.Map{}

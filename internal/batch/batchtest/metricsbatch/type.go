@@ -3,7 +3,7 @@ package metricsbatch
 import (
 	"context"
 
-	"github.com/LabGroupware/go-measure-tui/internal/api/request/queryreq"
+	"github.com/LabGroupware/go-measure-tui/internal/api/request/executor"
 	"github.com/LabGroupware/go-measure-tui/internal/app"
 )
 
@@ -46,7 +46,7 @@ func NewMetricsTypeFromStr(s string) MetricsType {
 type MetricsWriter func(
 	ctx context.Context,
 	ctr *app.Container,
-	data queryreq.ResponseContent[any],
+	data executor.ResponseContent[any],
 ) error
 
 type MetricsFetcher interface {

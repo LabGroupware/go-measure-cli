@@ -12,7 +12,7 @@ import (
 func WaitSagaBatch(
 	ctx context.Context,
 	ctr *app.Container,
-	// conf OneQueryConfig,
+	// conf OneExecuteConfig,
 	store *sync.Map,
 ) (map[string]string, error) {
 	ctx, cancel := context.WithCancel(ctx)

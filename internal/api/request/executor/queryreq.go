@@ -31,8 +31,8 @@ type QueryReq interface {
 	CreateRequest(ctx context.Context, ctr *app.Container) (*http.Request, error)
 }
 
-type QueryExecutor interface {
-	QueryExecute(ctx context.Context, ctr *app.Container) error
+type RequestExecutor interface {
+	RequestExecute(ctx context.Context, ctr *app.Container) error
 }
 
 type RequestCountLimit struct {
@@ -48,7 +48,7 @@ type RequestContent[Req QueryReq, Res any] struct {
 	CountLimit   RequestCountLimit
 }
 
-func (q RequestContent[Req, Res]) QueryExecute(
+func (q RequestContent[Req, Res]) RequestExecute(
 	ctx context.Context,
 	ctr *app.Container,
 ) error {

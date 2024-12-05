@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/LabGroupware/go-measure-tui/internal/api/request/queryreq"
+	"github.com/LabGroupware/go-measure-tui/internal/api/request/executor"
 	"github.com/LabGroupware/go-measure-tui/internal/auth"
 )
 
@@ -19,7 +19,7 @@ type ExecutorFactory interface {
 		authToken *auth.AuthToken,
 		apiEndpoint string,
 		outputFile *os.File,
-	) queryreq.QueryExecutor
+	) executor.RequestExecutor
 }
 
 var typeFactoryMap = map[QueryType]ExecutorFactory{

@@ -1,4 +1,6 @@
-type: MassQuery
+type: MassExecute
+output:
+  enabled: true
 data:
   requests:
     - endpointType: GetTeams

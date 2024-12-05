@@ -1,4 +1,4 @@
-package queryreqbatch
+package execbatch
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/LabGroupware/go-measure-tui/internal/api/request/queryreq"
+	"github.com/LabGroupware/go-measure-tui/internal/api/request/executor"
 	"github.com/LabGroupware/go-measure-tui/internal/app"
 	"github.com/LabGroupware/go-measure-tui/internal/logger"
 	"github.com/google/uuid"
@@ -53,11 +53,11 @@ func runResponseHandler[Res any](
 	ctx context.Context,
 	ctr *app.Container,
 	id int,
-	request *ValidatedQueryRequest,
+	request *ValidatedExecRequest,
 	termChan chan<- TerminateType,
 	writeErrChan <-chan struct{},
 	uidChan <-chan uuid.UUID,
-	resChan <-chan queryreq.ResponseContent[Res],
+	resChan <-chan executor.ResponseContent[Res],
 	writeChan chan<- writeSendData,
 ) {
 	defer close(termChan)
@@ -409,13 +409,13 @@ func runResponseHandler[Res any](
 	}
 }
 
-func runAsyncProcessing[Res any](
+func RunAsyncProcessing[Res any](
 	ctx context.Context,
 	ctr *app.Container,
 	id int,
-	request *ValidatedQueryRequest,
+	request *ValidatedExecRequest,
 	termChan chan<- TerminateType,
-	resChan <-chan queryreq.ResponseContent[Res],
+	resChan <-chan executor.ResponseContent[Res],
 	consumer ResponseDataConsumer,
 ) {
 	writeChan := make(chan writeSendData)

@@ -1,4 +1,4 @@
-package queryreqbatch
+package execbatch
 
 import (
 	"context"
@@ -8,17 +8,18 @@ import (
 	"strings"
 	"time"
 
-	"github.com/LabGroupware/go-measure-tui/internal/api/request/queryreq"
+	"github.com/LabGroupware/go-measure-tui/internal/api/request/executor"
 	"github.com/LabGroupware/go-measure-tui/internal/app"
 	"github.com/LabGroupware/go-measure-tui/internal/logger"
 )
 
-type CmdRequest struct {
-	EndpointType      string            `yaml:"endpointType"`
-	Interval          string            `yaml:"interval"`
-	AwaitPrevResponse bool              `yaml:"awaitPrevResponse"`
-	Body              any               `yaml:"body"`
-	PathVariables     map[string]string `yaml:"pathVariables"`
+type ExecRequest struct {
+	EndpointType      string              `yaml:"endpointType"`
+	Interval          string              `yaml:"interval"`
+	AwaitPrevResponse bool                `yaml:"awaitPrevResponse"`
+	Body              any                 `yaml:"body"`
+	QueryParam        map[string][]string `yaml:"queryParam"`
+	PathVariables     map[string]string   `yaml:"pathVariables"`
 	Break             struct {
 		Time       *string `yaml:"time"`
 		Count      *int    `yaml:"count"`
@@ -45,11 +46,7 @@ type CmdRequest struct {
 	} `yaml:"dataOutputFilter"`
 }
 
-func ValidateCmdReq(ctx context.Context, ctr *app.Container, req CmdRequest, validated *ValidatedCmdRequest) error {
-	cmdType := NewCmdTypeFromString(req.EndpointType)
-	if cmdType == 0 {
-		return fmt.Errorf("invalid command type: %s", req.EndpointType)
-	}
+func ValidateExecReq(ctx context.Context, ctr *app.Container, req ExecRequest, validated *ValidatedExecRequest) error {
 	validated.Endpoint = req.EndpointType
 	interval, err := time.ParseDuration(req.Interval)
 	if err != nil {
@@ -57,8 +54,9 @@ func ValidateCmdReq(ctx context.Context, ctr *app.Container, req CmdRequest, val
 	}
 	validated.Interval = interval
 	validated.AwaitPrevResp = req.AwaitPrevResponse
-	validated.Body = req.Body
+	validated.QueryParam = req.QueryParam
 	validated.PathVariables = req.PathVariables
+	validated.Body = req.Body
 	if req.Break.Time != nil {
 		breakTime, err := time.ParseDuration(*req.Break.Time)
 		if err != nil {
@@ -289,9 +287,9 @@ func statusCodeMatherFactory(ctx context.Context, ctr *app.Container, op string,
 	}
 }
 
-type ValidatedCmdRequestBreak struct {
+type ValidatedExecRequestBreak struct {
 	Time              time.Duration
-	Count             queryreq.RequestCountLimit
+	Count             executor.RequestCountLimit
 	SysError          bool
 	ParseError        bool
 	WriteError        bool
@@ -302,7 +300,7 @@ type ValidatedCmdRequestBreak struct {
 	}
 }
 
-func NewSimpleValidatedCmdRequestBreak(
+func NewSimpleValidatedExecRequestBreak(
 	timeout time.Duration,
 	count int,
 	statusesForTerm []int,
@@ -310,10 +308,10 @@ func NewSimpleValidatedCmdRequestBreak(
 		HasValue bool
 		JMESPath string
 	},
-) ValidatedCmdRequestBreak {
-	return ValidatedCmdRequestBreak{
+) ValidatedExecRequestBreak {
+	return ValidatedExecRequestBreak{
 		Time: timeout,
-		Count: queryreq.RequestCountLimit{
+		Count: executor.RequestCountLimit{
 			Enabled: true,
 			Count:   count,
 		},
@@ -332,24 +330,25 @@ func NewSimpleValidatedCmdRequestBreak(
 	}
 }
 
-type ValidatedCmdRequestDataOutput struct {
+type ValidatedExecRequestDataOutput struct {
 	HasValue bool
 	JMESPath string
 }
 
-type ValidatedCmdRequestDataOutputFilter struct {
+type ValidatedExecRequestDataOutputFilter struct {
 	HasValue bool
 	JMESPath string
 }
 
-type ValidatedCmdRequest struct {
+type ValidatedExecRequest struct {
 	Endpoint            string
 	Interval            time.Duration
 	AwaitPrevResp       bool
 	Body                any
+	QueryParam          map[string][]string
 	PathVariables       map[string]string
-	Break               ValidatedCmdRequestBreak
-	DataOutput          ValidatedCmdRequestDataOutput
+	Break               ValidatedExecRequestBreak
+	DataOutput          ValidatedExecRequestDataOutput
 	ExcludeStatusFilter StatusCodeMatcher
-	DataOutputFilter    ValidatedCmdRequestDataOutputFilter
+	DataOutputFilter    ValidatedExecRequestDataOutputFilter
 }

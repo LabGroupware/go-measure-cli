@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/LabGroupware/go-measure-tui/internal/api/request/queryreq"
+	"github.com/LabGroupware/go-measure-tui/internal/api/request/executor"
 	"github.com/LabGroupware/go-measure-tui/internal/app"
 	"github.com/LabGroupware/go-measure-tui/internal/logger"
 	"gopkg.in/yaml.v3"
@@ -29,18 +29,18 @@ func (p *PrometheusMetricsFetcher) Fetch(
 ) (<-chan TermType, error) {
 
 	// INFO: close on executor, because only it will write to this channel
-	resChan := make(chan queryreq.ResponseContent[any])
+	resChan := make(chan executor.ResponseContent[any])
 	termChan := make(chan TermType)
 
-	req := queryreq.RequestContent[PrometheusMetricsFetcher, any]{
+	req := executor.RequestContent[PrometheusMetricsFetcher, any]{
 		Req:          *p,
 		Interval:     p.interval,
 		ResponseWait: false,
 		ResChan:      resChan,
-		CountLimit:   queryreq.RequestCountLimit{},
+		CountLimit:   executor.RequestCountLimit{},
 	}
 
-	err := req.QueryExecute(ctx, ctr)
+	err := req.RequestExecute(ctx, ctr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute query: %w", err)
 	}

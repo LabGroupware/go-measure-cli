@@ -1,4 +1,4 @@
-type: MassQuery
+type: MassExecute
 data:
   requests:
     - endpointType: FindOrganization

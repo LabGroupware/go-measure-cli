@@ -11,9 +11,9 @@ import (
 	"sync"
 
 	"github.com/LabGroupware/go-measure-tui/internal/app"
-	"github.com/LabGroupware/go-measure-tui/internal/batch/batchtest/massquerybatch"
+	"github.com/LabGroupware/go-measure-tui/internal/batch/batchtest/massexecutorbatch"
 	"github.com/LabGroupware/go-measure-tui/internal/batch/batchtest/metricsbatch"
-	"github.com/LabGroupware/go-measure-tui/internal/batch/batchtest/onequerybatch"
+	"github.com/LabGroupware/go-measure-tui/internal/batch/batchtest/oneexecbatch"
 	"github.com/LabGroupware/go-measure-tui/internal/batch/batchtest/prefetchbatch"
 	"github.com/LabGroupware/go-measure-tui/internal/batch/batchtest/randomstore"
 	"github.com/LabGroupware/go-measure-tui/internal/logger"
@@ -110,7 +110,7 @@ func baseExecute(
 
 	if conf.Output.Enabled {
 		switch conf.Type {
-		case "MassQuery", "Pipeline":
+		case "MassExecute", "Pipeline":
 			err := os.MkdirAll(outputRoot, os.ModePerm)
 			if err != nil {
 				return fmt.Errorf("failed to create directory: %v", err)
@@ -142,15 +142,15 @@ func baseExecute(
 		})
 		ctr.Logger.Info(ctx, "newValues",
 			logger.Value("values", values))
-	case "OneQuery":
-		var oneQuery onequerybatch.OneQueryConfig
+	case "OneExecute":
+		var oneExec oneexecbatch.OneExecuteConfig
 		decoder := yaml.NewDecoder(reader)
-		if err := decoder.Decode(&oneQuery); err != nil {
+		if err := decoder.Decode(&oneExec); err != nil {
 			return fmt.Errorf("failed to decode yaml: %v", err)
 		}
 		var values map[string]string
-		if values, err = onequerybatch.OneQueryBatch(ctx, ctr, oneQuery, store); err != nil {
-			return fmt.Errorf("failed to execute one query: %v", err)
+		if values, err = oneexecbatch.OneExecuteBatch(ctx, ctr, oneExec, store); err != nil {
+			return fmt.Errorf("failed to execute one execute: %v", err)
 		}
 		store.Range(func(key, value interface{}) bool {
 			ctr.Logger.Debug(ctx, "current store value",
@@ -159,14 +159,14 @@ func baseExecute(
 		})
 		ctr.Logger.Info(ctx, "newValues",
 			logger.Value("values", values))
-	case "MassQuery":
-		var massQuery massquerybatch.MassQuery
+	case "MassExecute":
+		var massExec massexecutorbatch.MassExecute
 		decoder := yaml.NewDecoder(reader)
-		if err := decoder.Decode(&massQuery); err != nil {
+		if err := decoder.Decode(&massExec); err != nil {
 			return fmt.Errorf("failed to decode yaml: %v", err)
 		}
-		if err := massquerybatch.MassQueryBatch(ctx, ctr, massQuery, outputRoot); err != nil {
-			return fmt.Errorf("failed to execute mass query: %v", err)
+		if err := massexecutorbatch.MassExecuteBatch(ctx, ctr, massExec, outputRoot); err != nil {
+			return fmt.Errorf("failed to execute mass execute: %v", err)
 		}
 	case "WaitSaga":
 

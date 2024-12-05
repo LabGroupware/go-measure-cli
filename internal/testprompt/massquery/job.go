@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/LabGroupware/go-measure-tui/internal/api/request/queryreq"
+	"github.com/LabGroupware/go-measure-tui/internal/api/request/executor"
 	"github.com/LabGroupware/go-measure-tui/internal/api/response"
 	"github.com/LabGroupware/go-measure-tui/internal/auth"
 	"github.com/LabGroupware/go-measure-tui/internal/testprompt"
@@ -23,12 +23,12 @@ func (f FindJobFactory) factory(
 	authToken *auth.AuthToken,
 	apiEndpoint string,
 	outputFile *os.File,
-) queryreq.QueryExecutor {
+) executor.RequestExecutor {
 	var ok bool
 	var err error
 	var jobId string
 
-	req := queryreq.GetJobReq{
+	req := executor.GetJobReq{
 		AuthToken:    authToken,
 		BaseEndpoint: apiEndpoint,
 	}
@@ -47,7 +47,7 @@ func (f FindJobFactory) factory(
 		req.Path.JobID = jobId
 	}
 
-	resChan := make(chan queryreq.ResponseContent[response.JobResponseDto])
+	resChan := make(chan executor.ResponseContent[response.JobResponseDto])
 
 	go func() {
 		defer close(resChan)
@@ -66,7 +66,7 @@ func (f FindJobFactory) factory(
 		}
 	}()
 
-	return queryreq.RequestContent[queryreq.GetJobReq, response.JobResponseDto]{
+	return executor.RequestContent[executor.GetJobReq, response.JobResponseDto]{
 		Req:          req,
 		Interval:     interval,
 		ResponseWait: responseWait,

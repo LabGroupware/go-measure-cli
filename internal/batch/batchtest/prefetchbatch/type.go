@@ -10,6 +10,7 @@ type PrefetchRequest struct {
 	EndpointType  string              `yaml:"endpointType"`
 	QueryParam    map[string][]string `yaml:"queryParam"`
 	PathVariables map[string]string   `yaml:"pathVariables"`
+	Body          any                 `yaml:"body"`
 	Vars          []PrefetchVariable  `yaml:"vars"`
 	DependsOn     []string            `yaml:"dependsOn"`
 }

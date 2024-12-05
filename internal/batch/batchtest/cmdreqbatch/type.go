@@ -1,4 +1,4 @@
-package queryreqbatch
+package cmdreqbatch
 
 type CmdType int
 

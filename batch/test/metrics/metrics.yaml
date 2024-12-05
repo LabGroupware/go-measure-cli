@@ -1,4 +1,6 @@
-type: MassQuery
+type: MassExecute
+output:
+  enabled: true
 metrics:
   enabled: true
   requests:
@@ -27,9 +29,9 @@ metrics:
         - key: "cpu_seconds_total"
           jmesPath: data.result[?metrics.mode == "idle"].value
           onNil: "ignore" # cancel or ignore(default)
-        - key: "invalid_key"
-          jmesPath: "d"
-          onNil: "cancel" # cancel or ignore(default)
+        # - key: "invalid_key"
+          # jmesPath: "d"
+          # onNil: "cancel" # cancel or ignore(default)
 data:
   requests:
     - endpointType: GetTeams

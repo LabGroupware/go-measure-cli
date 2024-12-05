@@ -8,7 +8,7 @@ import (
 	"os"
 	"sync"
 
-	"github.com/LabGroupware/go-measure-tui/internal/api/request/queryreq"
+	"github.com/LabGroupware/go-measure-tui/internal/api/request/executor"
 	"github.com/LabGroupware/go-measure-tui/internal/app"
 	"github.com/LabGroupware/go-measure-tui/internal/logger"
 	"github.com/jmespath/go-jmespath"
@@ -70,7 +70,7 @@ func MetricsFetchBatch(
 		writeFunc := func(
 			ctx context.Context,
 			ctr *app.Container,
-			data queryreq.ResponseContent[any],
+			data executor.ResponseContent[any],
 		) error {
 			records := make([]string, 0, len(req.Data)+5)
 			records = append(

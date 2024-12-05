@@ -6,10 +6,11 @@ import (
 	"strconv"
 
 	"github.com/LabGroupware/go-measure-tui/internal/api/domain"
-	"github.com/LabGroupware/go-measure-tui/internal/api/request/queryreq"
+	"github.com/LabGroupware/go-measure-tui/internal/api/request/executor"
 	"github.com/LabGroupware/go-measure-tui/internal/api/response"
 	"github.com/LabGroupware/go-measure-tui/internal/app"
 	"github.com/LabGroupware/go-measure-tui/internal/auth"
+	"github.com/LabGroupware/go-measure-tui/internal/batch/batchtest/execbatch"
 	"github.com/LabGroupware/go-measure-tui/internal/logger"
 	"github.com/LabGroupware/go-measure-tui/internal/testprompt"
 )
@@ -20,16 +21,16 @@ func (f FindTaskFactory) Factory(
 	ctx context.Context,
 	ctr *app.Container,
 	id int,
-	request *ValidatedQueryRequest,
-	termChan chan<- TerminateType,
+	request *execbatch.ValidatedExecRequest,
+	termChan chan<- execbatch.TerminateType,
 	authToken *auth.AuthToken,
 	apiEndpoint string,
-	consumer ResponseDataConsumer,
-) (queryreq.QueryExecutor, func(), error) {
+	consumer execbatch.ResponseDataConsumer,
+) (executor.RequestExecutor, func(), error) {
 	var ok bool
 	var taskId string
 
-	req := queryreq.FindTaskReq{
+	req := executor.FindTaskReq{
 		AuthToken:    authToken,
 		BaseEndpoint: apiEndpoint,
 	}
@@ -50,15 +51,15 @@ func (f FindTaskFactory) Factory(
 	}
 
 	// INFO: close on executor, because only it will write to this channel
-	resChan := make(chan queryreq.ResponseContent[response.ResponseDto[domain.TaskDto]])
+	resChan := make(chan executor.ResponseContent[response.ResponseDto[domain.TaskDto]])
 
 	resChanCloser := func() {
 		close(resChan)
 	}
 
-	runAsyncProcessing(ctx, ctr, id, request, termChan, resChan, consumer)
+	execbatch.RunAsyncProcessing(ctx, ctr, id, request, termChan, resChan, consumer)
 
-	return queryreq.RequestContent[queryreq.FindTaskReq, response.ResponseDto[domain.TaskDto]]{
+	return executor.RequestContent[executor.FindTaskReq, response.ResponseDto[domain.TaskDto]]{
 		Req:          req,
 		Interval:     request.Interval,
 		ResponseWait: request.AwaitPrevResp,
@@ -73,13 +74,13 @@ func (f GetTasksFactory) Factory(
 	ctx context.Context,
 	ctr *app.Container,
 	id int,
-	request *ValidatedQueryRequest,
-	termChan chan<- TerminateType,
+	request *execbatch.ValidatedExecRequest,
+	termChan chan<- execbatch.TerminateType,
 	authToken *auth.AuthToken,
 	apiEndpoint string,
-	consumer ResponseDataConsumer,
-) (queryreq.QueryExecutor, func(), error) {
-	req := queryreq.GetTasksReq{
+	consumer execbatch.ResponseDataConsumer,
+) (executor.RequestExecutor, func(), error) {
+	req := executor.GetTasksReq{
 		AuthToken:    authToken,
 		BaseEndpoint: apiEndpoint,
 	}
@@ -175,15 +176,15 @@ func (f GetTasksFactory) Factory(
 	}
 
 	// INFO: close on executor, because only it will write to this channel
-	resChan := make(chan queryreq.ResponseContent[response.ListResponseDto[domain.TaskDto]])
+	resChan := make(chan executor.ResponseContent[response.ListResponseDto[domain.TaskDto]])
 
 	resChanCloser := func() {
 		close(resChan)
 	}
 
-	runAsyncProcessing(ctx, ctr, id, request, termChan, resChan, consumer)
+	execbatch.RunAsyncProcessing(ctx, ctr, id, request, termChan, resChan, consumer)
 
-	return queryreq.RequestContent[queryreq.GetTasksReq, response.ListResponseDto[domain.TaskDto]]{
+	return executor.RequestContent[executor.GetTasksReq, response.ListResponseDto[domain.TaskDto]]{
 		Req:          req,
 		Interval:     request.Interval,
 		ResponseWait: request.AwaitPrevResp,

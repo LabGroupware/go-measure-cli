@@ -1,4 +1,4 @@
-package massquerybatch
+package massexecutorbatch
 
 import (
 	"context"
@@ -9,26 +9,27 @@ import (
 	"sync/atomic"
 
 	"github.com/LabGroupware/go-measure-tui/internal/app"
-	"github.com/LabGroupware/go-measure-tui/internal/batch/batchtest/queryreqbatch"
+	"github.com/LabGroupware/go-measure-tui/internal/batch/batchtest/batchexecmap"
+	"github.com/LabGroupware/go-measure-tui/internal/batch/batchtest/execbatch"
 	"github.com/LabGroupware/go-measure-tui/internal/logger"
 )
 
-func MassQueryBatch(ctx context.Context, ctr *app.Container, massQuery MassQuery, outputRoot string) error {
+func MassExecuteBatch(ctx context.Context, ctr *app.Container, massExec MassExecute, outputRoot string) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	concurrentCount := len(massQuery.Data.Requests)
+	concurrentCount := len(massExec.Data.Requests)
 
-	threadExecutors := make([]*MassiveQueryThreadExecutor, concurrentCount)
+	threadExecutors := make([]*MassiveExecThreadExecutor, concurrentCount)
 
 	for i := 0; i < concurrentCount; i++ {
-		request := massQuery.Data.Requests[i]
-		threadExecutors[i] = &MassiveQueryThreadExecutor{
+		request := massExec.Data.Requests[i]
+		threadExecutors[i] = &MassiveExecThreadExecutor{
 			ID: i + 1,
 		}
 
-		if massQuery.Output.Enabled {
-			logFilePath := fmt.Sprintf("%s/massive_query_%010d.csv", outputRoot, i+1)
+		if massExec.Output.Enabled {
+			logFilePath := fmt.Sprintf("%s/massive_execute_%010d.csv", outputRoot, i+1)
 			file, err := os.Create(logFilePath)
 			if err != nil {
 				return fmt.Errorf("failed to create file: %v", err)
@@ -44,22 +45,25 @@ func MassQueryBatch(ctx context.Context, ctr *app.Container, massQuery MassQuery
 			writer.Flush()
 		}
 
-		endType := massQuery.Data.Requests[i].EndpointType
-		queryType := queryreqbatch.NewQueryTypeFromString(endType)
-		factor := queryreqbatch.TypeFactoryMap[queryType]
+		endType := massExec.Data.Requests[i].EndpointType
+		execType := batchexecmap.NewExecTypeFromString(endType)
+		if execType == 0 {
+			return fmt.Errorf("failed to parse exec type: %s", endType)
+		}
+		factor := batchexecmap.TypeFactoryMap[execType]
 		// INFO: close on factor.Factory(response handler), because only it will write to this channel
-		termChan := make(chan queryreqbatch.TerminateType)
-		validatedReq := &queryreqbatch.ValidatedQueryRequest{}
-		if err := queryreqbatch.ValidateQueryReq(ctx, ctr, request.QueryRequest, validatedReq); err != nil {
-			return fmt.Errorf("failed to validate query request: %v", err)
+		termChan := make(chan execbatch.TerminateType)
+		validatedReq := &execbatch.ValidatedExecRequest{}
+		if err := execbatch.ValidateExecReq(ctx, ctr, request.ExecRequest, validatedReq); err != nil {
+			return fmt.Errorf("failed to validate execute request: %v", err)
 		}
 		writeFunc := func(
 			ctx context.Context,
 			ctr *app.Container,
 			id int,
-			data queryreqbatch.WriteData,
+			data execbatch.WriteData,
 		) error {
-			if !massQuery.Output.Enabled {
+			if !massExec.Output.Enabled {
 				return nil
 			}
 			writer := csv.NewWriter(threadExecutors[i].outputFile)
@@ -79,7 +83,7 @@ func MassQueryBatch(ctx context.Context, ctr *app.Container, massQuery MassQuery
 			validatedReq,
 			termChan,
 			ctr.AuthToken,
-			ctr.Config.Web.QueryAPI.Url,
+			ctr.Config.Web.API.Url,
 			writeFunc,
 		)
 		ctr.Logger.Info(ctx, "created executor",
@@ -97,11 +101,11 @@ func MassQueryBatch(ctx context.Context, ctr *app.Container, massQuery MassQuery
 	var startChan = make(chan struct{})
 	for _, executor := range threadExecutors {
 		wg.Add(1)
-		go func(exec *MassiveQueryThreadExecutor) {
+		go func(exec *MassiveExecThreadExecutor) {
 			defer wg.Done()
 			if err := exec.Execute(ctx, ctr, startChan); err != nil {
 				atomicErr.Store(err)
-				ctr.Logger.Error(ctx, "failed to execute query",
+				ctr.Logger.Error(ctx, "failed to execute",
 					logger.Value("error", err), logger.Value("id", exec.ID))
 				cancel()
 				return
@@ -113,7 +117,7 @@ func MassQueryBatch(ctx context.Context, ctr *app.Container, massQuery MassQuery
 
 	if err := atomicErr.Load(); err != nil {
 		ctr.Logger.Error(ctx, "failed to find error",
-			logger.Value("error", err.(error)), logger.Value("on", "MassQueryBatch"))
+			logger.Value("error", err.(error)), logger.Value("on", "MassExecuteBatch"))
 		return err.(error)
 	}
 

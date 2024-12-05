@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/LabGroupware/go-measure-tui/internal/api/request/queryreq"
+	"github.com/LabGroupware/go-measure-tui/internal/api/request/executor"
 	"github.com/LabGroupware/go-measure-tui/internal/api/response"
 	"github.com/LabGroupware/go-measure-tui/internal/app"
 	"github.com/LabGroupware/go-measure-tui/internal/auth"
+	"github.com/LabGroupware/go-measure-tui/internal/batch/batchtest/execbatch"
 	"github.com/LabGroupware/go-measure-tui/internal/testprompt"
 )
 
@@ -17,16 +18,16 @@ func (f FindJobFactory) Factory(
 	ctx context.Context,
 	ctr *app.Container,
 	id int,
-	request *ValidatedQueryRequest,
-	termChan chan<- TerminateType,
+	request *execbatch.ValidatedExecRequest,
+	termChan chan<- execbatch.TerminateType,
 	authToken *auth.AuthToken,
 	apiEndpoint string,
-	consumer ResponseDataConsumer,
-) (queryreq.QueryExecutor, func(), error) {
+	consumer execbatch.ResponseDataConsumer,
+) (executor.RequestExecutor, func(), error) {
 	var ok bool
 	var jobId string
 
-	req := queryreq.GetJobReq{
+	req := executor.GetJobReq{
 		AuthToken:    authToken,
 		BaseEndpoint: apiEndpoint,
 	}
@@ -40,15 +41,15 @@ func (f FindJobFactory) Factory(
 	req.Path.JobID = jobId
 
 	// INFO: close on executor, because only it will write to this channel
-	resChan := make(chan queryreq.ResponseContent[response.JobResponseDto])
+	resChan := make(chan executor.ResponseContent[response.JobResponseDto])
 
 	resChanCloser := func() {
 		close(resChan)
 	}
 
-	runAsyncProcessing(ctx, ctr, id, request, termChan, resChan, consumer)
+	execbatch.RunAsyncProcessing(ctx, ctr, id, request, termChan, resChan, consumer)
 
-	return queryreq.RequestContent[queryreq.GetJobReq, response.JobResponseDto]{
+	return executor.RequestContent[executor.GetJobReq, response.JobResponseDto]{
 		Req:          req,
 		Interval:     request.Interval,
 		ResponseWait: request.AwaitPrevResp,

@@ -1,4 +1,4 @@
-type: OneQuery
+type: OneExecute
 request:
   endpointType: GetUsers
   queryParam:

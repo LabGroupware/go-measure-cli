@@ -4,20 +4,20 @@ import (
 	"context"
 	"os"
 
-	"github.com/LabGroupware/go-measure-tui/internal/api/request/queryreq"
+	"github.com/LabGroupware/go-measure-tui/internal/api/request/executor"
 )
 
 type MassiveQueryThreadExecutor struct {
 	ID              int
 	outputFile      *os.File
-	RequestExecutor queryreq.QueryExecutor
+	RequestExecutor executor.RequestExecutor
 	TermChan        chan struct{}
 }
 
 func NewMassiveQueryThreadExecutor(
 	id int,
 	outputFile *os.File,
-	req queryreq.QueryExecutor,
+	req executor.RequestExecutor,
 ) *MassiveQueryThreadExecutor {
 	return &MassiveQueryThreadExecutor{
 		ID:              id,

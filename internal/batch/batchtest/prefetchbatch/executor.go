@@ -8,7 +8,8 @@ import (
 	"time"
 
 	"github.com/LabGroupware/go-measure-tui/internal/app"
-	"github.com/LabGroupware/go-measure-tui/internal/batch/batchtest/queryreqbatch"
+	"github.com/LabGroupware/go-measure-tui/internal/batch/batchtest/batchexecmap"
+	"github.com/LabGroupware/go-measure-tui/internal/batch/batchtest/execbatch"
 	"github.com/LabGroupware/go-measure-tui/internal/logger"
 	"github.com/LabGroupware/go-measure-tui/internal/utils"
 	"github.com/jmespath/go-jmespath"
@@ -57,15 +58,19 @@ func executeRequest(
 
 	endType := req.EndpointType
 	// INFO: close on factor.Factory(response handler), because only it will write to this channel
-	queryTermChanWithBreak := make(chan queryreqbatch.TerminateType)
-	queryType := queryreqbatch.NewQueryTypeFromString(endType)
-	factor := queryreqbatch.TypeFactoryMap[queryType]
+	execTermChanWithBreak := make(chan execbatch.TerminateType)
+	execType := batchexecmap.NewExecTypeFromString(endType)
+	if execType == 0 {
+		return fmt.Errorf("failed to parse exec type: %s", endType)
+	}
+
+	factor := batchexecmap.TypeFactoryMap[execType]
 
 	writeFunc := func(
 		ctx context.Context,
 		ctr *app.Container,
 		id int,
-		data queryreqbatch.WriteData,
+		data execbatch.WriteData,
 	) error {
 		for _, replaceVar := range req.Vars {
 			jmesPathQuery := replaceVar.JMESPath
@@ -117,13 +122,14 @@ func executeRequest(
 		ctx,
 		ctr,
 		internalID,
-		&queryreqbatch.ValidatedQueryRequest{
+		&execbatch.ValidatedExecRequest{
 			Endpoint:      req.EndpointType,
 			Interval:      time.Microsecond * 1,
 			AwaitPrevResp: false,
 			QueryParam:    req.QueryParam,
+			Body:          req.Body,
 			PathVariables: req.PathVariables,
-			Break: queryreqbatch.NewSimpleValidatedQueryRequestBreak(
+			Break: execbatch.NewSimpleValidatedExecRequestBreak(
 				time.Duration(10)*time.Minute,
 				1,
 				[]int{},
@@ -136,33 +142,33 @@ func executeRequest(
 				return false
 			},
 		},
-		queryTermChanWithBreak,
+		execTermChanWithBreak,
 		ctr.AuthToken,
-		ctr.Config.Web.QueryAPI.Url,
+		ctr.Config.Web.API.Url,
 		writeFunc,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create executor: %v", err)
 	}
 
-	err = exec.QueryExecute(ctx, ctr)
+	err = exec.RequestExecute(ctx, ctr)
 	if err != nil {
-		ctr.Logger.Error(ctx, "failed to execute query",
+		ctr.Logger.Error(ctx, "failed to execute",
 			logger.Value("error", err), logger.Value("id", internalID))
-		return fmt.Errorf("failed to execute query: %v", err)
+		return fmt.Errorf("failed to execute: %v", err)
 	}
 
-	termType := <-queryTermChanWithBreak
-	ctr.Logger.Info(ctx, "Query End For Term For Break",
-		logger.Value("QueryID", internalID), logger.Value("on", "executeRequest"))
+	termType := <-execTermChanWithBreak
+	ctr.Logger.Info(ctx, "Execute End For Term For Break",
+		logger.Value("ExecuteID", internalID), logger.Value("on", "executeRequest"))
 	switch termType {
-	case queryreqbatch.ByCount:
-		ctr.Logger.Info(ctx, "Query End For Term By Count",
-			logger.Value("QueryID", internalID), logger.Value("on", "executeRequest"))
+	case execbatch.ByCount:
+		ctr.Logger.Info(ctx, "Execute End For Term By Count",
+			logger.Value("ExecuteID", internalID), logger.Value("on", "executeRequest"))
 	default:
-		ctr.Logger.Error(ctx, "Query End For Error",
-			logger.Value("QueryID", internalID), logger.Value("on", "executeRequest"))
-		return fmt.Errorf("error because of termType: %v", queryreqbatch.TerminateType(termType).String())
+		ctr.Logger.Error(ctx, "Execute End For Error",
+			logger.Value("ExecuteID", internalID), logger.Value("on", "executeRequest"))
+		return fmt.Errorf("error because of termType: %v", execbatch.TerminateType(termType).String())
 	}
 	return nil
 }

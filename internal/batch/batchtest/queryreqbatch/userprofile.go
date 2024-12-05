@@ -6,10 +6,11 @@ import (
 	"strconv"
 
 	"github.com/LabGroupware/go-measure-tui/internal/api/domain"
-	"github.com/LabGroupware/go-measure-tui/internal/api/request/queryreq"
+	"github.com/LabGroupware/go-measure-tui/internal/api/request/executor"
 	"github.com/LabGroupware/go-measure-tui/internal/api/response"
 	"github.com/LabGroupware/go-measure-tui/internal/app"
 	"github.com/LabGroupware/go-measure-tui/internal/auth"
+	"github.com/LabGroupware/go-measure-tui/internal/batch/batchtest/execbatch"
 	"github.com/LabGroupware/go-measure-tui/internal/logger"
 	"github.com/LabGroupware/go-measure-tui/internal/testprompt"
 )
@@ -20,16 +21,16 @@ func (f FindUserFactory) Factory(
 	ctx context.Context,
 	ctr *app.Container,
 	id int,
-	request *ValidatedQueryRequest,
-	termChan chan<- TerminateType,
+	request *execbatch.ValidatedExecRequest,
+	termChan chan<- execbatch.TerminateType,
 	authToken *auth.AuthToken,
 	apiEndpoint string,
-	consumer ResponseDataConsumer,
-) (queryreq.QueryExecutor, func(), error) {
+	consumer execbatch.ResponseDataConsumer,
+) (executor.RequestExecutor, func(), error) {
 	var ok bool
 	var userId string
 
-	req := queryreq.FindUserReq{
+	req := executor.FindUserReq{
 		AuthToken:    authToken,
 		BaseEndpoint: apiEndpoint,
 	}
@@ -50,15 +51,15 @@ func (f FindUserFactory) Factory(
 	}
 
 	// INFO: close on executor, because only it will write to this channel
-	resChan := make(chan queryreq.ResponseContent[response.ResponseDto[domain.UserProfileDto]])
+	resChan := make(chan executor.ResponseContent[response.ResponseDto[domain.UserProfileDto]])
 
 	resChanCloser := func() {
 		close(resChan)
 	}
 
-	runAsyncProcessing(ctx, ctr, id, request, termChan, resChan, consumer)
+	execbatch.RunAsyncProcessing(ctx, ctr, id, request, termChan, resChan, consumer)
 
-	return queryreq.RequestContent[queryreq.FindUserReq, response.ResponseDto[domain.UserProfileDto]]{
+	return executor.RequestContent[executor.FindUserReq, response.ResponseDto[domain.UserProfileDto]]{
 		Req:          req,
 		Interval:     request.Interval,
 		ResponseWait: request.AwaitPrevResp,
@@ -73,13 +74,13 @@ func (f GetUsersFactory) Factory(
 	ctx context.Context,
 	ctr *app.Container,
 	id int,
-	request *ValidatedQueryRequest,
-	termChan chan<- TerminateType,
+	request *execbatch.ValidatedExecRequest,
+	termChan chan<- execbatch.TerminateType,
 	authToken *auth.AuthToken,
 	apiEndpoint string,
-	consumer ResponseDataConsumer,
-) (queryreq.QueryExecutor, func(), error) {
-	req := queryreq.GetUsersReq{
+	consumer execbatch.ResponseDataConsumer,
+) (executor.RequestExecutor, func(), error) {
+	req := executor.GetUsersReq{
 		AuthToken:    authToken,
 		BaseEndpoint: apiEndpoint,
 	}
@@ -125,15 +126,15 @@ func (f GetUsersFactory) Factory(
 	}
 
 	// INFO: close on executor, because only it will write to this channel
-	resChan := make(chan queryreq.ResponseContent[response.ListResponseDto[domain.UserProfileDto]])
+	resChan := make(chan executor.ResponseContent[response.ListResponseDto[domain.UserProfileDto]])
 
 	resChanCloser := func() {
 		close(resChan)
 	}
 
-	runAsyncProcessing(ctx, ctr, id, request, termChan, resChan, consumer)
+	execbatch.RunAsyncProcessing(ctx, ctr, id, request, termChan, resChan, consumer)
 
-	return queryreq.RequestContent[queryreq.GetUsersReq, response.ListResponseDto[domain.UserProfileDto]]{
+	return executor.RequestContent[executor.GetUsersReq, response.ListResponseDto[domain.UserProfileDto]]{
 		Req:          req,
 		Interval:     request.Interval,
 		ResponseWait: request.AwaitPrevResp,
