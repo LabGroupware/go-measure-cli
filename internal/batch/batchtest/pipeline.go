@@ -23,10 +23,11 @@ type PipelineFileConfig struct {
 }
 
 type executeRequest struct {
-	id             string
-	filename       string
-	testRootDir    string
-	metricsRootDir string
+	id              string
+	filename        string
+	testRootDir     string
+	metricsRootDir  string
+	threadOnlyStore *sync.Map
 }
 
 func pipelineBatch(ctx context.Context, ctr *app.Container, conf PipelineConfig, store *sync.Map, testOutput, metricsOutput string) error {
@@ -48,15 +49,18 @@ func pipelineBatch(ctx context.Context, ctr *app.Container, conf PipelineConfig,
 
 		if f.Count > 1 {
 			for j := 0; j < f.Count; j++ {
+
 				testDirPath := fmt.Sprintf("%s/%s_%d", testOutput, f.ID, j)
 				metricsDirPath := fmt.Sprintf("%s/%s_%d", metricsOutput, f.ID, j)
 
 				requests[count] = executeRequest{
-					id:             fmt.Sprintf("%s_%d", f.ID, j),
-					filename:       f.File,
-					testRootDir:    testDirPath,
-					metricsRootDir: metricsDirPath,
+					id:              fmt.Sprintf("%s_%d", f.ID, j),
+					filename:        f.File,
+					testRootDir:     testDirPath,
+					metricsRootDir:  metricsDirPath,
+					threadOnlyStore: &sync.Map{},
 				}
+				requests[count].threadOnlyStore.Store("loopCount", fmt.Sprintf("%d", j))
 
 				count++
 			}
@@ -64,11 +68,14 @@ func pipelineBatch(ctx context.Context, ctr *app.Container, conf PipelineConfig,
 			testDirPath := fmt.Sprintf("%s/%s", testOutput, f.ID)
 			metricsDirPath := fmt.Sprintf("%s/%s", metricsOutput, f.ID)
 			requests[count] = executeRequest{
-				id:             f.ID,
-				filename:       f.File,
-				testRootDir:    testDirPath,
-				metricsRootDir: metricsDirPath,
+				id:              f.ID,
+				filename:        f.File,
+				testRootDir:     testDirPath,
+				metricsRootDir:  metricsDirPath,
+				threadOnlyStore: &sync.Map{},
 			}
+
+			requests[count].threadOnlyStore.Store("loopCount", fmt.Sprintf("%d", 0))
 
 			count++
 		}
@@ -87,7 +94,7 @@ func pipelineBatch(ctx context.Context, ctr *app.Container, conf PipelineConfig,
 	if sequential {
 		for _, req := range requests {
 
-			err := baseExecute(ctx, ctr, req.filename, store, req.testRootDir, req.metricsRootDir)
+			err := baseExecute(ctx, ctr, req.filename, store, req.threadOnlyStore, req.testRootDir, req.metricsRootDir)
 
 			if err != nil {
 				ctr.Logger.Error(ctr.Ctx, "failed to execute request",
@@ -112,7 +119,7 @@ func pipelineBatch(ctx context.Context, ctr *app.Container, conf PipelineConfig,
 
 				sem <- struct{}{}
 
-				err := baseExecute(ctx, ctr, preReq.filename, store, preReq.testRootDir, preReq.metricsRootDir)
+				err := baseExecute(ctx, ctr, preReq.filename, store, req.threadOnlyStore, preReq.testRootDir, preReq.metricsRootDir)
 
 				if err != nil {
 					atomicErr.Store(err)

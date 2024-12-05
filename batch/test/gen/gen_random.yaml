@@ -1,0 +1,15 @@
+type: Pipeline
+concurrency: -1
+files:
+  - id: "gen_common"
+    file: "gen/gen_common.yaml"
+  - id: "gen_file"
+    file: "gen/gen_file_values.yaml"
+  - id: "gen_org"
+    file: "gen/gen_org_values.yaml"
+  - id: "gen_task"
+    file: "gen/gen_task_values.yaml"
+  - id: "gen_user"
+    file: "gen/gen_user_values.yaml"
+  - id: "gen_user_preference"
+    file: "gen/gen_user_preference_values.yaml"

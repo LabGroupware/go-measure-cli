@@ -1,0 +1,21 @@
+type: RandomStoreValue
+data:
+  - key: "organizationPlan_invalid"
+    type: "constant"
+    value: "invalid"
+  - key: "organizationPlan_basic"
+    type: "constant"
+    value: "BASIC"
+  - key: "organizationPlan_standard"
+    type: "constant"
+    value: "STANDARD"
+  - key: "organizationPlan_premium"
+    type: "constant"
+    value: "PREMIUM"
+  - key: "organizationPlanRandom_0"
+    type: "element"
+    value: ["BASIC", "STANDARD", "PREMIUM"]
+  # - key: "organizationPlanRandom_1"
+  #   type: "element"
+  #   values: ["BASIC", "STANDARD", "PREMIUM"]
+  # - key: "organizationPlanRandom_2"

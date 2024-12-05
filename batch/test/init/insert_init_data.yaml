@@ -1,0 +1,33 @@
+type: MassExecute
+data:
+  requests:
+    - endpointType: CreateUserProfile
+      interval: 50ms
+      awaitPrevResponse: false
+      queryParam: {}
+      pathVariables: {}
+      body:
+        count: <..<loopCount>..>
+        userId: <..<userId_loopCount>..>
+        name: <..<name_1>..>
+        email: <..<userEmail_1>..>
+      successBreak:
+        - count
+      break:
+        time: 2m
+        count: 1
+        sysError: true
+        parseError: true
+        writeError: true
+        statusCode:
+          op: ne
+          value: 200
+        # responseBody:
+        #   jmesPath: "data.teams[?length(users) >= `5`] | length(@) >= `1`"
+      # dataOutput:
+      #   jmesPath: "jobId"
+      # excludeStatusFilter:
+      #   op: in
+      #   value: 400,401,403,404
+      # dataOutputFilter:
+      #   jmesPath: "data[?code != '000.000']"

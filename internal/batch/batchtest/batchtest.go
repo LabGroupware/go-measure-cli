@@ -17,6 +17,7 @@ func BatchTest(ctr *app.Container) error {
 	}
 
 	globalStore := sync.Map{}
+	threadOnlyStore := sync.Map{}
 	ctx := ctr.Ctx
 
 	testOutput := ctr.Config.Batch.Test.Output
@@ -26,7 +27,7 @@ func BatchTest(ctr *app.Container) error {
 	testDirPath := fmt.Sprintf("%s/test_%s", testOutput, timestamp)
 	metricsDirPath := fmt.Sprintf("%s/test_%s", metricsOutput, timestamp)
 
-	if err := baseExecute(ctx, ctr, filename, &globalStore, testDirPath, metricsDirPath); err != nil {
+	if err := baseExecute(ctx, ctr, filename, &globalStore, &threadOnlyStore, testDirPath, metricsDirPath); err != nil {
 		return fmt.Errorf("failed to execute batch test: %v", err)
 	}
 

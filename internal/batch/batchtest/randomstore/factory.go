@@ -12,10 +12,11 @@ type RandomGenerator interface {
 }
 
 var randomGeneratorFactoryMap = map[string]RandomGenerator{
-	"element": &RandomStoreValueElementDataConfig{},
-	"int":     &RandomStoreValueIntDataConfig{},
-	"float":   &RandomStoreValueFloatDataConfig{},
-	"string":  &RandomStoreValueStringDataConfig{},
-	"bool":    &RandomStoreValueBoolDataConfig{},
-	"uuid":    &RandomStoreValueUUIDDataConfig{},
+	"constant": &RandomStoreValueConstantDataConfig{},
+	"element":  &RandomStoreValueElementDataConfig{},
+	"int":      &RandomStoreValueIntDataConfig{},
+	"float":    &RandomStoreValueFloatDataConfig{},
+	"string":   &RandomStoreValueStringDataConfig{},
+	"bool":     &RandomStoreValueBoolDataConfig{},
+	"uuid":     &RandomStoreValueUUIDDataConfig{},
 }

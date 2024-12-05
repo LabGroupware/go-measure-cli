@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"sync"
 
 	"github.com/LabGroupware/go-measure-tui/internal/app"
@@ -25,6 +26,7 @@ func baseExecute(
 	ctr *app.Container,
 	filename string,
 	store *sync.Map,
+	threadOnlyStore *sync.Map,
 	outputRoot string,
 	metricsOutputRoot string,
 ) error {
@@ -71,10 +73,30 @@ func baseExecute(
 	placeholderRegex := regexp.MustCompile(`\<\.\.\<\s*(\w+)\s*\>\.\.\>`)
 
 	result := placeholderRegex.ReplaceAllStringFunc(content, func(match string) string {
-		key := placeholderRegex.FindStringSubmatch(match)[1]
+		originKey := placeholderRegex.FindStringSubmatch(match)[1]
+		keys := strings.Split(originKey, "_")
+		var builder strings.Builder
+		for i, k := range keys {
+			if v, exists := threadOnlyStore.Load(k); exists {
+				builder.WriteString(v.(string))
+			} else {
+				builder.WriteString(k)
+			}
+
+			if i != len(keys)-1 {
+				builder.WriteString("_")
+			}
+		}
+		key := builder.String()
+
 		if v, exists := store.Load(key); exists {
 			return v.(string)
 		}
+
+		if key != originKey {
+			return key
+		}
+
 		return match
 	})
 
@@ -84,6 +106,7 @@ func baseExecute(
 		return fmt.Errorf("failed to parse as YAML: %w", err)
 	}
 
+	fmt.Println("===========================yamlData", yamlData)
 	ctr.Logger.Debug(ctx, "replaced content",
 		logger.Value("content", yamlData))
 

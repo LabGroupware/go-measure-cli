@@ -1,0 +1,17 @@
+type: RandomStoreValue
+data:
+  - key: "taskStatus_invalid"
+    type: "constant"
+    value: "invalid"
+  - key: "taskStatus_prepare"
+    type: "constant"
+    value: "prepare"
+  - key: "taskStatus_inProgress"
+    type: "constant"
+    value: "in_progress"
+  - key: "taskStatus_done"
+    type: "constant"
+    value: "done"
+  - key: "taskStatus_cancel"
+    type: "constant"
+    value: "cancel"
