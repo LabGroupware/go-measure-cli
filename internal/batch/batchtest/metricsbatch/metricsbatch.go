@@ -124,9 +124,7 @@ func MetricsFetchBatch(
 	}
 
 	go func() {
-		ctx, cancel := context.WithCancel(ctx)
 		defer func(threadExecutors []*MetricsThreadExecutor) {
-			cancel()
 			for _, executor := range threadExecutors {
 				executor.closer()
 			}
@@ -138,13 +136,15 @@ func MetricsFetchBatch(
 			wg.Add(1)
 
 			go func(executor *MetricsThreadExecutor) {
+				ctx, threadCancel := context.WithCancel(ctx)
 				defer wg.Done()
+				defer threadCancel()
 
 				termChan, err := executor.fetcher.Fetch(ctx, ctr, executor.writer)
 				if err != nil {
 					ctr.Logger.Error(ctx, "failed to start fetch metrics",
 						logger.Value("error", err), logger.Value("on", "metricsFetchBatch"))
-					cancel()
+					threadCancel()
 				}
 
 				select {
@@ -160,7 +160,7 @@ func MetricsFetchBatch(
 					case TermWriteError:
 						ctr.Logger.Error(ctx, "failed to write metrics",
 							logger.Value("on", "metricsFetchBatch"))
-						cancel()
+						threadCancel()
 						return
 					}
 				}
