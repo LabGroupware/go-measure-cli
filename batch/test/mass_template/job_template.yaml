@@ -31,6 +31,9 @@ data:
       queryParam: {}
       pathVariables:
         jobId: abcdef
+      successBreak:
+        - count
+        - time
       break:
         time: 2m
         count: 5

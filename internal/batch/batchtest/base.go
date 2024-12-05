@@ -30,8 +30,6 @@ func baseExecute(
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	fmt.Println("baseExecute called!!", outputRoot, metricsOutputRoot)
-
 	file, err := os.Open(filepath.Join(ctr.Config.Batch.Test.Path, filename))
 	if err != nil {
 		return fmt.Errorf("failed to open file: %v", err)
@@ -95,7 +93,19 @@ func baseExecute(
 	if conf.Metrics.Enabled {
 		ctr.Logger.Debug(ctx, "metrics enabled",
 			logger.Value("metrics", conf.Metrics))
+		err = os.MkdirAll(metricsOutputRoot, os.ModePerm)
+		if err != nil {
+			return fmt.Errorf("failed to create directory: %v", err)
+		}
 		metricsbatch.PrefetchBatch(ctx, ctr, conf.Metrics, conf.Type, metricsOutputRoot)
+	}
+
+	switch conf.Type {
+	case "MassQuery", "Pipeline":
+		err := os.MkdirAll(outputRoot, os.ModePerm)
+		if err != nil {
+			return fmt.Errorf("failed to create directory: %v", err)
+		}
 	}
 
 	switch conf.Type {
@@ -123,7 +133,6 @@ func baseExecute(
 		var massQuery massquerybatch.MassQuery
 		decoder := yaml.NewDecoder(reader)
 		if err := decoder.Decode(&massQuery); err != nil {
-
 			return fmt.Errorf("failed to decode yaml: %v", err)
 		}
 		if err := massquerybatch.MassQueryBatch(ctx, ctr, massQuery, outputRoot); err != nil {

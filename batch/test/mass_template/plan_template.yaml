@@ -12,6 +12,9 @@ data:
           - chargeUser.userPreference
       pathVariables:
         taskId: 12345
+      successBreak:
+        - count
+        - time
       break:
         time: 2m
         count: 10
@@ -60,6 +63,9 @@ data:
           - chargeUser
           - chargeUser.userPreference
       pathVariables: {}
+      successBreak:
+        - count
+        - time
       break:
         time: 2m
         count: 5

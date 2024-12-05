@@ -8,6 +8,9 @@ data:
         with: []
       pathVariables:
         userPreferenceId: 12345
+      successBreak:
+        - count
+        - time
       break:
         time: 2m
         count: 10

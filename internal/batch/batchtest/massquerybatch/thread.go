@@ -2,6 +2,7 @@ package massquerybatch
 
 import (
 	"context"
+	"fmt"
 	"os"
 
 	"github.com/LabGroupware/go-measure-tui/internal/api/request/queryreq"
@@ -15,6 +16,7 @@ type MassiveQueryThreadExecutor struct {
 	outputFile      *os.File
 	RequestExecutor queryreq.QueryExecutor
 	TermChan        chan queryreqbatch.TerminateType
+	successBreak    []string
 }
 
 func NewMassiveQueryThreadExecutor(
@@ -46,10 +48,16 @@ func (e *MassiveQueryThreadExecutor) Execute(
 		return err
 	}
 
-	<-e.TermChan
-	ctr.Logger.Info(ctx, "Query End For Term",
+	termType := <-e.TermChan
+	ctr.Logger.Info(ctx, "Query End For Break",
 		logger.Value("QueryID", e.ID), logger.Value("OutputFile", e.outputFile.Name()))
-	return nil
+	for _, breakType := range e.successBreak {
+		if termType == queryreqbatch.NewTerminateTypeFromString(breakType) {
+			ctr.Logger.Info(ctx, "Query End For Success Break", logger.Value("QueryID", e.ID), logger.Value("OutputFile", e.outputFile.Name()))
+			return nil
+		}
+	}
+	return fmt.Errorf("query End For Fail Break: %s", termType.String())
 }
 
 func (e *MassiveQueryThreadExecutor) Close(ctx context.Context) error {

@@ -25,6 +25,9 @@ data:
           - tasks
           - tasks.attachments
       pathVariables: {}
+      successBreak:
+        - count
+        - time
       break:
         time: 2m
         count: 5

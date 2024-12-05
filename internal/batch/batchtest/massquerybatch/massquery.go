@@ -3,7 +3,12 @@ package massquerybatch
 import "github.com/LabGroupware/go-measure-tui/internal/batch/batchtest/queryreqbatch"
 
 type MassQueryData struct {
-	Requests []queryreqbatch.QueryRequest `yaml:"requests"`
+	Requests []MassQueryOneData `yaml:"requests"`
+}
+
+type MassQueryOneData struct {
+	queryreqbatch.QueryRequest `yaml:",inline"`
+	SuccessBreak               []string `yaml:"successBreak"`
 }
 
 type MassQuery struct {

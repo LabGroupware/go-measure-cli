@@ -2,7 +2,6 @@ package batchtest
 
 import (
 	"fmt"
-	"os"
 	"sync"
 	"time"
 
@@ -25,16 +24,7 @@ func BatchTest(ctr *app.Container) error {
 
 	timestamp := time.Now().Format("20060102_150405")
 	testDirPath := fmt.Sprintf("%s/test_%s", testOutput, timestamp)
-	err = os.MkdirAll(testDirPath, os.ModePerm)
-	if err != nil {
-		return fmt.Errorf("failed to create directory: %v", err)
-	}
-
 	metricsDirPath := fmt.Sprintf("%s/test_%s", metricsOutput, timestamp)
-	err = os.MkdirAll(metricsDirPath, os.ModePerm)
-	if err != nil {
-		return fmt.Errorf("failed to create directory: %v", err)
-	}
 
 	if err := baseExecute(ctx, ctr, filename, &globalStore, testDirPath, metricsDirPath); err != nil {
 		return fmt.Errorf("failed to execute batch test: %v", err)

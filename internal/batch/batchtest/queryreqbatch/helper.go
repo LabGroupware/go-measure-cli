@@ -87,11 +87,6 @@ func runResponseHandler[Res any](
 			writeErr := false
 			for sentLen > 0 {
 				select {
-				case <-ctx.Done():
-					ctr.Logger.Info(ctx, "Term Condition: Context Done",
-						logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
-					termChan <- ByContext
-					return
 				case uid := <-uidChan:
 					delete(sentUid, uid)
 					sentLen--
@@ -112,6 +107,25 @@ func runResponseHandler[Res any](
 			termChan <- ByTimeout
 			return
 		case <-ctx.Done():
+			sentLen := len(sentUid)
+			writeErr := false
+			for sentLen > 0 {
+				select {
+				case uid := <-uidChan:
+					delete(sentUid, uid)
+					sentLen--
+				case <-writeErrChan:
+					ctr.Logger.Warn(ctx, "write error occurred",
+						logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
+					writeErr = true
+				}
+			}
+			if writeErr {
+				ctr.Logger.Warn(ctx, "Term Condition: Write Error",
+					logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
+				termChan <- ByWriteError
+				return
+			}
 			ctr.Logger.Info(ctx, "Term Condition: Context Done",
 				logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
 			termChan <- ByContext
@@ -178,6 +192,25 @@ func runResponseHandler[Res any](
 				for {
 					select {
 					case <-ctx.Done():
+						sentLen := len(sentUid)
+						writeErr := false
+						for sentLen > 0 {
+							select {
+							case uid := <-uidChan:
+								delete(sentUid, uid)
+								sentLen--
+							case <-writeErrChan:
+								ctr.Logger.Warn(ctx, "write error occurred",
+									logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
+								writeErr = true
+							}
+						}
+						if writeErr {
+							ctr.Logger.Warn(ctx, "Term Condition: Write Error",
+								logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
+							termChan <- ByWriteError
+							return
+						}
 						ctr.Logger.Info(ctx, "Term Condition: Context Done",
 							logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
 						termChan <- ByContext
@@ -199,11 +232,6 @@ func runResponseHandler[Res any](
 				// writeErr := false
 				for sentLen > 0 {
 					select {
-					case <-ctx.Done():
-						ctr.Logger.Info(ctx, "Term Condition: Context Done",
-							logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
-						termChan <- ByContext
-						return
 					case uid := <-uidChan:
 						delete(sentUid, uid)
 						sentLen--
@@ -231,11 +259,6 @@ func runResponseHandler[Res any](
 					// writeErr := false
 					for sentLen > 0 {
 						select {
-						case <-ctx.Done():
-							ctr.Logger.Info(ctx, "Term Condition: Context Done",
-								logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
-							termChan <- ByContext
-							return
 						case uid := <-uidChan:
 							delete(sentUid, uid)
 							sentLen--
@@ -267,11 +290,6 @@ func runResponseHandler[Res any](
 					// writeErr := false
 					for sentLen > 0 {
 						select {
-						case <-ctx.Done():
-							ctr.Logger.Info(ctx, "Term Condition: Context Done",
-								logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
-							termChan <- ByContext
-							return
 						case uid := <-uidChan:
 							delete(sentUid, uid)
 							sentLen--
@@ -301,11 +319,6 @@ func runResponseHandler[Res any](
 				writeErr := false
 				for sentLen > 0 {
 					select {
-					case <-ctx.Done():
-						ctr.Logger.Info(ctx, "Term Condition: Context Done",
-							logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
-						termChan <- ByContext
-						return
 					case uid := <-uidChan:
 						delete(sentUid, uid)
 						sentLen--
@@ -339,11 +352,6 @@ func runResponseHandler[Res any](
 					writeErr := false
 					for sentLen > 0 {
 						select {
-						case <-ctx.Done():
-							ctr.Logger.Info(ctx, "Term Condition: Context Done",
-								logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
-							termChan <- ByContext
-							return
 						case uid := <-uidChan:
 							delete(sentUid, uid)
 							sentLen--

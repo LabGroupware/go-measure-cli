@@ -3,7 +3,6 @@ package batchtest
 import (
 	"context"
 	"fmt"
-	"os"
 	"sync"
 	"sync/atomic"
 
@@ -30,7 +29,6 @@ type executeRequest struct {
 }
 
 func pipelineBatch(ctx context.Context, ctr *app.Container, conf PipelineConfig, store *sync.Map, testOutput, metricsOutput string) error {
-	var err error
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -39,16 +37,7 @@ func pipelineBatch(ctx context.Context, ctr *app.Container, conf PipelineConfig,
 	requests := make([]executeRequest, len(conf.Files))
 	for i, f := range conf.Files {
 		testDirPath := fmt.Sprintf("%s/%s", testOutput, f.ID)
-		err = os.MkdirAll(testDirPath, os.ModePerm)
-		if err != nil {
-			return fmt.Errorf("failed to create directory: %v", err)
-		}
-
 		metricsDirPath := fmt.Sprintf("%s/%s", metricsOutput, f.ID)
-		err = os.MkdirAll(metricsDirPath, os.ModePerm)
-		if err != nil {
-			return fmt.Errorf("failed to create directory: %v", err)
-		}
 
 		requests[i] = executeRequest{
 			id:             f.ID,

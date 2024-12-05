@@ -33,12 +33,15 @@ data:
         userFilterType: ["all"]
         with: []
       pathVariables: {}
+      successBreak:
+        - count
+        - time
       break:
         time: 2m
         count: 30
-        # sysError: true
-        # parseError: true
-        # writeError: true
+        sysError: true
+        parseError: true
+        writeError: true
         statusCode:
           op: eq
           value: 500

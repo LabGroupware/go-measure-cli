@@ -23,6 +23,9 @@ data:
           - users
           - users.userPreference
       pathVariables: {}
+      successBreak:
+        - count
+        - time
       break:
         time: 2m
         count: 5

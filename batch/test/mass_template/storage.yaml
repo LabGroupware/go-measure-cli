@@ -12,6 +12,9 @@ data:
           - attachedTasks.team
       pathVariables:
         fileObjectId: 12345
+      successBreak:
+        - count
+        - time
       break:
         time: 2m
         count: 10
@@ -49,6 +52,9 @@ data:
           - attachedTasks.chargeUser.userPreference
           - attachedTasks.team
       pathVariables: {}
+      successBreak:
+        - count
+        - time
       break:
         time: 2m
         count: 5

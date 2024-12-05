@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"sync"
+	"sync/atomic"
 
 	"github.com/LabGroupware/go-measure-tui/internal/app"
 	"github.com/LabGroupware/go-measure-tui/internal/batch/batchtest/queryreqbatch"
@@ -13,6 +14,9 @@ import (
 )
 
 func MassQueryBatch(ctx context.Context, ctr *app.Container, massQuery MassQuery, outputRoot string) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	concurrentCount := len(massQuery.Data.Requests)
 
 	threadExecutors := make([]*MassiveQueryThreadExecutor, concurrentCount)
@@ -43,7 +47,7 @@ func MassQueryBatch(ctx context.Context, ctr *app.Container, massQuery MassQuery
 		// INFO: close on factor.Factory(response handler), because only it will write to this channel
 		termChan := make(chan queryreqbatch.TerminateType)
 		validatedReq := &queryreqbatch.ValidatedQueryRequest{}
-		if err := queryreqbatch.ValidateQueryReq(ctx, ctr, request, validatedReq); err != nil {
+		if err := queryreqbatch.ValidateQueryReq(ctx, ctr, request.QueryRequest, validatedReq); err != nil {
 			return fmt.Errorf("failed to validate query request: %v", err)
 		}
 		writeFunc := func(
@@ -79,22 +83,33 @@ func MassQueryBatch(ctx context.Context, ctr *app.Container, massQuery MassQuery
 		}
 		threadExecutors[i].RequestExecutor = executor
 		threadExecutors[i].TermChan = termChan
+		threadExecutors[i].successBreak = request.SuccessBreak
 	}
 
 	var wg sync.WaitGroup
+	atomicErr := atomic.Value{}
 	var startChan = make(chan struct{})
 	for _, executor := range threadExecutors {
 		wg.Add(1)
 		go func(exec *MassiveQueryThreadExecutor) {
 			defer wg.Done()
 			if err := exec.Execute(ctx, ctr, startChan); err != nil {
+				atomicErr.Store(err)
 				ctr.Logger.Error(ctx, "failed to execute query",
 					logger.Value("error", err), logger.Value("id", exec.ID))
+				cancel()
+				return
 			}
 		}(executor)
 	}
 	close(startChan)
 	wg.Wait()
+
+	if err := atomicErr.Load(); err != nil {
+		ctr.Logger.Error(ctx, "failed to find error",
+			logger.Value("error", err.(error)), logger.Value("on", "MassQueryBatch"))
+		return err.(error)
+	}
 
 	return nil
 }
