@@ -1,15 +1,15 @@
 type: MassExecute
-output:
-  enabled: true
 data:
   requests:
-    - endpointType: FindUserPreference
-      interval: 1s
+    - endpointType: CreateFileObject
+      interval: 3s
       awaitPrevResponse: false
-      queryParam:
-        with: []
-      pathVariables:
-        userPreferenceId: 12345
+      queryParam: {}
+      pathVariables: {}
+      body:
+        bucketId: <..<bucketId>..>
+        name: <..<fileName>..>
+        path: <..<filePath>..>
       successBreak:
         - count
         - time

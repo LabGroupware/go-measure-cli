@@ -1,0 +1,26 @@
+type: MassExecute
+data:
+  requests:
+    - endpointType: UpdateUserPreference
+      interval: 3s
+      awaitPrevResponse: false
+      queryParam: {}
+      pathVariables:
+        userPreferenceId: 12345
+      body:
+        timeZone: "Asia/Tokyo"
+        theme: "DARK"
+        language: "ja"
+      successBreak:
+        - count
+        - time
+      break:
+        time: 2m
+        count: 5
+        sysError: true
+        parseError: true
+        writeError: true
+      # dataOutput:
+      #   jmesPath: "code"
+      # dataOutputFilter:
+      #   jmesPath: "code == '0002:0003'"

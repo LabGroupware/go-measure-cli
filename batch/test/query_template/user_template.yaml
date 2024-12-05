@@ -1,4 +1,6 @@
 type: MassExecute
+output:
+  enabled: true
 data:
   requests:
     - endpointType: FindUser

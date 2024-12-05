@@ -6,6 +6,7 @@ import (
 	"github.com/LabGroupware/go-measure-tui/internal/api/request/executor"
 	"github.com/LabGroupware/go-measure-tui/internal/app"
 	"github.com/LabGroupware/go-measure-tui/internal/auth"
+	"github.com/LabGroupware/go-measure-tui/internal/batch/batchtest/cmdreqbatch"
 	"github.com/LabGroupware/go-measure-tui/internal/batch/batchtest/execbatch"
 	"github.com/LabGroupware/go-measure-tui/internal/batch/batchtest/queryreqbatch"
 )
@@ -36,4 +37,13 @@ var TypeFactoryMap = map[ExecType]ExecutorFactory{
 	GetFileObjects:     queryreqbatch.GetFileObjectsFactory{},
 	GetOrganizations:   queryreqbatch.GetOrganizationsFactory{},
 	GetUsers:           queryreqbatch.GetUsersFactory{},
+
+	UpdateUserPreference: cmdreqbatch.UpdateUserPreferenceFactory{},
+	CreateTeam:           cmdreqbatch.CreateTeamFactory{},
+	AddUsersTeam:         cmdreqbatch.AddUsersTeamFactory{},
+	CreateOrganization:   cmdreqbatch.CreateOrganizationFactory{},
+	AddUsersOrganization: cmdreqbatch.AddUsersOrganizationFactory{},
+	CreateTask:           cmdreqbatch.CreateTaskFactory{},
+	UpdateStatusTask:     cmdreqbatch.UpdateStatusTaskFactory{},
+	CreateFileObject:     cmdreqbatch.CreateFileObjectFactory{},
 }
