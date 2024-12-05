@@ -72,8 +72,6 @@ func MetricsFetchBatch(
 			ctr *app.Container,
 			data queryreq.ResponseContent[any],
 		) error {
-			fmt.Println("Metrics Writing data to csv", data, "on runAsyncProcessing")
-
 			records := make([]string, 0, len(req.Data)+5)
 			records = append(
 				records,
@@ -84,13 +82,15 @@ func MetricsFetchBatch(
 				fmt.Sprintf("%v", data.StatusCode),
 			)
 			for _, d := range req.Data {
+				fmt.Println("Metrics Writing data to csv", d.JMESPath, "on runAsyncProcessing")
 				jmesPathQuery := d.JMESPath
-				result, err := jmespath.Search(jmesPathQuery, d)
+				result, err := jmespath.Search(jmesPathQuery, data.Res)
 				if err != nil {
 					ctr.Logger.Error(ctx, "failed to search jmespath",
 						logger.Value("error", err), logger.Value("on", "metricsFetchBatch"))
 					return fmt.Errorf("failed to search jmespath: %v", err)
 				}
+				fmt.Println("Metrics Writing data to csv", result, "on runAsyncProcessing")
 				if result == nil {
 					switch d.OnNil {
 					case "cancel":

@@ -88,7 +88,7 @@ func (p *PrometheusMetricsBatchRequestConfig) Init(conf []byte) error {
 }
 
 func (p *PrometheusMetricsBatchRequestConfig) FetcherFactory(ctx context.Context, ctr *app.Container) (MetricsFetcher, error) {
-	baseURL := fmt.Sprintf("%s/api/v1/query", p.URL)
+	baseURL := p.URL
 	fullURL, err := url.Parse(baseURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse URL: %w", err)
@@ -97,6 +97,8 @@ func (p *PrometheusMetricsBatchRequestConfig) FetcherFactory(ctx context.Context
 	queryParams := fullURL.Query()
 	queryParams.Add("query", p.Query)
 	fullURL.RawQuery = queryParams.Encode()
+
+	fmt.Println(fullURL.String())
 
 	ctr.Logger.Debug(ctx, "GET request to Prometheus query URL created",
 		logger.Value("url", fullURL.String()), logger.Value("on", "PrometheusMetricsBatchRequestConfig.FetcherFactory"))
