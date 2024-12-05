@@ -1,7 +1,9 @@
 package executor
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -97,6 +99,39 @@ func (r GetFileObjectsReq) CreateRequest(ctx context.Context, ctr *app.Container
 		logger.Value("url", fullURL.String()), logger.Value("on", "GetFileObjectsReq.CreateRequest"))
 
 	req, err := http.NewRequest(http.MethodGet, fullURL.String(), nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+	r.AuthToken.SetAuthHeader(req)
+
+	return req, nil
+}
+
+type CreateFileObjectReq struct {
+	BaseEndpoint string
+	AuthToken    *auth.AuthToken
+	Body         any
+}
+
+func (r CreateFileObjectReq) CreateRequest(ctx context.Context, ctr *app.Container) (*http.Request, error) {
+	baseURL := r.BaseEndpoint + "/file-objects"
+
+	fullURL, err := url.Parse(baseURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to construct URL: %w", err)
+	}
+
+	ctr.Logger.Debug(ctx, "POST request to fileObject endpoint URL created",
+		logger.Value("url", fullURL.String()), logger.Value("on", "CreateFileObjectReq.CreateRequest"))
+
+	bodyBytes, err := json.Marshal(r.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal request body: %w", err)
+	}
+
+	req, err := http.NewRequest(http.MethodPost, fullURL.String(), bytes.NewReader(bodyBytes))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
 	}

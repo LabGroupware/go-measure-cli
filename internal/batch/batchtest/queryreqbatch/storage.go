@@ -12,7 +12,6 @@ import (
 	"github.com/LabGroupware/go-measure-tui/internal/auth"
 	"github.com/LabGroupware/go-measure-tui/internal/batch/batchtest/execbatch"
 	"github.com/LabGroupware/go-measure-tui/internal/logger"
-	"github.com/LabGroupware/go-measure-tui/internal/testprompt"
 )
 
 type FindFileObjectFactory struct{}
@@ -37,9 +36,6 @@ func (f FindFileObjectFactory) Factory(
 
 	if fileObjectId, ok = request.PathVariables["fileObjectId"]; !ok {
 		return nil, nil, fmt.Errorf("fileObjectId not found in pathVariables")
-	}
-	if fileObjectId == "*" {
-		fileObjectId = testprompt.GenerateRandomString(10)
 	}
 	req.Path.FileObjectID = fileObjectId
 

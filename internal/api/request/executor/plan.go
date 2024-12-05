@@ -1,7 +1,9 @@
 package executor
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -125,6 +127,76 @@ func (r GetTasksReq) CreateRequest(ctx context.Context, ctr *app.Container) (*ht
 		logger.Value("url", fullURL.String()), logger.Value("on", "GetTasksReq.CreateRequest"))
 
 	req, err := http.NewRequest(http.MethodGet, fullURL.String(), nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+	r.AuthToken.SetAuthHeader(req)
+
+	return req, nil
+}
+
+type CreateTaskReq struct {
+	BaseEndpoint string
+	AuthToken    *auth.AuthToken
+	Body         any
+}
+
+func (r CreateTaskReq) CreateRequest(ctx context.Context, ctr *app.Container) (*http.Request, error) {
+	baseURL := r.BaseEndpoint + "/tasks"
+
+	fullURL, err := url.Parse(baseURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to construct URL: %w", err)
+	}
+
+	ctr.Logger.Debug(ctx, "POST request to task endpoint URL created",
+		logger.Value("url", fullURL.String()), logger.Value("on", "CreateTaskReq.CreateRequest"))
+
+	bodyBytes, err := json.Marshal(r.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal request body: %w", err)
+	}
+
+	req, err := http.NewRequest(http.MethodPost, fullURL.String(), bytes.NewReader(bodyBytes))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+	r.AuthToken.SetAuthHeader(req)
+
+	return req, nil
+}
+
+type UpdateStatusTaskReq struct {
+	BaseEndpoint string
+	AuthToken    *auth.AuthToken
+	Path         struct {
+		TaskID string
+	}
+	Body any
+}
+
+func (r UpdateStatusTaskReq) CreateRequest(ctx context.Context, ctr *app.Container) (*http.Request, error) {
+	baseURL := r.BaseEndpoint + "/tasks"
+
+	taskID := r.Path.TaskID
+	fullURL, err := url.Parse(fmt.Sprintf("%s/%s/status", baseURL, taskID))
+	if err != nil {
+		return nil, fmt.Errorf("failed to construct URL: %w", err)
+	}
+
+	ctr.Logger.Debug(ctx, "PUT request to task status endpoint URL created",
+		logger.Value("url", fullURL.String()), logger.Value("on", "UpdateStatusTaskReq.CreateRequest"))
+
+	bodyBytes, err := json.Marshal(r.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal request body: %w", err)
+	}
+
+	req, err := http.NewRequest(http.MethodPut, fullURL.String(), bytes.NewReader(bodyBytes))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
 	}

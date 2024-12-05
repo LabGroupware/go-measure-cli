@@ -98,6 +98,7 @@ func executeRequest(
 			Endpoint:      req.EndpointType,
 			Interval:      time.Microsecond * 1,
 			AwaitPrevResp: false,
+			Body:          req.Body,
 			QueryParam:    req.QueryParam,
 			PathVariables: req.PathVariables,
 			Break: execbatch.NewSimpleValidatedExecRequestBreak(

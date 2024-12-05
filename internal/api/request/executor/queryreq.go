@@ -26,7 +26,7 @@ type ResponseContent[Res any] struct {
 	WithCountLimit  bool
 }
 
-type QueryReq interface {
+type ExecReq interface {
 	// CreateRequest creates the http.Request object for the query
 	CreateRequest(ctx context.Context, ctr *app.Container) (*http.Request, error)
 }
@@ -40,7 +40,7 @@ type RequestCountLimit struct {
 	Count   int
 }
 
-type RequestContent[Req QueryReq, Res any] struct {
+type RequestContent[Req ExecReq, Res any] struct {
 	Req          Req
 	Interval     time.Duration
 	ResponseWait bool

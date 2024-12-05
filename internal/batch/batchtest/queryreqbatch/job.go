@@ -9,7 +9,6 @@ import (
 	"github.com/LabGroupware/go-measure-tui/internal/app"
 	"github.com/LabGroupware/go-measure-tui/internal/auth"
 	"github.com/LabGroupware/go-measure-tui/internal/batch/batchtest/execbatch"
-	"github.com/LabGroupware/go-measure-tui/internal/testprompt"
 )
 
 type FindJobFactory struct{}
@@ -34,9 +33,6 @@ func (f FindJobFactory) Factory(
 
 	if jobId, ok = request.PathVariables["jobId"]; !ok {
 		return nil, nil, fmt.Errorf("jobId not found in pathVariables")
-	}
-	if jobId == "*" {
-		jobId = testprompt.GenerateRandomString(10)
 	}
 	req.Path.JobID = jobId
 

@@ -12,7 +12,6 @@ import (
 	"github.com/LabGroupware/go-measure-tui/internal/auth"
 	"github.com/LabGroupware/go-measure-tui/internal/batch/batchtest/execbatch"
 	"github.com/LabGroupware/go-measure-tui/internal/logger"
-	"github.com/LabGroupware/go-measure-tui/internal/testprompt"
 )
 
 type FindTeamFactory struct{}
@@ -37,9 +36,6 @@ func (f FindTeamFactory) Factory(
 
 	if teamId, ok = request.PathVariables["teamId"]; !ok {
 		return nil, nil, fmt.Errorf("teamId not found in pathVariables")
-	}
-	if teamId == "*" {
-		teamId = testprompt.GenerateRandomString(10)
 	}
 	req.Path.TeamID = teamId
 

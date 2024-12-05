@@ -1,7 +1,9 @@
 package executor
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -111,6 +113,76 @@ func (r GetOrganizationsReq) CreateRequest(ctx context.Context, ctr *app.Contain
 		logger.Value("url", fullURL.String()), logger.Value("on", "GetOrganizationsReq.CreateRequest"))
 
 	req, err := http.NewRequest(http.MethodGet, fullURL.String(), nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+	r.AuthToken.SetAuthHeader(req)
+
+	return req, nil
+}
+
+type CreateOrganizationReq struct {
+	BaseEndpoint string
+	AuthToken    *auth.AuthToken
+	Body         any
+}
+
+func (r CreateOrganizationReq) CreateRequest(ctx context.Context, ctr *app.Container) (*http.Request, error) {
+	baseURL := r.BaseEndpoint + "/organizations"
+
+	fullURL, err := url.Parse(baseURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to construct URL: %w", err)
+	}
+
+	ctr.Logger.Debug(ctx, "POST request to organization endpoint URL created",
+		logger.Value("url", fullURL.String()), logger.Value("on", "CreateOrganizationReq.CreateRequest"))
+
+	bodyBytes, err := json.Marshal(r.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal request body: %w", err)
+	}
+
+	req, err := http.NewRequest(http.MethodPost, fullURL.String(), bytes.NewReader(bodyBytes))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+	r.AuthToken.SetAuthHeader(req)
+
+	return req, nil
+}
+
+type AddUsersOrganizationReq struct {
+	BaseEndpoint string
+	AuthToken    *auth.AuthToken
+	Path         struct {
+		OrganizationID string
+	}
+	Body any
+}
+
+func (r AddUsersOrganizationReq) CreateRequest(ctx context.Context, ctr *app.Container) (*http.Request, error) {
+	baseURL := r.BaseEndpoint + "/organizations"
+
+	organizationID := r.Path.OrganizationID
+	fullURL, err := url.Parse(fmt.Sprintf("%s/%s/users", baseURL, organizationID))
+	if err != nil {
+		return nil, fmt.Errorf("failed to construct URL: %w", err)
+	}
+
+	ctr.Logger.Debug(ctx, "POST request to organization users endpoint URL created",
+		logger.Value("url", fullURL.String()), logger.Value("on", "AddUsersOrganizationReq.CreateRequest"))
+
+	bodyBytes, err := json.Marshal(r.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal request body: %w", err)
+	}
+
+	req, err := http.NewRequest(http.MethodPost, fullURL.String(), bytes.NewReader(bodyBytes))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
 	}

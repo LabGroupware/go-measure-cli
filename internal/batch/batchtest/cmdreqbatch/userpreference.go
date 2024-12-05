@@ -1,10 +1,9 @@
-package queryreqbatch
+package cmdreqbatch
 
 import (
 	"context"
 	"fmt"
 
-	"github.com/LabGroupware/go-measure-tui/internal/api/domain"
 	"github.com/LabGroupware/go-measure-tui/internal/api/request/executor"
 	"github.com/LabGroupware/go-measure-tui/internal/api/response"
 	"github.com/LabGroupware/go-measure-tui/internal/app"
@@ -12,9 +11,9 @@ import (
 	"github.com/LabGroupware/go-measure-tui/internal/batch/batchtest/execbatch"
 )
 
-type FindUserPreferenceFactory struct{}
+type UpdateUserPreferenceFactory struct{}
 
-func (f FindUserPreferenceFactory) Factory(
+func (f UpdateUserPreferenceFactory) Factory(
 	ctx context.Context,
 	ctr *app.Container,
 	id int,
@@ -27,7 +26,7 @@ func (f FindUserPreferenceFactory) Factory(
 	var ok bool
 	var userPreferenceId string
 
-	req := executor.FindUserPreferenceReq{
+	req := executor.UpdateUserPreferenceReq{
 		AuthToken:    authToken,
 		BaseEndpoint: apiEndpoint,
 	}
@@ -37,15 +36,10 @@ func (f FindUserPreferenceFactory) Factory(
 	}
 	req.Path.UserPreferenceID = userPreferenceId
 
-	for key, param := range request.QueryParam {
-		switch key {
-		case "with":
-			req.Param.With = param
-		}
-	}
+	req.Body = request.Body
 
 	// INFO: close on executor, because only it will write to this channel
-	resChan := make(chan executor.ResponseContent[response.ResponseDto[domain.UserPreferenceDto]])
+	resChan := make(chan executor.ResponseContent[response.CommandResponseDto])
 
 	resChanCloser := func() {
 		close(resChan)
@@ -53,7 +47,7 @@ func (f FindUserPreferenceFactory) Factory(
 
 	execbatch.RunAsyncProcessing(ctx, ctr, id, request, termChan, resChan, consumer)
 
-	return executor.RequestContent[executor.FindUserPreferenceReq, response.ResponseDto[domain.UserPreferenceDto]]{
+	return executor.RequestContent[executor.UpdateUserPreferenceReq, response.CommandResponseDto]{
 		Req:          req,
 		Interval:     request.Interval,
 		ResponseWait: request.AwaitPrevResp,
