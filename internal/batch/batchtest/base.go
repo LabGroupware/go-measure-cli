@@ -109,11 +109,13 @@ func baseExecute(
 		}
 	}
 
-	switch conf.Type {
-	case "MassQuery", "Pipeline":
-		err := os.MkdirAll(outputRoot, os.ModePerm)
-		if err != nil {
-			return fmt.Errorf("failed to create directory: %v", err)
+	if conf.Output.Enabled {
+		switch conf.Type {
+		case "MassQuery", "Pipeline":
+			err := os.MkdirAll(outputRoot, os.ModePerm)
+			if err != nil {
+				return fmt.Errorf("failed to create directory: %v", err)
+			}
 		}
 	}
 

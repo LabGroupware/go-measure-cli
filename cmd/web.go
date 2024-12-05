@@ -28,6 +28,8 @@ to be made to the website. It then displays the average time taken to make the r
 
 This command is used to measure the performance of a website by providing the URL and the number of requests to be made to the website.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		ctx := cmd.Context()
+
 		wSock := ws.NewWebSocket()
 		wsEventHandler := ws.NewDetailEventResponseMessageHandler()
 		wsEventHandler.RegisterHandleFunc(
@@ -37,7 +39,7 @@ This command is used to measure the performance of a website by providing the UR
 			},
 		)
 		wSock.EventMsgHandler = wsEventHandler.HandleMessage
-		done, err := wSock.Connect(container.Config.Web.WebSocket.Url, container.AuthToken.AccessToken)
+		done, err := wSock.Connect(ctx, container)
 		if err != nil {
 			red := color.New(color.FgRed).SprintFunc()
 			fmt.Println(red(fmt.Sprintf("failed to connect to WebSocket server: %v", err)))

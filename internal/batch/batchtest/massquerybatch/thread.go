@@ -42,7 +42,7 @@ func (e *MassiveQueryThreadExecutor) Execute(
 	<-startChan
 
 	ctr.Logger.Info(ctx, "Query Start",
-		logger.Value("QueryID", e.ID), logger.Value("OutputFile", e.outputFile.Name()))
+		logger.Value("QueryID", e.ID))
 	err := e.RequestExecutor.QueryExecute(ctx, ctr)
 	if err != nil {
 		return err
@@ -50,10 +50,10 @@ func (e *MassiveQueryThreadExecutor) Execute(
 
 	termType := <-e.TermChan
 	ctr.Logger.Info(ctx, "Query End For Break",
-		logger.Value("QueryID", e.ID), logger.Value("OutputFile", e.outputFile.Name()))
+		logger.Value("QueryID", e.ID))
 	for _, breakType := range e.successBreak {
 		if termType == queryreqbatch.NewTerminateTypeFromString(breakType) {
-			ctr.Logger.Info(ctx, "Query End For Success Break", logger.Value("QueryID", e.ID), logger.Value("OutputFile", e.outputFile.Name()))
+			ctr.Logger.Info(ctx, "Query End For Success Break", logger.Value("QueryID", e.ID))
 			return nil
 		}
 	}

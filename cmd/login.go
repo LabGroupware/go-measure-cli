@@ -38,7 +38,7 @@ var loginCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		oauthConf := createOAuthConfig()
 		if authToken, err := auth.StartOAuthFlow(
-			ctx,
+			container.Ctx,
 			*oauthConf,
 			container.Config.Auth.RedirectPort,
 			container.Config.Auth.RedirectPath,

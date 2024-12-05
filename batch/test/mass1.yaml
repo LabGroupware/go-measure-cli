@@ -1,8 +1,10 @@
 type: MassQuery
+output:
+  enabled: false
 data:
   requests:
     - endpointType: GetTeams
-      interval: 1s
+      interval: 20ms
       awaitPrevResponse: false
       queryParam:
         limit: [10]
@@ -27,9 +29,9 @@ data:
       break:
         time: 2m
         count: 5
-        sysError: true
-        parseError: true
-        writeError: true
+        # sysError: true
+        # parseError: true
+        # writeError: true
         statusCode:
           op: eq
           value: 500

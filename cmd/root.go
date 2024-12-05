@@ -39,8 +39,6 @@ import (
 
 var container = app.NewContainer()
 
-var ctx context.Context
-
 // var ctx context.Context
 
 var rootCmd = &cobra.Command{
@@ -71,7 +69,7 @@ func init() {
 }
 
 func initConfig() {
-	ctx = context.Background()
+	container.Ctx = context.Background()
 
 	configFile := viper.GetString("config")
 	if configFile != "" {
@@ -122,7 +120,7 @@ func initConfig() {
 	if expire := container.AuthToken.IsExpired(); expire {
 		yellow := color.New(color.FgYellow).SprintFunc()
 		fmt.Println(yellow("Token has expired. Refreshing token..."))
-		if err := container.AuthToken.Refresh(ctx, createOAuthConfig(), container.Config.Credential.Path); err != nil {
+		if err := container.AuthToken.Refresh(container.Ctx, createOAuthConfig(), container.Config.Credential.Path); err != nil {
 			red := color.New(color.FgRed).SprintFunc()
 			fmt.Println(red(fmt.Sprintf("Failed to refresh token: %v", err)))
 			fmt.Println("You may need to re-authenticate, if want to access the credential API.")

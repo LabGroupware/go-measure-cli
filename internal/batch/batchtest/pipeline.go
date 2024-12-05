@@ -17,8 +17,9 @@ type PipelineConfig struct {
 }
 
 type PipelineFileConfig struct {
-	ID   string `yaml:"id"`
-	File string `yaml:"file"`
+	ID    string `yaml:"id"`
+	File  string `yaml:"file"`
+	Count int    `yaml:"count"`
 }
 
 type executeRequest struct {
@@ -32,16 +33,44 @@ func pipelineBatch(ctx context.Context, ctr *app.Container, conf PipelineConfig,
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	requests := make([]executeRequest, len(conf.Files))
-	for i, f := range conf.Files {
-		testDirPath := fmt.Sprintf("%s/%s", testOutput, f.ID)
-		metricsDirPath := fmt.Sprintf("%s/%s", metricsOutput, f.ID)
+	sumCount := 0
+	for _, f := range conf.Files {
+		if f.Count <= 0 {
+			f.Count = 1
+		}
+		sumCount += f.Count
+	}
 
-		requests[i] = executeRequest{
-			id:             f.ID,
-			filename:       f.File,
-			testRootDir:    testDirPath,
-			metricsRootDir: metricsDirPath,
+	requests := make([]executeRequest, sumCount)
+
+	var count int
+	for _, f := range conf.Files {
+
+		if f.Count > 1 {
+			for j := 0; j < f.Count; j++ {
+				testDirPath := fmt.Sprintf("%s/%s_%d", testOutput, f.ID, j)
+				metricsDirPath := fmt.Sprintf("%s/%s_%d", metricsOutput, f.ID, j)
+
+				requests[count] = executeRequest{
+					id:             fmt.Sprintf("%s_%d", f.ID, j),
+					filename:       f.File,
+					testRootDir:    testDirPath,
+					metricsRootDir: metricsDirPath,
+				}
+
+				count++
+			}
+		} else {
+			testDirPath := fmt.Sprintf("%s/%s", testOutput, f.ID)
+			metricsDirPath := fmt.Sprintf("%s/%s", metricsOutput, f.ID)
+			requests[count] = executeRequest{
+				id:             f.ID,
+				filename:       f.File,
+				testRootDir:    testDirPath,
+				metricsRootDir: metricsDirPath,
+			}
+
+			count++
 		}
 	}
 

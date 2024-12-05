@@ -23,23 +23,26 @@ func MassQueryBatch(ctx context.Context, ctr *app.Container, massQuery MassQuery
 
 	for i := 0; i < concurrentCount; i++ {
 		request := massQuery.Data.Requests[i]
-		logFilePath := fmt.Sprintf("%s/massive_query_%010d.csv", outputRoot, i+1)
-		file, err := os.Create(logFilePath)
-		if err != nil {
-			return fmt.Errorf("failed to create file: %v", err)
-		}
 		threadExecutors[i] = &MassiveQueryThreadExecutor{
-			ID:         i + 1,
-			outputFile: file,
+			ID: i + 1,
 		}
-		defer threadExecutors[i].Close(ctx)
 
-		writer := csv.NewWriter(file)
-		header := []string{"Success", "SendDatetime", "ReceivedDatetime", "Count", "ResponseTime", "StatusCode", "Data"}
-		if err := writer.Write(header); err != nil {
-			return fmt.Errorf("failed to write header: %v", err)
+		if massQuery.Output.Enabled {
+			logFilePath := fmt.Sprintf("%s/massive_query_%010d.csv", outputRoot, i+1)
+			file, err := os.Create(logFilePath)
+			if err != nil {
+				return fmt.Errorf("failed to create file: %v", err)
+			}
+			threadExecutors[i].outputFile = file
+			defer threadExecutors[i].Close(ctx)
+
+			writer := csv.NewWriter(file)
+			header := []string{"Success", "SendDatetime", "ReceivedDatetime", "Count", "ResponseTime", "StatusCode", "Data"}
+			if err := writer.Write(header); err != nil {
+				return fmt.Errorf("failed to write header: %v", err)
+			}
+			writer.Flush()
 		}
-		writer.Flush()
 
 		endType := massQuery.Data.Requests[i].EndpointType
 		queryType := queryreqbatch.NewQueryTypeFromString(endType)
@@ -56,7 +59,9 @@ func MassQueryBatch(ctx context.Context, ctr *app.Container, massQuery MassQuery
 			id int,
 			data queryreqbatch.WriteData,
 		) error {
-			fmt.Println("Writing data to csv", id, data, "on runAsyncProcessing")
+			if !massQuery.Output.Enabled {
+				return nil
+			}
 			writer := csv.NewWriter(threadExecutors[i].outputFile)
 			ctr.Logger.Debug(ctx, "Writing data to csv",
 				logger.Value("id", id), logger.Value("data", data), logger.Value("on", "runAsyncProcessing"))
@@ -74,7 +79,7 @@ func MassQueryBatch(ctx context.Context, ctr *app.Container, massQuery MassQuery
 			validatedReq,
 			termChan,
 			ctr.AuthToken,
-			ctr.Config.Web.API.Url,
+			ctr.Config.Web.QueryAPI.Url,
 			writeFunc,
 		)
 		ctr.Logger.Info(ctx, "created executor",

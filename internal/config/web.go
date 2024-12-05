@@ -2,7 +2,7 @@ package config
 
 // WebConfig represents the configuration for the web command
 type WebConfig struct {
-	API       APIConfig       `mapstructure:"api"`
+	QueryAPI  APIConfig       `mapstructure:"queryApi"`
 	WebSocket WebSocketConfig `mapstructure:"websocket"`
 }
 

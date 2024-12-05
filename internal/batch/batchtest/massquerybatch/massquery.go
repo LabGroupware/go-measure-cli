@@ -12,6 +12,11 @@ type MassQueryOneData struct {
 }
 
 type MassQuery struct {
-	Type string        `yaml:"type"`
-	Data MassQueryData `yaml:"data"`
+	Type   string          `yaml:"type"`
+	Data   MassQueryData   `yaml:"data"`
+	Output BatchTestOutput `yaml:"output"`
+}
+
+type BatchTestOutput struct {
+	Enabled bool `yaml:"enabled"`
 }

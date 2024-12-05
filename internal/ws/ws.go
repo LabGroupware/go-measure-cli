@@ -1,11 +1,14 @@
 package ws
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
 
+	"github.com/LabGroupware/go-measure-tui/internal/app"
+	"github.com/LabGroupware/go-measure-tui/internal/logger"
 	"github.com/LabGroupware/go-measure-tui/internal/utils"
 	"github.com/gorilla/websocket"
 )
@@ -36,11 +39,11 @@ func NewWebSocket() *WebSocket {
 }
 
 // Connect connects to a remote server using the WebSocket protocol
-func (ws *WebSocket) Connect(addr, accessToken string) (<-chan struct{}, error) {
+func (ws *WebSocket) Connect(ctx context.Context, ctr *app.Container) (<-chan struct{}, error) {
 	headers := http.Header{
-		"Authorization": []string{fmt.Sprintf("Bearer %s", accessToken)},
+		"Authorization": []string{fmt.Sprintf("Bearer %s", ctr.AuthToken.AccessToken)},
 	}
-	conn, res, err := websocket.DefaultDialer.Dial(addr, headers)
+	conn, res, err := websocket.DefaultDialer.Dial(ctr.Config.Web.WebSocket.Url, headers)
 	if err != nil {
 		if res != nil && res.StatusCode == http.StatusUnauthorized {
 			return nil, fmt.Errorf("unauthorized: %w", err)
@@ -62,15 +65,18 @@ func (ws *WebSocket) Connect(addr, accessToken string) (<-chan struct{}, error) 
 			_, content, err := ws.conn.ReadMessage()
 			if err != nil {
 				if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
-					fmt.Println("WebSocket connection closed")
+					ctr.Logger.Debug(ctx, "WebSocket connection closed",
+						logger.Value("error", err))
 					return
 				}
-				fmt.Printf("failed to read message: %v\n", err)
+				ctr.Logger.Error(ctx, "failed to read message",
+					logger.Value("error", err))
 				return
 			}
 			err = utils.UnmarshalJSON(content, &msg)
 			if err != nil {
-				fmt.Printf("failed to unmarshal JSON: %v\n", err)
+				ctr.Logger.Error(ctx, "failed to unmarshal JSON",
+					logger.Value("error", err))
 				return
 			}
 			switch msg.Type {
@@ -78,7 +84,8 @@ func (ws *WebSocket) Connect(addr, accessToken string) (<-chan struct{}, error) 
 				var cannotParse CannotParseResponseMessage
 				err := utils.UnmarshalJSON(content, &cannotParse)
 				if err != nil {
-					fmt.Printf("failed to read CannotParseResponseMessage: %v\n", err)
+					ctr.Logger.Error(ctx, "failed to read CannotParseResponseMessage",
+						logger.Value("error", err))
 					return
 				}
 				if ws.CannotParseMsgHandler != nil {
@@ -88,7 +95,8 @@ func (ws *WebSocket) Connect(addr, accessToken string) (<-chan struct{}, error) 
 				var subscribe SubscribeResponseMessage
 				err := utils.UnmarshalJSON(content, &subscribe)
 				if err != nil {
-					fmt.Printf("failed to read SubscribeResponseMessage: %v\n", err)
+					ctr.Logger.Error(ctx, "failed to read SubscribeResponseMessage",
+						logger.Value("error", err))
 					return
 				}
 				if v, ok := ws.subscribeMsgMem.Memory[subscribe.MessageID]; ok {
@@ -104,7 +112,8 @@ func (ws *WebSocket) Connect(addr, accessToken string) (<-chan struct{}, error) 
 				var unsubscribe UnsubscribeResponseMessage
 				err := utils.UnmarshalJSON(content, &unsubscribe)
 				if err != nil {
-					fmt.Printf("failed to read UnsubscribeResponseMessage: %v\n", err)
+					ctr.Logger.Error(ctx, "failed to read UnsubscribeResponseMessage",
+						logger.Value("error", err))
 					return
 				}
 				if v, ok := ws.unsubscribeMsgMem.Memory[unsubscribe.MessageID]; ok {
@@ -122,7 +131,8 @@ func (ws *WebSocket) Connect(addr, accessToken string) (<-chan struct{}, error) 
 				var unsupported UnsupportedResponseMessage
 				err := utils.UnmarshalJSON(content, &unsupported)
 				if err != nil {
-					fmt.Printf("failed to read UnsupportedResponseMessage: %v\n", err)
+					ctr.Logger.Error(ctx, "failed to read UnsupportedResponseMessage",
+						logger.Value("error", err))
 					return
 				}
 				if ws.UnsupportedMsgHandler != nil {
@@ -132,7 +142,8 @@ func (ws *WebSocket) Connect(addr, accessToken string) (<-chan struct{}, error) 
 				var event EventResponseMessage
 				err := utils.UnmarshalJSON(content, &event)
 				if err != nil {
-					fmt.Printf("failed to read EventResponseMessage: %v\n", err)
+					ctr.Logger.Error(ctx, "failed to read EventResponseMessage",
+						logger.Value("error", err))
 					return
 				}
 				if ws.EventMsgHandler != nil {

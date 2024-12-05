@@ -1,8 +1,10 @@
 type: MassQuery
+output:
+  enabled: false
 data:
   requests:
     - endpointType: GetTeams
-      interval: 1s
+      interval: 100ms
       awaitPrevResponse: false
       queryParam:
         limit: [10]

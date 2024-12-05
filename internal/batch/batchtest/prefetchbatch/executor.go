@@ -138,7 +138,7 @@ func executeRequest(
 		},
 		queryTermChanWithBreak,
 		ctr.AuthToken,
-		ctr.Config.Web.API.Url,
+		ctr.Config.Web.QueryAPI.Url,
 		writeFunc,
 	)
 	if err != nil {

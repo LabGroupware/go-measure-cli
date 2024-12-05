@@ -2,7 +2,13 @@ type: Pipeline
 concurrency: 0 # if set to 0, it will run one by one in sequence, if set to minus, it will run all the queries in sequence
 files:
   - id: "pipeline_1"
-    file: "pipeline/onequery_1.yaml"
+    file: "mass1.yaml"
+    count: 4
+  - id: "pipeline_2"
+    file: "mass2.yaml"
+    count: 2
+  - id: "pipeline_3"
+    file: "mass3.yaml"
   # - id: "pipeline_1"
   #   file: "pipeline/onequery_1.yaml"
   # - id: "pipeline_2"
