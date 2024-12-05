@@ -41,7 +41,6 @@ func (l *SlogLogger) SetupLogger(cfg *config.LoggingConfig) error {
 		case "error":
 			level = slog.LevelError
 		default:
-			fmt.Printf("unsupported log level: %s, defaulting to info\n", output.Level)
 			level = slog.LevelInfo
 		}
 
@@ -62,12 +61,10 @@ func (l *SlogLogger) SetupLogger(cfg *config.LoggingConfig) error {
 			}
 
 			if err := os.MkdirAll(filepath.Dir(output.Filename), 0755); err != nil {
-				fmt.Printf("Error creating directories: %v\n", err)
 				return fmt.Errorf("failed to create log directories: %w", err)
 			}
 			file, err := os.OpenFile(output.Filename, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o600)
 			if err != nil {
-				fmt.Println(err)
 				return fmt.Errorf("failed to open log file: %w", err)
 			}
 			l.openFIles = append(l.openFIles, file)

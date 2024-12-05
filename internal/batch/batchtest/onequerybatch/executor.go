@@ -129,13 +129,11 @@ func executeRequest(
 		logger.Value("QueryID", internalID), logger.Value("on", "executeRequest"))
 	switch termType {
 	case queryreqbatch.ByCount:
-		fmt.Println("Query End For Term By Count---------------------------------------------------")
 		ctr.Logger.Info(ctx, "Query End For Term By Count",
 			logger.Value("QueryID", internalID), logger.Value("on", "executeRequest"))
 	default:
 		ctr.Logger.Error(ctx, "Query End For Error",
 			logger.Value("QueryID", internalID), logger.Value("on", "executeRequest"))
-		fmt.Println("error because of termType---------------------------------------------------", queryreqbatch.TerminateType(termType).String())
 		return fmt.Errorf("error because of termType: %v", queryreqbatch.TerminateType(termType).String())
 	}
 

@@ -32,8 +32,6 @@ func pipelineBatch(ctx context.Context, ctr *app.Container, conf PipelineConfig,
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	fmt.Println("Pipeline called!!", testOutput, metricsOutput)
-
 	requests := make([]executeRequest, len(conf.Files))
 	for i, f := range conf.Files {
 		testDirPath := fmt.Sprintf("%s/%s", testOutput, f.ID)
@@ -62,8 +60,6 @@ func pipelineBatch(ctx context.Context, ctr *app.Container, conf PipelineConfig,
 
 			err := baseExecute(ctx, ctr, req.filename, store, req.testRootDir, req.metricsRootDir)
 
-			fmt.Println("Request finished on seq", testOutput, metricsOutput, req.id, err)
-
 			if err != nil {
 				ctr.Logger.Error(ctr.Ctx, "failed to execute request",
 					logger.Value("error", err), logger.Value("on", "PipelineBatch"))
@@ -73,8 +69,6 @@ func pipelineBatch(ctx context.Context, ctr *app.Container, conf PipelineConfig,
 			ctr.Logger.Debug(ctr.Ctx, "request finished",
 				logger.Value("on", "PipelineBatch"))
 		}
-
-		fmt.Println("All requests finished on seq", testOutput, metricsOutput)
 
 		return nil
 	} else {
@@ -91,8 +85,6 @@ func pipelineBatch(ctx context.Context, ctr *app.Container, conf PipelineConfig,
 
 				err := baseExecute(ctx, ctr, preReq.filename, store, preReq.testRootDir, preReq.metricsRootDir)
 
-				fmt.Println("Request finished on parallel", testOutput, metricsOutput, req.id, err)
-
 				if err != nil {
 					atomicErr.Store(err)
 					ctr.Logger.Error(ctr.Ctx, "failed to execute request",
@@ -108,8 +100,6 @@ func pipelineBatch(ctx context.Context, ctr *app.Container, conf PipelineConfig,
 		}
 
 		wg.Wait()
-
-		fmt.Println("All requests finished on parallel", testOutput, metricsOutput, atomicErr.Load())
 
 		close(sem)
 

@@ -86,8 +86,6 @@ func baseExecute(
 	ctr.Logger.Debug(ctx, "replaced content",
 		logger.Value("content", yamlData))
 
-	fmt.Println("content", yamlData, "type", conf.Type)
-
 	reader := bytes.NewReader([]byte(result))
 
 	if conf.Metrics.Enabled {
@@ -115,11 +113,8 @@ func baseExecute(
 		if err := decoder.Decode(&oneQuery); err != nil {
 			return fmt.Errorf("failed to decode yaml: %v", err)
 		}
-		fmt.Println("oneQuery", oneQuery)
 		var values map[string]string
 		if values, err = onequerybatch.OneQueryBatch(ctx, ctr, oneQuery, store); err != nil {
-			fmt.Println("failed to execute one query:---------------------------------------------------", err)
-
 			return fmt.Errorf("failed to execute one query: %v", err)
 		}
 		store.Range(func(key, value interface{}) bool {
