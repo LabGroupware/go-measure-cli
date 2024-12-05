@@ -11,11 +11,10 @@ import (
 )
 
 type MassiveQueryThreadExecutor struct {
-	ID                 int
-	outputFile         *os.File
-	RequestExecutor    queryreq.QueryExecutor
-	TermChan           chan queryreqbatch.TerminateType
-	responseChanCloser func()
+	ID              int
+	outputFile      *os.File
+	RequestExecutor queryreq.QueryExecutor
+	TermChan        chan queryreqbatch.TerminateType
 }
 
 func NewMassiveQueryThreadExecutor(
@@ -45,20 +44,11 @@ func (e *MassiveQueryThreadExecutor) Execute(
 		return err
 	}
 
-	for {
-		select {
-		case <-ctx.Done():
-			term <- struct{}{}
-			ctr.Logger.Info(ctx, "Query End For Context",
-				logger.Value("QueryID", e.ID), logger.Value("OutputFile", e.outputFile.Name()))
-			return nil
-		case <-e.TermChan:
-			term <- struct{}{}
-			ctr.Logger.Info(ctx, "Query End For Term",
-				logger.Value("QueryID", e.ID), logger.Value("OutputFile", e.outputFile.Name()))
-			return nil
-		}
-	}
+	<-e.TermChan
+	term <- struct{}{}
+	ctr.Logger.Info(ctx, "Query End For Term",
+		logger.Value("QueryID", e.ID), logger.Value("OutputFile", e.outputFile.Name()))
+	return nil
 }
 
 func (e *MassiveQueryThreadExecutor) Close(ctx context.Context) error {

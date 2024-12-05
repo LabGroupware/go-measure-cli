@@ -52,7 +52,6 @@ func (q RequestContent[Req, Res]) QueryExecute(
 	ctx context.Context,
 	ctr *app.Container,
 ) (chan<- struct{}, error) {
-
 	terminateChan := make(chan struct{})
 
 	req, err := q.Req.CreateRequest(ctx, ctr)
@@ -64,6 +63,7 @@ func (q RequestContent[Req, Res]) QueryExecute(
 	}
 
 	go func() {
+		defer close(q.ResChan)
 		defer close(terminateChan)
 
 		ticker := time.NewTicker(q.Interval)

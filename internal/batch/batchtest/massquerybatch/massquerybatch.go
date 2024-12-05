@@ -49,8 +49,8 @@ func MassQueryBatch(ctx context.Context, ctr *app.Container, massQuery MassQuery
 		endType := massQuery.Data.Requests[i].EndpointType
 		queryType := queryreqbatch.NewQueryTypeFromString(endType)
 		factor := queryreqbatch.TypeFactoryMap[queryType]
+		// INFO: close on factor.Factory(response handler), because only it will write to this channel
 		termChan := make(chan queryreqbatch.TerminateType)
-		defer close(termChan)
 		validatedReq := &queryreqbatch.ValidatedQueryRequest{}
 		if err := queryreqbatch.ValidateQueryReq(ctx, ctr, request, validatedReq); err != nil {
 			return fmt.Errorf("failed to validate query request: %v", err)
@@ -71,7 +71,7 @@ func MassQueryBatch(ctx context.Context, ctr *app.Container, massQuery MassQuery
 			writer.Flush()
 			return nil
 		}
-		executor, resCloser, err := factor.Factory(
+		executor, _, err := factor.Factory(
 			ctx,
 			ctr,
 			i+1,
@@ -88,7 +88,6 @@ func MassQueryBatch(ctx context.Context, ctr *app.Container, massQuery MassQuery
 		}
 		threadExecutors[i].RequestExecutor = executor
 		threadExecutors[i].TermChan = termChan
-		threadExecutors[i].responseChanCloser = resCloser
 	}
 
 	var wg sync.WaitGroup
@@ -97,7 +96,7 @@ func MassQueryBatch(ctx context.Context, ctr *app.Container, massQuery MassQuery
 		wg.Add(1)
 		go func(exec *MassiveQueryThreadExecutor) {
 			defer wg.Done()
-			defer exec.responseChanCloser()
+			// defer exec.responseChanCloser()
 			if err := exec.Execute(ctx, ctr, startChan); err != nil {
 				ctr.Logger.Error(ctx, "failed to execute query",
 					logger.Value("error", err), logger.Value("id", exec.ID))

@@ -49,6 +49,7 @@ func (f FindFileObjectFactory) Factory(
 		}
 	}
 
+	// INFO: close on executor, because only it will write to this channel
 	resChan := make(chan queryreq.ResponseContent[response.ResponseDto[domain.FileObjectDto]])
 
 	resChanCloser := func() {
@@ -133,6 +134,7 @@ func (f GetFileObjectsFactory) Factory(
 
 	}
 
+	// INFO: close on executor, because only it will write to this channel
 	resChan := make(chan queryreq.ResponseContent[response.ListResponseDto[domain.FileObjectDto]])
 
 	resChanCloser := func() {

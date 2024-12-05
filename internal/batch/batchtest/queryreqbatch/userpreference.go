@@ -47,6 +47,7 @@ func (f FindUserPreferenceFactory) Factory(
 		}
 	}
 
+	// INFO: close on executor, because only it will write to this channel
 	resChan := make(chan queryreq.ResponseContent[response.ResponseDto[domain.UserPreferenceDto]])
 
 	resChanCloser := func() {

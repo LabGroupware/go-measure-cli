@@ -60,12 +60,11 @@ func runResponseHandler[Res any](
 	resChan <-chan queryreq.ResponseContent[Res],
 	writeChan chan<- writeSendData,
 ) {
+	defer close(termChan)
 	var count int
 	var timeout <-chan time.Time
 	if request.Break.Time > 0 {
 		timeout = time.After(request.Break.Time)
-	} else {
-		timeout = make(chan time.Time)
 	}
 	sentUid := make(map[uuid.UUID]struct{})
 	for {

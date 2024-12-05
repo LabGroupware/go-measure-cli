@@ -3,43 +3,68 @@ package metricsbatch
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/url"
+	"time"
 
+	"github.com/LabGroupware/go-measure-tui/internal/api/request/queryreq"
 	"github.com/LabGroupware/go-measure-tui/internal/app"
 	"github.com/LabGroupware/go-measure-tui/internal/logger"
 )
 
 type PrometheusMetricsFetcher struct {
-	req *http.Request
+	req      *http.Request
+	interval time.Duration
 }
 
-func (p *PrometheusMetricsFetcher) Fetch(ctx context.Context, ctr *app.Container) (any, error) {
-	// client := &http.Client{
-	// 	Timeout: 10 * time.Second,
-	// 	Transport: &utils.DelayedTransport{
-	// 		Transport: http.DefaultTransport,
-	// 		// Delay:     2 * time.Second,
-	// 	},
-	// }
+func (r PrometheusMetricsFetcher) CreateRequest(ctx context.Context, ctr *app.Container) (*http.Request, error) {
+	return r.req, nil
+}
 
-	resp, err := http.Get(p.req.URL.String())
+func (p *PrometheusMetricsFetcher) Fetch(
+	ctx context.Context,
+	ctr *app.Container,
+) (any, chan<- struct{}, error) {
+
+	// INFO: close on executor, because only it will write to this channel
+	resChan := make(chan queryreq.ResponseContent[any])
+	// INFO: close on factor.Factory(response handler), because only it will write to this channel
+	termChan := make(chan TermType)
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				termChan <- TermTypeContext
+				return
+			}
+		}
+	}()
+
+	req := queryreq.RequestContent[PrometheusMetricsFetcher, any]{
+		Req:          *p,
+		Interval:     p.interval,
+		ResponseWait: false,
+		ResChan:      resChan,
+		CountLimit:   queryreq.RequestCountLimit{},
+	}
+
+	execTerm, err := req.QueryExecute(ctx, ctr)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch Prometheus query: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("non-200 response: %d", resp.StatusCode)
+		return nil, nil, fmt.Errorf("failed to execute query: %w", err)
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("failed to read response body: %w", err)
-	}
+	go func() {
+		defer close(termChan)
 
-	return string(body), nil
+		<-termChan
+		execTerm <- struct{}{}
+		ctr.Logger.Info(ctx, "Prometheus Query End For Term",
+			logger.Value("on", "PrometheusMetricsFetcher.Fetch"))
+	}()
+
+	return nil, execTerm, nil
+
 }
 
 type PrometheusMetricsBatchRequestConfig struct {
@@ -55,6 +80,9 @@ func (p *PrometheusMetricsBatchRequestConfig) FetcherFactory(ctx context.Context
 
 	baseURL := fmt.Sprintf("%s/api/v1/query", p.URL)
 	fullURL, err := url.Parse(baseURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse URL: %w", err)
+	}
 
 	queryParams := fullURL.Query()
 	queryParams.Add("query", p.Query)
@@ -70,7 +98,21 @@ func (p *PrometheusMetricsBatchRequestConfig) FetcherFactory(ctx context.Context
 
 	req.Header.Set("Accept", "application/json")
 
-	return &PrometheusMetricsFetcher{req: req}, nil
+	var interval time.Duration
+
+	if p.Interval != "" {
+		interval, err = time.ParseDuration(p.Interval)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse interval: %w", err)
+		}
+	} else {
+		return nil, fmt.Errorf("interval is required")
+	}
+
+	return &PrometheusMetricsFetcher{
+		req:      req,
+		interval: interval,
+	}, nil
 }
 
 var _ MetricsFetcher = &PrometheusMetricsFetcher{}

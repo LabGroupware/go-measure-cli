@@ -1,0 +1,5 @@
+type: Pipeline
+concurrency: 0 # if set to 0, it will run one by one in sequence, if set to minus, it will run all the queries in sequence
+files:
+  - "pipeline/onequery_1.yaml"
+  - "pipeline/onequery_2.yaml"

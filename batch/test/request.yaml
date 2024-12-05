@@ -14,7 +14,7 @@ metrics:
 data:
   requests:
     - endpointType: GetTeams
-      interval: 1s
+      interval: 1ms
       awaitPrevResponse: false
       queryParam:
         limit: [10]
@@ -35,7 +35,7 @@ data:
       pathVariables: {}
       break:
         time: 2m
-        count: 3
+        count: 30
         # sysError: true
         # parseError: true
         # writeError: true

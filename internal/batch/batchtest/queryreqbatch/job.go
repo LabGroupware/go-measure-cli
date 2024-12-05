@@ -39,6 +39,7 @@ func (f FindJobFactory) Factory(
 	}
 	req.Path.JobID = jobId
 
+	// INFO: close on executor, because only it will write to this channel
 	resChan := make(chan queryreq.ResponseContent[response.JobResponseDto])
 
 	resChanCloser := func() {

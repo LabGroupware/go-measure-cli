@@ -24,7 +24,9 @@ func executeRequest(
 		logger.Value("on", "executeRequest"))
 
 	endType := req.EndpointType
-	queryTermChanWithBreak := make(chan queryreqbatch.TerminateType) // TODO: close this channel
+	// INFO: close on factor.Factory(response handler), because only it will write to this channel
+	queryTermChanWithBreak := make(chan queryreqbatch.TerminateType)
+
 	queryType := queryreqbatch.NewQueryTypeFromString(endType)
 	factor := queryreqbatch.TypeFactoryMap[queryType]
 
@@ -118,25 +120,19 @@ func executeRequest(
 			logger.Value("error", err), logger.Value("id", internalID))
 		return fmt.Errorf("failed to execute query: %v", err)
 	}
-	select {
-	case <-ctx.Done():
-		execTerm <- struct{}{}
-		ctr.Logger.Info(ctx, "Query End For Term For Context Done",
+
+	termType := <-queryTermChanWithBreak
+	execTerm <- struct{}{}
+	ctr.Logger.Info(ctx, "Query End For Term For Break",
+		logger.Value("QueryID", internalID), logger.Value("on", "executeRequest"))
+	switch termType {
+	case queryreqbatch.ByCount:
+		ctr.Logger.Info(ctx, "Query End For Term By Count",
 			logger.Value("QueryID", internalID), logger.Value("on", "executeRequest"))
-		return nil
-	case termType := <-queryTermChanWithBreak:
-		execTerm <- struct{}{}
-		ctr.Logger.Info(ctx, "Query End For Term For Break",
+	default:
+		ctr.Logger.Error(ctx, "Query End For Error",
 			logger.Value("QueryID", internalID), logger.Value("on", "executeRequest"))
-		switch termType {
-		case queryreqbatch.ByCount:
-			ctr.Logger.Info(ctx, "Query End For Term By Count",
-				logger.Value("QueryID", internalID), logger.Value("on", "executeRequest"))
-		default:
-			ctr.Logger.Error(ctx, "Query End For Error",
-				logger.Value("QueryID", internalID), logger.Value("on", "executeRequest"))
-			return fmt.Errorf("error because of termType: %v", queryreqbatch.TerminateType(termType).String())
-		}
+		return fmt.Errorf("error because of termType: %v", queryreqbatch.TerminateType(termType).String())
 	}
 
 	return nil

@@ -133,7 +133,6 @@ func baseExecute(
 			return fmt.Errorf("failed to decode yaml: %v", err)
 		}
 		if err := pipelineBatch(ctx, ctr, pipeline, store); err != nil {
-			fmt.Println("pipelineBatch failed^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
 			return fmt.Errorf("failed to execute pipeline: %v", err)
 		}
 	default:

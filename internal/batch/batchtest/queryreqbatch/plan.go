@@ -49,6 +49,7 @@ func (f FindTaskFactory) Factory(
 		}
 	}
 
+	// INFO: close on executor, because only it will write to this channel
 	resChan := make(chan queryreq.ResponseContent[response.ResponseDto[domain.TaskDto]])
 
 	resChanCloser := func() {
@@ -173,6 +174,7 @@ func (f GetTasksFactory) Factory(
 
 	}
 
+	// INFO: close on executor, because only it will write to this channel
 	resChan := make(chan queryreq.ResponseContent[response.ListResponseDto[domain.TaskDto]])
 
 	resChanCloser := func() {

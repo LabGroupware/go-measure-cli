@@ -53,7 +53,8 @@ func executeRequest(
 	}
 
 	endType := req.EndpointType
-	queryTermChanWithBreak := make(chan queryreqbatch.TerminateType) // TODO: close this channel
+	// INFO: close on factor.Factory(response handler), because only it will write to this channel
+	queryTermChanWithBreak := make(chan queryreqbatch.TerminateType)
 	queryType := queryreqbatch.NewQueryTypeFromString(endType)
 	factor := queryreqbatch.TypeFactoryMap[queryType]
 

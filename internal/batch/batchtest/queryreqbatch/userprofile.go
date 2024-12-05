@@ -49,6 +49,7 @@ func (f FindUserFactory) Factory(
 		}
 	}
 
+	// INFO: close on executor, because only it will write to this channel
 	resChan := make(chan queryreq.ResponseContent[response.ResponseDto[domain.UserProfileDto]])
 
 	resChanCloser := func() {
@@ -123,6 +124,7 @@ func (f GetUsersFactory) Factory(
 
 	}
 
+	// INFO: close on executor, because only it will write to this channel
 	resChan := make(chan queryreq.ResponseContent[response.ListResponseDto[domain.UserProfileDto]])
 
 	resChanCloser := func() {

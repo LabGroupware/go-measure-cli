@@ -85,6 +85,8 @@ func pipelineBatch(ctx context.Context, ctr *app.Container, conf PipelineConfig,
 
 		wg.Wait()
 
+		close(sem)
+
 		if err := atomicErr.Load(); err != nil {
 			ctr.Logger.Error(ctr.Ctx, "failed to find error",
 				logger.Value("error", err.(error)), logger.Value("on", "PipelineBatch"))
