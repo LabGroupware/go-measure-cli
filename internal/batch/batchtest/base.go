@@ -15,6 +15,7 @@ import (
 	"github.com/LabGroupware/go-measure-tui/internal/batch/batchtest/metricsbatch"
 	"github.com/LabGroupware/go-measure-tui/internal/batch/batchtest/onequerybatch"
 	"github.com/LabGroupware/go-measure-tui/internal/batch/batchtest/prefetchbatch"
+	"github.com/LabGroupware/go-measure-tui/internal/batch/batchtest/randomstore"
 	"github.com/LabGroupware/go-measure-tui/internal/logger"
 	"gopkg.in/yaml.v3"
 )
@@ -67,10 +68,11 @@ func baseExecute(
 	}
 
 	content := buffer.String()
-	placeholderRegex := regexp.MustCompile(`\{\{\s*(\w+)\s*\}\}`)
+	placeholderRegex := regexp.MustCompile(`\<\.\.\<\s*(\w+)\s*\>\.\.\>`)
 
 	result := placeholderRegex.ReplaceAllStringFunc(content, func(match string) string {
 		key := placeholderRegex.FindStringSubmatch(match)[1]
+		fmt.Println(key)
 		if v, exists := store.Load(key); exists {
 			return v.(string)
 		}
@@ -116,6 +118,30 @@ func baseExecute(
 	}
 
 	switch conf.Type {
+	case "RandomStoreValue":
+		var randomStoreValue randomstore.RandomStoreValueConfig
+		decoder := yaml.NewDecoder(reader)
+		if err := decoder.Decode(&randomStoreValue); err != nil {
+			return fmt.Errorf("failed to decode yaml: %v", err)
+		}
+		var values map[string]string
+		if values, err = randomstore.RandomStoreValueBatch(
+			ctx,
+			ctr,
+			randomStoreValue,
+			bytes.NewReader([]byte(result)),
+			store,
+		); err != nil {
+			return fmt.Errorf("failed to execute random store value: %v", err)
+		}
+		fmt.Println(values)
+		store.Range(func(key, value interface{}) bool {
+			ctr.Logger.Debug(ctx, "current store value",
+				logger.Value("key", key), logger.Value("value", value))
+			return true
+		})
+		ctr.Logger.Info(ctx, "newValues",
+			logger.Value("values", values))
 	case "OneQuery":
 		var oneQuery onequerybatch.OneQueryConfig
 		decoder := yaml.NewDecoder(reader)

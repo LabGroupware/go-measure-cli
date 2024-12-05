@@ -1,0 +1,70 @@
+type: MassQuery
+metrics:
+  enabled: true
+  requests:
+    - id: "request1"
+      type: "prometheus"
+      url: "http://localhost:10090/api/v1/query"
+      query: "node_memory_Active_bytes"
+      interval: 5s
+      data:
+        - key: "resultType"
+          jmesPath: "data.resultType"
+        - key: "memory_active"
+          jmesPath: "data.result[*].value"
+          onNil: "ignore" # cancel or ignore(default)
+        - key: "invalid_key"
+          jmesPath: "d"
+          onNil: "ignore" # cancel or ignore(default)
+    - id: "request2"
+      type: "prometheus"
+      url: "http://localhost:10090/api/v1/query"
+      query: "node_cpu_seconds_total"
+      interval: 1s
+      data:
+        - key: "resultType"
+          jmesPath: "data.resultType"
+        - key: "cpu_seconds_total"
+          jmesPath: data.result[?metrics.mode == "idle"].value
+          onNil: "ignore" # cancel or ignore(default)
+        - key: "invalid_key"
+          jmesPath: "d"
+          onNil: "cancel" # cancel or ignore(default)
+data:
+  requests:
+    - endpointType: GetTeams
+      interval: 3s
+      awaitPrevResponse: false
+      queryParam:
+        limit: [10]
+        offset: [0]
+        cursor: [""]
+        pagination: ["offset"]
+        sortField: ["name"]
+        sortOrder: ["asc"]
+        withCount: [true]
+        hasIsDefaultFilter: [false]
+        filterIsDefault: [false]
+        hasOrganizationFilter: [true]
+        filterOrganizationIDs: ["<..<orgId>..>"]
+        hasUserFilter: [true]
+        filterUserIDs: ["<..<userId>..>", "<..<userId2>..>"]
+        userFilterType: ["all"]
+        with: []
+      pathVariables: {}
+      successBreak:
+        - count
+        - time
+      break:
+        time: 2m
+        count: 3
+        # sysError: true
+        # parseError: true
+        # writeError: true
+        statusCode:
+          op: eq
+          value: 500
+      # dataOutput:
+      #   jmesPath: "code"
+      # dataOutputFilter:
+      #   jmesPath: "code == '0002:0003'"

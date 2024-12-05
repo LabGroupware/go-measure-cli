@@ -1,0 +1,7 @@
+type: Pipeline
+concurrency: 0 # if set to 0, it will run one by one in sequence, if set to minus, it will run all the queries in sequence
+files:
+  - id: "random_generate"
+    file: "store/store_1.yaml"
+  - id: "random_generate_string"
+    file: "store/store_2.yaml"

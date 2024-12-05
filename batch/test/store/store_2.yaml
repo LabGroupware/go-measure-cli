@@ -1,0 +1,6 @@
+type: RandomStoreValue
+data:
+  - key: "stringValue"
+    type: "string"
+    length: <..<intValue>..>
+    charSet: "numeric,[!@#$%^&*],capital,lower"

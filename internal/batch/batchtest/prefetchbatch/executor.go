@@ -37,7 +37,7 @@ func executeRequest(
 		if err != nil {
 			return fmt.Errorf("failed to marshal request: %v", err)
 		}
-		placeholderRegex := regexp.MustCompile(`\{\{\s*(\w+)\s*\}\}`)
+		placeholderRegex := regexp.MustCompile(`\<\.\.\<\s*(\w+)\s*\>\.\.\>`)
 
 		replaced := placeholderRegex.ReplaceAllStringFunc(string(output), func(match string) string {
 			key := placeholderRegex.FindStringSubmatch(match)[1]

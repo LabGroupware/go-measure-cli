@@ -24,7 +24,7 @@ prefetch:
         sortField: ["name"]
         sortOrder: ["asc"]
         hasUserFilter: [true]
-        filterUserIDs: ["{{userId}}"]
+        filterUserIDs: ["<..<userId>..>"]
         userFilterType: ["all"]
         with: []
       pathVariables: {}
@@ -49,9 +49,9 @@ data:
         hasIsDefaultFilter: [false]
         filterIsDefault: [false]
         hasOrganizationFilter: [true]
-        filterOrganizationIDs: ["{{orgId}}"]
+        filterOrganizationIDs: ["<..<orgId>..>"]
         hasUserFilter: [true]
-        filterUserIDs: ["{{userId}}", "{{userId2}}"]
+        filterUserIDs: ["<..<userId>..>", "<..<userId2>..>"]
         userFilterType: ["all"]
         with: []
       pathVariables: {}

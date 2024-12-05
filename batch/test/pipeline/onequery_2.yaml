@@ -8,7 +8,7 @@ request:
     sortField: ["name"]
     sortOrder: ["asc"]
     hasUserFilter: [true]
-    filterUserIDs: ["{{userId}}"]
+    filterUserIDs: ["<..<userId>..>"]
     userFilterType: ["all"]
     with: []
   pathVariables: {}
