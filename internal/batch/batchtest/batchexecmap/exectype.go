@@ -17,6 +17,7 @@ const (
 	FindUser
 	GetUsers
 
+	CreateUserProfile
 	UpdateUserPreference
 	CreateTeam
 	AddUsersTeam
@@ -53,6 +54,8 @@ func NewExecTypeFromString(s string) ExecType {
 		return FindUser
 	case "GetUsers":
 		return GetUsers
+	case "CreateUserProfile":
+		return CreateUserProfile
 	case "UpdateUserPreference":
 		return UpdateUserPreference
 	case "CreateTeam":

@@ -1,7 +1,9 @@
 package executor
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -91,6 +93,39 @@ func (r GetUsersReq) CreateRequest(ctx context.Context, ctr *app.Container) (*ht
 		logger.Value("url", fullURL.String()), logger.Value("on", "GetUsersReq.CreateRequest"))
 
 	req, err := http.NewRequest(http.MethodGet, fullURL.String(), nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+	r.AuthToken.SetAuthHeader(req)
+
+	return req, nil
+}
+
+type CreateUserProfileReq struct {
+	BaseEndpoint string
+	AuthToken    *auth.AuthToken
+	Body         any
+}
+
+func (r CreateUserProfileReq) CreateRequest(ctx context.Context, ctr *app.Container) (*http.Request, error) {
+	baseURL := r.BaseEndpoint + "/user-profiles"
+
+	fullURL, err := url.Parse(baseURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to construct URL: %w", err)
+	}
+
+	ctr.Logger.Debug(ctx, "POST request to team endpoint URL created",
+		logger.Value("url", fullURL.String()), logger.Value("on", "CreateUserProfileReq.CreateRequest"))
+
+	bodyBytes, err := json.Marshal(r.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal request body: %w", err)
+	}
+
+	req, err := http.NewRequest(http.MethodPost, fullURL.String(), bytes.NewReader(bodyBytes))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
 	}

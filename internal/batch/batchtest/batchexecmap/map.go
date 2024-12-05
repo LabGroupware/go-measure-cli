@@ -38,6 +38,7 @@ var TypeFactoryMap = map[ExecType]ExecutorFactory{
 	GetOrganizations:   queryreqbatch.GetOrganizationsFactory{},
 	GetUsers:           queryreqbatch.GetUsersFactory{},
 
+	CreateUserProfile:    cmdreqbatch.CreateUserProfileFactory{},
 	UpdateUserPreference: cmdreqbatch.UpdateUserPreferenceFactory{},
 	CreateTeam:           cmdreqbatch.CreateTeamFactory{},
 	AddUsersTeam:         cmdreqbatch.AddUsersTeamFactory{},
