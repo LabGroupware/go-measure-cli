@@ -24,9 +24,13 @@ func baseExecute(
 	ctr *app.Container,
 	filename string,
 	store *sync.Map,
+	outputRoot string,
+	metricsOutputRoot string,
 ) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
+
+	fmt.Println("baseExecute called!!", outputRoot, metricsOutputRoot)
 
 	file, err := os.Open(filepath.Join(ctr.Config.Batch.Test.Path, filename))
 	if err != nil {
@@ -78,19 +82,20 @@ func baseExecute(
 	var yamlData map[string]interface{}
 
 	if err := yaml.Unmarshal([]byte(result), &yamlData); err != nil {
-
 		return fmt.Errorf("failed to parse as YAML: %w", err)
 	}
 
 	ctr.Logger.Debug(ctx, "replaced content",
 		logger.Value("content", yamlData))
 
+	fmt.Println("content", yamlData, "type", conf.Type)
+
 	reader := bytes.NewReader([]byte(result))
 
 	if conf.Metrics.Enabled {
 		ctr.Logger.Debug(ctx, "metrics enabled",
 			logger.Value("metrics", conf.Metrics))
-		metricsbatch.PrefetchBatch(ctx, ctr, conf.Metrics, conf.Type)
+		metricsbatch.PrefetchBatch(ctx, ctr, conf.Metrics, conf.Type, metricsOutputRoot)
 	}
 
 	switch conf.Type {
@@ -98,11 +103,13 @@ func baseExecute(
 		var oneQuery onequerybatch.OneQueryConfig
 		decoder := yaml.NewDecoder(reader)
 		if err := decoder.Decode(&oneQuery); err != nil {
-
 			return fmt.Errorf("failed to decode yaml: %v", err)
 		}
+		fmt.Println("oneQuery", oneQuery)
 		var values map[string]string
 		if values, err = onequerybatch.OneQueryBatch(ctx, ctr, oneQuery, store); err != nil {
+			fmt.Println("failed to execute one query:---------------------------------------------------", err)
+
 			return fmt.Errorf("failed to execute one query: %v", err)
 		}
 		store.Range(func(key, value interface{}) bool {
@@ -119,7 +126,7 @@ func baseExecute(
 
 			return fmt.Errorf("failed to decode yaml: %v", err)
 		}
-		if err := massquerybatch.MassQueryBatch(ctx, ctr, massQuery); err != nil {
+		if err := massquerybatch.MassQueryBatch(ctx, ctr, massQuery, outputRoot); err != nil {
 			return fmt.Errorf("failed to execute mass query: %v", err)
 		}
 	case "WaitSaga":
@@ -132,7 +139,7 @@ func baseExecute(
 
 			return fmt.Errorf("failed to decode yaml: %v", err)
 		}
-		if err := pipelineBatch(ctx, ctr, pipeline, store); err != nil {
+		if err := pipelineBatch(ctx, ctr, pipeline, store, outputRoot, metricsOutputRoot); err != nil {
 			return fmt.Errorf("failed to execute pipeline: %v", err)
 		}
 	default:

@@ -23,6 +23,9 @@ func executeRequest(
 	mapStore *sync.Map,
 	hasDep bool,
 ) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	ctr.Logger.Debug(ctx, "executing request",
 		logger.Value("id", req.ID), logger.Value("on", "executeRequest"))
 
@@ -142,32 +145,24 @@ func executeRequest(
 		return fmt.Errorf("failed to create executor: %v", err)
 	}
 
-	execTerm, err := exec.QueryExecute(ctx, ctr)
+	err = exec.QueryExecute(ctx, ctr)
 	if err != nil {
 		ctr.Logger.Error(ctx, "failed to execute query",
 			logger.Value("error", err), logger.Value("id", internalID))
 		return fmt.Errorf("failed to execute query: %v", err)
 	}
-	select {
-	case <-ctx.Done():
-		execTerm <- struct{}{}
-		ctr.Logger.Info(ctx, "Query End For Term For Context Done",
-			logger.Value("QueryID", internalID), logger.Value("on", "executeRequest"))
-		return fmt.Errorf("context done")
-	case termType := <-queryTermChanWithBreak:
-		execTerm <- struct{}{}
-		ctr.Logger.Info(ctx, "Query End For Term For Break",
-			logger.Value("QueryID", internalID), logger.Value("on", "executeRequest"))
-		switch termType {
-		case queryreqbatch.ByCount:
-			ctr.Logger.Info(ctx, "Query End For Term By Count",
-				logger.Value("QueryID", internalID), logger.Value("on", "executeRequest"))
-		default:
-			ctr.Logger.Error(ctx, "Query End For Error",
-				logger.Value("QueryID", internalID), logger.Value("on", "executeRequest"))
-			return fmt.Errorf("error because of termType: %v", queryreqbatch.TerminateType(termType).String())
-		}
-	}
 
+	termType := <-queryTermChanWithBreak
+	ctr.Logger.Info(ctx, "Query End For Term For Break",
+		logger.Value("QueryID", internalID), logger.Value("on", "executeRequest"))
+	switch termType {
+	case queryreqbatch.ByCount:
+		ctr.Logger.Info(ctx, "Query End For Term By Count",
+			logger.Value("QueryID", internalID), logger.Value("on", "executeRequest"))
+	default:
+		ctr.Logger.Error(ctx, "Query End For Error",
+			logger.Value("QueryID", internalID), logger.Value("on", "executeRequest"))
+		return fmt.Errorf("error because of termType: %v", queryreqbatch.TerminateType(termType).String())
+	}
 	return nil
 }

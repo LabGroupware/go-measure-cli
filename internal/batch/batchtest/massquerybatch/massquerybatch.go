@@ -6,29 +6,20 @@ import (
 	"fmt"
 	"os"
 	"sync"
-	"time"
 
 	"github.com/LabGroupware/go-measure-tui/internal/app"
 	"github.com/LabGroupware/go-measure-tui/internal/batch/batchtest/queryreqbatch"
 	"github.com/LabGroupware/go-measure-tui/internal/logger"
 )
 
-func MassQueryBatch(ctx context.Context, ctr *app.Container, massQuery MassQuery) error {
-	var err error
+func MassQueryBatch(ctx context.Context, ctr *app.Container, massQuery MassQuery, outputRoot string) error {
 	concurrentCount := len(massQuery.Data.Requests)
 
 	threadExecutors := make([]*MassiveQueryThreadExecutor, concurrentCount)
 
-	timestamp := time.Now().Format("20060102_150405")
-	dirPath := fmt.Sprintf("%s/test_%s", ctr.Config.Batch.Test.MassQuery.Output, timestamp)
-	err = os.MkdirAll(dirPath, os.ModePerm)
-	if err != nil {
-		return fmt.Errorf("failed to create directory: %v", err)
-	}
-
 	for i := 0; i < concurrentCount; i++ {
 		request := massQuery.Data.Requests[i]
-		logFilePath := fmt.Sprintf("%s/logcsv_%010d.csv", dirPath, i+1)
+		logFilePath := fmt.Sprintf("%s/massive_query_%010d.csv", outputRoot, i+1)
 		file, err := os.Create(logFilePath)
 		if err != nil {
 			return fmt.Errorf("failed to create file: %v", err)
@@ -96,7 +87,6 @@ func MassQueryBatch(ctx context.Context, ctr *app.Container, massQuery MassQuery
 		wg.Add(1)
 		go func(exec *MassiveQueryThreadExecutor) {
 			defer wg.Done()
-			// defer exec.responseChanCloser()
 			if err := exec.Execute(ctx, ctr, startChan); err != nil {
 				ctr.Logger.Error(ctx, "failed to execute query",
 					logger.Value("error", err), logger.Value("id", exec.ID))

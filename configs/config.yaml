@@ -1,9 +1,9 @@
 lang: "ja"
 logging:
   output:
-    - type: "stdout"
-      format: "text"
-      level: "debug"
+    # - type: "stdout"
+    #   format: "text"
+    #   level: "debug"
     - type: "file"
       filename: "logs/app.log"
       format: "text"
@@ -41,8 +41,7 @@ web:
 batch:
   test:
     path: "batch/test"
-    massquery:
-      output: "bench/batch/massquery"
+    output: "bench/batch"
   metrics:
     output: "bench/metrics"
 

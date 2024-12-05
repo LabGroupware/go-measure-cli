@@ -34,18 +34,19 @@ func (e *MassiveQueryThreadExecutor) Execute(
 	ctr *app.Container,
 	startChan <-chan struct{},
 ) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
 	<-startChan
 
 	ctr.Logger.Info(ctx, "Query Start",
 		logger.Value("QueryID", e.ID), logger.Value("OutputFile", e.outputFile.Name()))
-	term, err := e.RequestExecutor.QueryExecute(ctx, ctr)
+	err := e.RequestExecutor.QueryExecute(ctx, ctr)
 	if err != nil {
 		return err
 	}
 
 	<-e.TermChan
-	term <- struct{}{}
 	ctr.Logger.Info(ctx, "Query End For Term",
 		logger.Value("QueryID", e.ID), logger.Value("OutputFile", e.outputFile.Name()))
 	return nil

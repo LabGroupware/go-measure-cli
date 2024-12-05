@@ -43,7 +43,7 @@ const (
 )
 
 type MetricsFetcher interface {
-	Fetch(ctx context.Context, ctr *app.Container) (any, chan<- struct{}, error)
+	Fetch(ctx context.Context, ctr *app.Container) (any, error)
 }
 
 type TermType int

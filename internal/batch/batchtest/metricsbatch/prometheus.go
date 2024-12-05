@@ -24,22 +24,14 @@ func (r PrometheusMetricsFetcher) CreateRequest(ctx context.Context, ctr *app.Co
 func (p *PrometheusMetricsFetcher) Fetch(
 	ctx context.Context,
 	ctr *app.Container,
-) (any, chan<- struct{}, error) {
+) (any, error) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
 	// INFO: close on executor, because only it will write to this channel
 	resChan := make(chan queryreq.ResponseContent[any])
 	// INFO: close on factor.Factory(response handler), because only it will write to this channel
 	termChan := make(chan TermType)
-
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				termChan <- TermTypeContext
-				return
-			}
-		}
-	}()
 
 	req := queryreq.RequestContent[PrometheusMetricsFetcher, any]{
 		Req:          *p,
@@ -49,21 +41,21 @@ func (p *PrometheusMetricsFetcher) Fetch(
 		CountLimit:   queryreq.RequestCountLimit{},
 	}
 
-	execTerm, err := req.QueryExecute(ctx, ctr)
+	err := req.QueryExecute(ctx, ctr)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to execute query: %w", err)
+		return nil, fmt.Errorf("failed to execute query: %w", err)
 	}
 
 	go func() {
 		defer close(termChan)
 
 		<-termChan
-		execTerm <- struct{}{}
+		cancel()
 		ctr.Logger.Info(ctx, "Prometheus Query End For Term",
 			logger.Value("on", "PrometheusMetricsFetcher.Fetch"))
 	}()
 
-	return nil, execTerm, nil
+	return nil, nil
 
 }
 

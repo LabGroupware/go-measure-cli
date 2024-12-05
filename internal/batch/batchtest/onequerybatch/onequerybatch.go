@@ -17,6 +17,7 @@ func OneQueryBatch(
 ) (map[string]string, error) {
 	newStore := sync.Map{}
 	err := executeRequest(ctx, ctr, 0, conf.Request, &newStore)
+	fmt.Println("finish!!!!!!!!", err)
 	if err != nil {
 		ctr.Logger.Error(ctx, "failed to find error",
 			logger.Value("error", err))

@@ -6,7 +6,7 @@ import (
 	"github.com/LabGroupware/go-measure-tui/internal/app"
 )
 
-func PrefetchBatch(ctx context.Context, ctr *app.Container, conf MetricsBatchConfig, testType string) (map[string]string, error) {
+func PrefetchBatch(ctx context.Context, ctr *app.Container, conf MetricsBatchConfig, testType string, outputRoot string) (map[string]string, error) {
 
 	// var err error
 	// concurrentCount := len(conf.Requests)

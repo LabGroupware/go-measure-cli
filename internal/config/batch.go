@@ -6,11 +6,7 @@ type BatchConfig struct {
 }
 
 type BatchTestConfig struct {
-	Path      string               `mapstructure:"path"`
-	MassQuery BatchMassQueryConfig `mapstructure:"massquery"`
-}
-
-type BatchMassQueryConfig struct {
+	Path   string `mapstructure:"path"`
 	Output string `mapstructure:"output"`
 }
 
