@@ -1,6 +1,7 @@
 package queryreq
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -21,7 +22,7 @@ type FindTeamReq struct {
 	}
 }
 
-func (r FindTeamReq) CreateRequest(ctr *app.Container) (*http.Request, error) {
+func (r FindTeamReq) CreateRequest(ctx context.Context, ctr *app.Container) (*http.Request, error) {
 	baseURL := r.BaseEndpoint + "/teams"
 
 	teamID := r.Path.TeamID
@@ -36,7 +37,7 @@ func (r FindTeamReq) CreateRequest(ctr *app.Container) (*http.Request, error) {
 	}
 	fullURL.RawQuery = queryParams.Encode()
 
-	ctr.Logger.Debug(ctr.Ctx, "GET request to team endpoint URL created",
+	ctr.Logger.Debug(ctx, "GET request to team endpoint URL created",
 		logger.Value("url", fullURL.String()), logger.Value("on", "FindTeamReq.CreateRequest"))
 
 	req, err := http.NewRequest(http.MethodGet, fullURL.String(), nil)
@@ -72,7 +73,7 @@ type GetTeamsReq struct {
 	}
 }
 
-func (r GetTeamsReq) CreateRequest(ctr *app.Container) (*http.Request, error) {
+func (r GetTeamsReq) CreateRequest(ctx context.Context, ctr *app.Container) (*http.Request, error) {
 	baseURL := r.BaseEndpoint + "/teams"
 
 	fullURL, err := url.Parse(baseURL)
@@ -104,7 +105,7 @@ func (r GetTeamsReq) CreateRequest(ctr *app.Container) (*http.Request, error) {
 	}
 	fullURL.RawQuery = queryParams.Encode()
 
-	ctr.Logger.Debug(ctr.Ctx, "GET request to teams endpoint URL created",
+	ctr.Logger.Debug(ctx, "GET request to teams endpoint URL created",
 		logger.Value("url", fullURL.String()), logger.Value("on", "GetTeamsReq.CreateRequest"))
 
 	req, err := http.NewRequest(http.MethodGet, fullURL.String(), nil)

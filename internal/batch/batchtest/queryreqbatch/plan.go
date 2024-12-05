@@ -1,6 +1,7 @@
 package queryreqbatch
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 
@@ -16,6 +17,7 @@ import (
 type FindTaskFactory struct{}
 
 func (f FindTaskFactory) Factory(
+	ctx context.Context,
 	ctr *app.Container,
 	id int,
 	request *ValidatedQueryRequest,
@@ -53,7 +55,7 @@ func (f FindTaskFactory) Factory(
 		close(resChan)
 	}
 
-	runAsyncProcessing(ctr, id, request, termChan, resChan, consumer)
+	runAsyncProcessing(ctx, ctr, id, request, termChan, resChan, consumer)
 
 	return queryreq.RequestContent[queryreq.FindTaskReq, response.ResponseDto[domain.TaskDto]]{
 		Req:          req,
@@ -67,6 +69,7 @@ func (f FindTaskFactory) Factory(
 type GetTasksFactory struct{}
 
 func (f GetTasksFactory) Factory(
+	ctx context.Context,
 	ctr *app.Container,
 	id int,
 	request *ValidatedQueryRequest,
@@ -85,7 +88,7 @@ func (f GetTasksFactory) Factory(
 		case "limit":
 			limitInt, err := strconv.Atoi(param[0])
 			if err != nil {
-				ctr.Logger.Warn(ctr.Ctx, "Failed to convert limit to int",
+				ctr.Logger.Warn(ctx, "Failed to convert limit to int",
 					logger.Value("error", err))
 				continue
 			}
@@ -93,7 +96,7 @@ func (f GetTasksFactory) Factory(
 		case "offset":
 			offsetInt, err := strconv.Atoi(param[0])
 			if err != nil {
-				ctr.Logger.Warn(ctr.Ctx, "Failed to convert offset to int",
+				ctr.Logger.Warn(ctx, "Failed to convert offset to int",
 					logger.Value("error", err))
 				continue
 			}
@@ -109,7 +112,7 @@ func (f GetTasksFactory) Factory(
 		case "withCount":
 			withCountBool, err := strconv.ParseBool(param[0])
 			if err != nil {
-				ctr.Logger.Warn(ctr.Ctx, "Failed to convert withCount to bool",
+				ctr.Logger.Warn(ctx, "Failed to convert withCount to bool",
 					logger.Value("error", err))
 				continue
 			}
@@ -117,7 +120,7 @@ func (f GetTasksFactory) Factory(
 		case "hasTeamFilter":
 			hasTeamFilterBool, err := strconv.ParseBool(param[0])
 			if err != nil {
-				ctr.Logger.Warn(ctr.Ctx, "Failed to convert hasTeamFilter to bool",
+				ctr.Logger.Warn(ctx, "Failed to convert hasTeamFilter to bool",
 					logger.Value("error", err))
 				continue
 			}
@@ -127,7 +130,7 @@ func (f GetTasksFactory) Factory(
 		case "hasStatusFilter":
 			hasStatusFilterBool, err := strconv.ParseBool(param[0])
 			if err != nil {
-				ctr.Logger.Warn(ctr.Ctx, "Failed to convert hasStatusFilter to bool",
+				ctr.Logger.Warn(ctx, "Failed to convert hasStatusFilter to bool",
 					logger.Value("error", err))
 				continue
 			}
@@ -137,7 +140,7 @@ func (f GetTasksFactory) Factory(
 		case "hasChargeUserFilter":
 			hasChargeUserFilterBool, err := strconv.ParseBool(param[0])
 			if err != nil {
-				ctr.Logger.Warn(ctr.Ctx, "Failed to convert hasChargeUserFilter to bool",
+				ctr.Logger.Warn(ctx, "Failed to convert hasChargeUserFilter to bool",
 					logger.Value("error", err))
 				continue
 			}
@@ -155,7 +158,7 @@ func (f GetTasksFactory) Factory(
 		case "hasFileObjectFilter":
 			hasFileObjectFilterBool, err := strconv.ParseBool(param[0])
 			if err != nil {
-				ctr.Logger.Warn(ctr.Ctx, "Failed to convert hasFileObjectFilter to bool",
+				ctr.Logger.Warn(ctx, "Failed to convert hasFileObjectFilter to bool",
 					logger.Value("error", err))
 				continue
 			}
@@ -176,7 +179,7 @@ func (f GetTasksFactory) Factory(
 		close(resChan)
 	}
 
-	runAsyncProcessing(ctr, id, request, termChan, resChan, consumer)
+	runAsyncProcessing(ctx, ctr, id, request, termChan, resChan, consumer)
 
 	return queryreq.RequestContent[queryreq.GetTasksReq, response.ListResponseDto[domain.TaskDto]]{
 		Req:          req,

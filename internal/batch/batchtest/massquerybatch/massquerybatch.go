@@ -1,6 +1,7 @@
 package massquerybatch
 
 import (
+	"context"
 	"encoding/csv"
 	"fmt"
 	"os"
@@ -12,7 +13,7 @@ import (
 	"github.com/LabGroupware/go-measure-tui/internal/logger"
 )
 
-func MassQueryBatch(ctr *app.Container, massQuery MassQuery) error {
+func MassQueryBatch(ctx context.Context, ctr *app.Container, massQuery MassQuery) error {
 	var err error
 	concurrentCount := len(massQuery.Data.Requests)
 
@@ -36,7 +37,7 @@ func MassQueryBatch(ctr *app.Container, massQuery MassQuery) error {
 			ID:         i + 1,
 			outputFile: file,
 		}
-		defer threadExecutors[i].Close(ctr.Ctx)
+		defer threadExecutors[i].Close(ctx)
 
 		writer := csv.NewWriter(file)
 		header := []string{"Success", "SendDatetime", "ReceivedDatetime", "Count", "ResponseTime", "StatusCode", "Data"}
@@ -51,25 +52,27 @@ func MassQueryBatch(ctr *app.Container, massQuery MassQuery) error {
 		termChan := make(chan queryreqbatch.TerminateType)
 		defer close(termChan)
 		validatedReq := &queryreqbatch.ValidatedQueryRequest{}
-		if err := queryreqbatch.ValidateQueryReq(ctr, request, validatedReq); err != nil {
+		if err := queryreqbatch.ValidateQueryReq(ctx, ctr, request, validatedReq); err != nil {
 			return fmt.Errorf("failed to validate query request: %v", err)
 		}
 		writeFunc := func(
+			ctx context.Context,
 			ctr *app.Container,
 			id int,
 			data queryreqbatch.WriteData,
 		) error {
 			writer := csv.NewWriter(threadExecutors[i].outputFile)
-			ctr.Logger.Debug(ctr.Ctx, "Writing data to csv",
+			ctr.Logger.Debug(ctx, "Writing data to csv",
 				logger.Value("id", id), logger.Value("data", data), logger.Value("on", "runAsyncProcessing"))
 			if err := writer.Write(data.ToSlice()); err != nil {
-				ctr.Logger.Error(ctr.Ctx, "failed to write data to csv",
+				ctr.Logger.Error(ctx, "failed to write data to csv",
 					logger.Value("error", err), logger.Value("on", "runAsyncProcessing"))
 			}
 			writer.Flush()
 			return nil
 		}
 		executor, resCloser, err := factor.Factory(
+			ctx,
 			ctr,
 			i+1,
 			validatedReq,
@@ -78,7 +81,7 @@ func MassQueryBatch(ctr *app.Container, massQuery MassQuery) error {
 			ctr.Config.Web.API.Url,
 			writeFunc,
 		)
-		ctr.Logger.Info(ctr.Ctx, "created executor",
+		ctr.Logger.Info(ctx, "created executor",
 			logger.Value("id", i+1), logger.Value("type", endType), logger.Value("executor", executor))
 		if err != nil {
 			return fmt.Errorf("failed to create executor: %v", err)
@@ -95,8 +98,8 @@ func MassQueryBatch(ctr *app.Container, massQuery MassQuery) error {
 		go func(exec *MassiveQueryThreadExecutor) {
 			defer wg.Done()
 			defer exec.responseChanCloser()
-			if err := exec.Execute(ctr, startChan); err != nil {
-				ctr.Logger.Error(ctr.Ctx, "failed to execute query",
+			if err := exec.Execute(ctx, ctr, startChan); err != nil {
+				ctr.Logger.Error(ctx, "failed to execute query",
 					logger.Value("error", err), logger.Value("id", exec.ID))
 			}
 		}(executor)

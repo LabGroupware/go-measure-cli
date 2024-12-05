@@ -1,0 +1,18 @@
+type: OneQuery
+request:
+  endpointType: GetOrganizations
+  queryParam:
+    limit: [1]
+    offset: [0]
+    pagination: ["offset"]
+    sortField: ["name"]
+    sortOrder: ["asc"]
+    hasUserFilter: [true]
+    filterUserIDs: ["{{userId}}"]
+    userFilterType: ["all"]
+    with: []
+  pathVariables: {}
+  vars:
+    - id: orgId
+      jmesPath: "data.listData[0].organizationId"
+      onError: "empty"

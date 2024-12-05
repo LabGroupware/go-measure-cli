@@ -1,0 +1,13 @@
+type: OneQuery
+request:
+  endpointType: GetUsers
+  queryParam:
+    limit: [1]
+    offset: [0]
+    cursor: [""]
+    pagination: ["offset"]
+  pathVariables: {}
+  outputs:
+    - id: userId
+      jmesPath: "data.listData[0].userId"
+      onError: "cancel" # cancel or random or ignore or empty

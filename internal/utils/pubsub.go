@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"sync"
 )
 
@@ -48,6 +49,7 @@ func (b *Broadcaster[T]) Broadcast(value T) <-chan struct{} {
 	go func() {
 		defer close(done)
 		for range b.subscribers {
+			fmt.Println("Broadcasting")
 			<-doneAny
 		}
 

@@ -1,6 +1,7 @@
 package queryreq
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -18,7 +19,7 @@ type GetJobReq struct {
 	}
 }
 
-func (r GetJobReq) CreateRequest(ctr *app.Container) (*http.Request, error) {
+func (r GetJobReq) CreateRequest(ctx context.Context, ctr *app.Container) (*http.Request, error) {
 	baseURL := r.BaseEndpoint + "/jobs"
 
 	jobID := r.Path.JobID
@@ -27,7 +28,7 @@ func (r GetJobReq) CreateRequest(ctr *app.Container) (*http.Request, error) {
 		return nil, fmt.Errorf("failed to construct URL: %w", err)
 	}
 
-	ctr.Logger.Debug(ctr.Ctx, "GET request to job endpoint URL created",
+	ctr.Logger.Debug(ctx, "GET request to job endpoint URL created",
 		logger.Value("url", fullURL.String()), logger.Value("on", "GetJobReq.CreateRequest"))
 
 	req, err := http.NewRequest(http.MethodGet, fullURL.String(), nil)

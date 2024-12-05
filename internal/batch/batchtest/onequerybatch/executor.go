@@ -1,9 +1,8 @@
-package prefetchbatch
+package onequerybatch
 
 import (
 	"context"
 	"fmt"
-	"regexp"
 	"sync"
 	"time"
 
@@ -12,45 +11,17 @@ import (
 	"github.com/LabGroupware/go-measure-tui/internal/logger"
 	"github.com/LabGroupware/go-measure-tui/internal/utils"
 	"github.com/jmespath/go-jmespath"
-	"gopkg.in/yaml.v3"
 )
 
 func executeRequest(
 	ctx context.Context,
 	ctr *app.Container,
 	internalID int,
-	req *PrefetchRequest,
+	req *OneQueryRequest,
 	mapStore *sync.Map,
-	hasDep bool,
 ) error {
 	ctr.Logger.Debug(ctx, "executing request",
-		logger.Value("id", req.ID), logger.Value("on", "executeRequest"))
-
-	var targetReq PrefetchRequest
-	if hasDep {
-		ctr.Logger.Debug(ctx, "replace placeholders for dependent request",
-			logger.Value("id", req.ID), logger.Value("on", "executeRequest"))
-		output, err := yaml.Marshal(req)
-		if err != nil {
-			return fmt.Errorf("failed to marshal request: %v", err)
-		}
-		placeholderRegex := regexp.MustCompile(`\{\{\s*(\w+)\s*\}\}`)
-
-		replaced := placeholderRegex.ReplaceAllStringFunc(string(output), func(match string) string {
-			key := placeholderRegex.FindStringSubmatch(match)[1]
-			if v, exists := mapStore.Load(key); exists {
-				return v.(string)
-			}
-			return match
-		})
-
-		if err := yaml.Unmarshal([]byte(replaced), &targetReq); err != nil {
-			return fmt.Errorf("failed to unmarshal replaced request: %v", err)
-		}
-
-		ctr.Logger.Debug(ctx, "replaced request",
-			logger.Value("id", req.ID), logger.Value("replaced", targetReq), logger.Value("on", "executeRequest"))
-	}
+		logger.Value("on", "executeRequest"))
 
 	endType := req.EndpointType
 	queryTermChanWithBreak := make(chan queryreqbatch.TerminateType) // TODO: close this channel
@@ -63,7 +34,7 @@ func executeRequest(
 		id int,
 		data queryreqbatch.WriteData,
 	) error {
-		for _, replaceVar := range req.Vars {
+		for _, replaceVar := range req.Outputs {
 			jmesPathQuery := replaceVar.JMESPath
 			result, err := jmespath.Search(jmesPathQuery, data.RawData)
 			if err != nil {
@@ -152,7 +123,7 @@ func executeRequest(
 		execTerm <- struct{}{}
 		ctr.Logger.Info(ctx, "Query End For Term For Context Done",
 			logger.Value("QueryID", internalID), logger.Value("on", "executeRequest"))
-		return fmt.Errorf("context done")
+		return nil
 	case termType := <-queryTermChanWithBreak:
 		execTerm <- struct{}{}
 		ctr.Logger.Info(ctx, "Query End For Term For Break",

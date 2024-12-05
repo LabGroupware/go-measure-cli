@@ -1,6 +1,7 @@
 package queryreqbatch
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 
@@ -16,6 +17,7 @@ import (
 type FindUserFactory struct{}
 
 func (f FindUserFactory) Factory(
+	ctx context.Context,
 	ctr *app.Container,
 	id int,
 	request *ValidatedQueryRequest,
@@ -53,7 +55,7 @@ func (f FindUserFactory) Factory(
 		close(resChan)
 	}
 
-	runAsyncProcessing(ctr, id, request, termChan, resChan, consumer)
+	runAsyncProcessing(ctx, ctr, id, request, termChan, resChan, consumer)
 
 	return queryreq.RequestContent[queryreq.FindUserReq, response.ResponseDto[domain.UserProfileDto]]{
 		Req:          req,
@@ -67,6 +69,7 @@ func (f FindUserFactory) Factory(
 type GetUsersFactory struct{}
 
 func (f GetUsersFactory) Factory(
+	ctx context.Context,
 	ctr *app.Container,
 	id int,
 	request *ValidatedQueryRequest,
@@ -85,7 +88,7 @@ func (f GetUsersFactory) Factory(
 		case "limit":
 			limitInt, err := strconv.Atoi(param[0])
 			if err != nil {
-				ctr.Logger.Warn(ctr.Ctx, "Failed to convert limit to int",
+				ctr.Logger.Warn(ctx, "Failed to convert limit to int",
 					logger.Value("error", err))
 				continue
 			}
@@ -93,7 +96,7 @@ func (f GetUsersFactory) Factory(
 		case "offset":
 			offsetInt, err := strconv.Atoi(param[0])
 			if err != nil {
-				ctr.Logger.Warn(ctr.Ctx, "Failed to convert offset to int",
+				ctr.Logger.Warn(ctx, "Failed to convert offset to int",
 					logger.Value("error", err))
 				continue
 			}
@@ -109,7 +112,7 @@ func (f GetUsersFactory) Factory(
 		case "withCount":
 			withCountBool, err := strconv.ParseBool(param[0])
 			if err != nil {
-				ctr.Logger.Warn(ctr.Ctx, "Failed to convert withCount to bool",
+				ctr.Logger.Warn(ctx, "Failed to convert withCount to bool",
 					logger.Value("error", err))
 				continue
 			}
@@ -126,7 +129,7 @@ func (f GetUsersFactory) Factory(
 		close(resChan)
 	}
 
-	runAsyncProcessing(ctr, id, request, termChan, resChan, consumer)
+	runAsyncProcessing(ctx, ctr, id, request, termChan, resChan, consumer)
 
 	return queryreq.RequestContent[queryreq.GetUsersReq, response.ListResponseDto[domain.UserProfileDto]]{
 		Req:          req,

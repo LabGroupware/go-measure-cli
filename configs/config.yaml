@@ -43,6 +43,8 @@ batch:
     path: "batch/test"
     massquery:
       output: "bench/batch/massquery"
+  metrics:
+    output: "bench/metrics"
 
 view:
   color:

@@ -1,6 +1,7 @@
 package prefetchbatch
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"sync/atomic"
@@ -14,14 +15,14 @@ type prefetchExecuteRequest struct {
 	id              string
 	request         *PrefetchRequest
 	mustWaitChan    *[]<-chan struct{}
-	termChan        <-chan struct{}
 	selfBroadCaster *utils.Broadcaster[struct{}]
 }
 
-func PrefetchBatch(ctr *app.Container, conf PrefetchConfig) (map[string]string, error) {
-	store := sync.Map{}
-	termBroadCaster := utils.NewBroadcaster[struct{}]()
-	defer termBroadCaster.Close()
+func PrefetchBatch(ctx context.Context, ctr *app.Container, conf PrefetchConfig, store *sync.Map) (map[string]string, error) {
+	newStore := sync.Map{}
+
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
 	requests := make([]prefetchExecuteRequest, len(conf.Requests))
 	for i, req := range conf.Requests {
@@ -29,7 +30,6 @@ func PrefetchBatch(ctr *app.Container, conf PrefetchConfig) (map[string]string, 
 			id:              req.ID,
 			request:         req,
 			mustWaitChan:    &[]<-chan struct{}{},
-			termChan:        termBroadCaster.Subscribe(),
 			selfBroadCaster: utils.NewBroadcaster[struct{}](),
 		}
 		defer requests[i].selfBroadCaster.Close()
@@ -51,7 +51,7 @@ func PrefetchBatch(ctr *app.Container, conf PrefetchConfig) (map[string]string, 
 				return nil, fmt.Errorf("request %s depends on non-existent request(%s)", req.id, depID)
 			}
 		}
-		ctr.Logger.Debug(ctr.Ctx, "request depends on",
+		ctr.Logger.Debug(ctx, "request depends on",
 			logger.Value("id", req.id), logger.Value("depends_on", req.request.DependsOn), logger.Value("on", "PrefetchBatch"))
 	}
 
@@ -65,11 +65,12 @@ func PrefetchBatch(ctr *app.Container, conf PrefetchConfig) (map[string]string, 
 				<-broadDone
 				wg.Done()
 			}()
+
 			unprocessed := len(*preReq.mustWaitChan)
 			for _, waitChan := range *preReq.mustWaitChan {
 			loop:
 				select {
-				case <-preReq.termChan:
+				case <-ctx.Done():
 					<-waitChan
 					return
 				case <-waitChan:
@@ -79,39 +80,38 @@ func PrefetchBatch(ctr *app.Container, conf PrefetchConfig) (map[string]string, 
 					}
 				}
 			}
-			err := executeRequest(ctr, i, preReq.request, preReq.termChan, &store, len(*preReq.mustWaitChan) > 0)
+
+			err := executeRequest(ctx, ctr, i, preReq.request, &newStore, len(*preReq.mustWaitChan) > 0)
 
 			if err != nil {
 				atomicErr.Store(err)
-				ctr.Logger.Error(ctr.Ctx, "failed to execute request",
+				ctr.Logger.Error(ctx, "failed to execute request",
 					logger.Value("request_id", preReq.id), logger.Value("error", err), logger.Value("on", "PrefetchBatch"))
-				ctr.Logger.Info(ctr.Ctx, "terminating all requests: failed to execute prefetch request",
+				ctr.Logger.Info(ctx, "terminating all requests: failed to execute prefetch request",
 					logger.Value("request_id", preReq.id), logger.Value("on", "PrefetchBatch"))
-				termDoneChan := termBroadCaster.Broadcast(struct{}{})
-
-				<-preReq.termChan
-				<-termDoneChan
+				cancel()
 				return
 			}
-			ctr.Logger.Debug(ctr.Ctx, "request finished",
+			ctr.Logger.Debug(ctx, "request finished",
 				logger.Value("id", preReq.id), logger.Value("on", "PrefetchBatch"))
 		}(req)
 	}
 
-	ctr.Logger.Debug(ctr.Ctx, "waiting for all requests to finish",
+	ctr.Logger.Debug(ctx, "waiting for all requests to finish",
 		logger.Value("on", "PrefetchBatch"))
 	wg.Wait()
-	ctr.Logger.Debug(ctr.Ctx, "all requests finished",
+	ctr.Logger.Debug(ctx, "all requests finished",
 		logger.Value("on", "PrefetchBatch"))
 
 	if err := atomicErr.Load(); err != nil {
-		ctr.Logger.Error(ctr.Ctx, "failed to find error",
+		ctr.Logger.Error(ctx, "failed to find error",
 			logger.Value("error", err.(error)), logger.Value("on", "PrefetchBatch"))
 		return nil, err.(error)
 	}
 
 	result := make(map[string]string)
-	store.Range(func(key, value interface{}) bool {
+	newStore.Range(func(key, value interface{}) bool {
+		store.Store(key.(string), value.(string))
 		result[key.(string)] = value.(string)
 		return true
 	})

@@ -1,6 +1,7 @@
 package queryreq
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -21,7 +22,7 @@ type FindOrganizationReq struct {
 	}
 }
 
-func (r FindOrganizationReq) CreateRequest(ctr *app.Container) (*http.Request, error) {
+func (r FindOrganizationReq) CreateRequest(ctx context.Context, ctr *app.Container) (*http.Request, error) {
 	baseURL := r.BaseEndpoint + "/organizations"
 
 	organizationID := r.Path.OrganizationID
@@ -36,7 +37,7 @@ func (r FindOrganizationReq) CreateRequest(ctr *app.Container) (*http.Request, e
 	}
 	fullURL.RawQuery = queryParams.Encode()
 
-	ctr.Logger.Debug(ctr.Ctx, "GET request to organization endpoint URL created",
+	ctr.Logger.Debug(ctx, "GET request to organization endpoint URL created",
 		logger.Value("url", fullURL.String()), logger.Value("on", "FindOrganizationReq.CreateRequest"))
 
 	req, err := http.NewRequest(http.MethodGet, fullURL.String(), nil)
@@ -72,7 +73,7 @@ type GetOrganizationsReq struct {
 	}
 }
 
-func (r GetOrganizationsReq) CreateRequest(ctr *app.Container) (*http.Request, error) {
+func (r GetOrganizationsReq) CreateRequest(ctx context.Context, ctr *app.Container) (*http.Request, error) {
 	baseURL := r.BaseEndpoint + "/organizations"
 
 	fullURL, err := url.Parse(baseURL)
@@ -106,7 +107,7 @@ func (r GetOrganizationsReq) CreateRequest(ctr *app.Container) (*http.Request, e
 	}
 	fullURL.RawQuery = queryParams.Encode()
 
-	ctr.Logger.Debug(ctr.Ctx, "GET request to organizations endpoint URL created",
+	ctr.Logger.Debug(ctx, "GET request to organizations endpoint URL created",
 		logger.Value("url", fullURL.String()), logger.Value("on", "GetOrganizationsReq.CreateRequest"))
 
 	req, err := http.NewRequest(http.MethodGet, fullURL.String(), nil)

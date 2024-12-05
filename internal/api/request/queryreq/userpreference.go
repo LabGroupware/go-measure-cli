@@ -1,6 +1,7 @@
 package queryreq
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -21,7 +22,7 @@ type FindUserPreferenceReq struct {
 	}
 }
 
-func (r FindUserPreferenceReq) CreateRequest(ctr *app.Container) (*http.Request, error) {
+func (r FindUserPreferenceReq) CreateRequest(ctx context.Context, ctr *app.Container) (*http.Request, error) {
 	baseURL := r.BaseEndpoint + "/user-preferences"
 
 	userPreferenceID := r.Path.UserPreferenceID
@@ -36,7 +37,7 @@ func (r FindUserPreferenceReq) CreateRequest(ctr *app.Container) (*http.Request,
 	}
 	fullURL.RawQuery = queryParams.Encode()
 
-	ctr.Logger.Debug(ctr.Ctx, "GET request to user preference endpoint URL created",
+	ctr.Logger.Debug(ctx, "GET request to user preference endpoint URL created",
 		logger.Value("url", fullURL.String()), logger.Value("on", "FindUserPreferenceReq.CreateRequest"))
 
 	req, err := http.NewRequest(http.MethodGet, fullURL.String(), nil)

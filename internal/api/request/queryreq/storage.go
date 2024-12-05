@@ -1,6 +1,7 @@
 package queryreq
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -21,7 +22,7 @@ type FindFileObjectReq struct {
 	}
 }
 
-func (r FindFileObjectReq) CreateRequest(ctr *app.Container) (*http.Request, error) {
+func (r FindFileObjectReq) CreateRequest(ctx context.Context, ctr *app.Container) (*http.Request, error) {
 	baseURL := r.BaseEndpoint + "/file-objects"
 
 	fileObjectID := r.Path.FileObjectID
@@ -36,7 +37,7 @@ func (r FindFileObjectReq) CreateRequest(ctr *app.Container) (*http.Request, err
 	}
 	fullURL.RawQuery = queryParams.Encode()
 
-	ctr.Logger.Debug(ctr.Ctx, "GET request to file object endpoint URL created",
+	ctr.Logger.Debug(ctx, "GET request to file object endpoint URL created",
 		logger.Value("url", fullURL.String()), logger.Value("on", "FindFileObjectReq.CreateRequest"))
 
 	req, err := http.NewRequest(http.MethodGet, fullURL.String(), nil)
@@ -67,7 +68,7 @@ type GetFileObjectsReq struct {
 	}
 }
 
-func (r GetFileObjectsReq) CreateRequest(ctr *app.Container) (*http.Request, error) {
+func (r GetFileObjectsReq) CreateRequest(ctx context.Context, ctr *app.Container) (*http.Request, error) {
 	baseURL := r.BaseEndpoint + "/file-objects"
 
 	fullURL, err := url.Parse(baseURL)
@@ -92,7 +93,7 @@ func (r GetFileObjectsReq) CreateRequest(ctr *app.Container) (*http.Request, err
 	}
 	fullURL.RawQuery = queryParams.Encode()
 
-	ctr.Logger.Debug(ctr.Ctx, "GET request to file objects endpoint URL created",
+	ctr.Logger.Debug(ctx, "GET request to file objects endpoint URL created",
 		logger.Value("url", fullURL.String()), logger.Value("on", "GetFileObjectsReq.CreateRequest"))
 
 	req, err := http.NewRequest(http.MethodGet, fullURL.String(), nil)

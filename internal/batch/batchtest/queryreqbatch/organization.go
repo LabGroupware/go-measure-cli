@@ -1,6 +1,7 @@
 package queryreqbatch
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 
@@ -16,6 +17,7 @@ import (
 type FindOrganizationFactory struct{}
 
 func (f FindOrganizationFactory) Factory(
+	ctx context.Context,
 	ctr *app.Container,
 	id int,
 	request *ValidatedQueryRequest,
@@ -53,7 +55,7 @@ func (f FindOrganizationFactory) Factory(
 		close(resChan)
 	}
 
-	runAsyncProcessing(ctr, id, request, termChan, resChan, consumer)
+	runAsyncProcessing(ctx, ctr, id, request, termChan, resChan, consumer)
 
 	return queryreq.RequestContent[queryreq.FindOrganizationReq, response.ResponseDto[domain.OrganizationDto]]{
 		Req:          req,
@@ -67,6 +69,7 @@ func (f FindOrganizationFactory) Factory(
 type GetOrganizationsFactory struct{}
 
 func (f GetOrganizationsFactory) Factory(
+	ctx context.Context,
 	ctr *app.Container,
 	id int,
 	request *ValidatedQueryRequest,
@@ -85,7 +88,7 @@ func (f GetOrganizationsFactory) Factory(
 		case "limit":
 			limitInt, err := strconv.Atoi(param[0])
 			if err != nil {
-				ctr.Logger.Warn(ctr.Ctx, "Failed to convert limit to int",
+				ctr.Logger.Warn(ctx, "Failed to convert limit to int",
 					logger.Value("error", err))
 				continue
 			}
@@ -93,7 +96,7 @@ func (f GetOrganizationsFactory) Factory(
 		case "offset":
 			offsetInt, err := strconv.Atoi(param[0])
 			if err != nil {
-				ctr.Logger.Warn(ctr.Ctx, "Failed to convert offset to int",
+				ctr.Logger.Warn(ctx, "Failed to convert offset to int",
 					logger.Value("error", err))
 				continue
 			}
@@ -109,7 +112,7 @@ func (f GetOrganizationsFactory) Factory(
 		case "withCount":
 			withCountBool, err := strconv.ParseBool(param[0])
 			if err != nil {
-				ctr.Logger.Warn(ctr.Ctx, "Failed to convert withCount to bool",
+				ctr.Logger.Warn(ctx, "Failed to convert withCount to bool",
 					logger.Value("error", err))
 				continue
 			}
@@ -117,7 +120,7 @@ func (f GetOrganizationsFactory) Factory(
 		case "hasOwnerFilter":
 			hasOwnerFilterBool, err := strconv.ParseBool(param[0])
 			if err != nil {
-				ctr.Logger.Warn(ctr.Ctx, "Failed to convert hasOwnerFilter to bool",
+				ctr.Logger.Warn(ctx, "Failed to convert hasOwnerFilter to bool",
 					logger.Value("error", err))
 				continue
 			}
@@ -127,7 +130,7 @@ func (f GetOrganizationsFactory) Factory(
 		case "hasPlanFilter":
 			hasPlanFilterBool, err := strconv.ParseBool(param[0])
 			if err != nil {
-				ctr.Logger.Warn(ctr.Ctx, "Failed to convert hasPlanFilter to bool",
+				ctr.Logger.Warn(ctx, "Failed to convert hasPlanFilter to bool",
 					logger.Value("error", err))
 				continue
 			}
@@ -137,7 +140,7 @@ func (f GetOrganizationsFactory) Factory(
 		case "hasUserFilter":
 			hasUserFilterBool, err := strconv.ParseBool(param[0])
 			if err != nil {
-				ctr.Logger.Warn(ctr.Ctx, "Failed to convert hasUserFilter to bool",
+				ctr.Logger.Warn(ctx, "Failed to convert hasUserFilter to bool",
 					logger.Value("error", err))
 				continue
 			}
@@ -158,7 +161,7 @@ func (f GetOrganizationsFactory) Factory(
 		close(resChan)
 	}
 
-	runAsyncProcessing(ctr, id, request, termChan, resChan, consumer)
+	runAsyncProcessing(ctx, ctr, id, request, termChan, resChan, consumer)
 
 	return queryreq.RequestContent[queryreq.GetOrganizationsReq, response.ListResponseDto[domain.OrganizationDto]]{
 		Req:          req,

@@ -1,6 +1,7 @@
 package queryreq
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -21,7 +22,7 @@ type FindTaskReq struct {
 	}
 }
 
-func (r FindTaskReq) CreateRequest(ctr *app.Container) (*http.Request, error) {
+func (r FindTaskReq) CreateRequest(ctx context.Context, ctr *app.Container) (*http.Request, error) {
 	baseURL := r.BaseEndpoint + "/tasks"
 
 	taskID := r.Path.TaskID
@@ -41,7 +42,7 @@ func (r FindTaskReq) CreateRequest(ctr *app.Container) (*http.Request, error) {
 		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
 	}
 
-	ctr.Logger.Debug(ctr.Ctx, "GET request to task endpoint URL created",
+	ctr.Logger.Debug(ctx, "GET request to task endpoint URL created",
 		logger.Value("url", fullURL.String()), logger.Value("on", "FindTaskReq.CreateRequest"))
 
 	req.Header.Set("Accept", "application/json")
@@ -78,7 +79,7 @@ type GetTasksReq struct {
 	}
 }
 
-func (r GetTasksReq) CreateRequest(ctr *app.Container) (*http.Request, error) {
+func (r GetTasksReq) CreateRequest(ctx context.Context, ctr *app.Container) (*http.Request, error) {
 	baseURL := r.BaseEndpoint + "/teams"
 
 	fullURL, err := url.Parse(baseURL)
@@ -120,7 +121,7 @@ func (r GetTasksReq) CreateRequest(ctr *app.Container) (*http.Request, error) {
 	}
 	fullURL.RawQuery = queryParams.Encode()
 
-	ctr.Logger.Debug(ctr.Ctx, "GET request to tasks endpoint URL created",
+	ctr.Logger.Debug(ctx, "GET request to tasks endpoint URL created",
 		logger.Value("url", fullURL.String()), logger.Value("on", "GetTasksReq.CreateRequest"))
 
 	req, err := http.NewRequest(http.MethodGet, fullURL.String(), nil)

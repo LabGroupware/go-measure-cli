@@ -30,27 +30,31 @@ func NewMassiveQueryThreadExecutor(
 	}
 }
 
-func (e *MassiveQueryThreadExecutor) Execute(ctr *app.Container, startChan <-chan struct{}) error {
+func (e *MassiveQueryThreadExecutor) Execute(
+	ctx context.Context,
+	ctr *app.Container,
+	startChan <-chan struct{},
+) error {
 
 	<-startChan
 
-	ctr.Logger.Info(ctr.Ctx, "Query Start",
+	ctr.Logger.Info(ctx, "Query Start",
 		logger.Value("QueryID", e.ID), logger.Value("OutputFile", e.outputFile.Name()))
-	term, err := e.RequestExecutor.QueryExecute(ctr)
+	term, err := e.RequestExecutor.QueryExecute(ctx, ctr)
 	if err != nil {
 		return err
 	}
 
 	for {
 		select {
-		case <-ctr.Ctx.Done():
+		case <-ctx.Done():
 			term <- struct{}{}
-			ctr.Logger.Info(ctr.Ctx, "Query End For Context",
+			ctr.Logger.Info(ctx, "Query End For Context",
 				logger.Value("QueryID", e.ID), logger.Value("OutputFile", e.outputFile.Name()))
 			return nil
 		case <-e.TermChan:
 			term <- struct{}{}
-			ctr.Logger.Info(ctr.Ctx, "Query End For Term",
+			ctr.Logger.Info(ctx, "Query End For Term",
 				logger.Value("QueryID", e.ID), logger.Value("OutputFile", e.outputFile.Name()))
 			return nil
 		}

@@ -1,6 +1,8 @@
 package queryreqbatch
 
 import (
+	"context"
+
 	"github.com/LabGroupware/go-measure-tui/internal/api/request/queryreq"
 	"github.com/LabGroupware/go-measure-tui/internal/app"
 	"github.com/LabGroupware/go-measure-tui/internal/auth"
@@ -8,6 +10,7 @@ import (
 
 type ExecutorFactory interface {
 	Factory(
+		ctx context.Context,
 		ctr *app.Container,
 		id int,
 		request *ValidatedQueryRequest,

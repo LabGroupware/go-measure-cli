@@ -1,6 +1,7 @@
 package queryreqbatch
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/LabGroupware/go-measure-tui/internal/api/request/queryreq"
@@ -13,6 +14,7 @@ import (
 type FindJobFactory struct{}
 
 func (f FindJobFactory) Factory(
+	ctx context.Context,
 	ctr *app.Container,
 	id int,
 	request *ValidatedQueryRequest,
@@ -43,7 +45,7 @@ func (f FindJobFactory) Factory(
 		close(resChan)
 	}
 
-	runAsyncProcessing(ctr, id, request, termChan, resChan, consumer)
+	runAsyncProcessing(ctx, ctr, id, request, termChan, resChan, consumer)
 
 	return queryreq.RequestContent[queryreq.GetJobReq, response.JobResponseDto]{
 		Req:          req,

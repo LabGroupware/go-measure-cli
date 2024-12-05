@@ -1,6 +1,7 @@
 package queryreq
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -21,7 +22,7 @@ type FindUserReq struct {
 	}
 }
 
-func (r FindUserReq) CreateRequest(ctr *app.Container) (*http.Request, error) {
+func (r FindUserReq) CreateRequest(ctx context.Context, ctr *app.Container) (*http.Request, error) {
 	baseURL := r.BaseEndpoint + "/user-profiles"
 
 	userID := r.Path.UserID
@@ -36,7 +37,7 @@ func (r FindUserReq) CreateRequest(ctr *app.Container) (*http.Request, error) {
 	}
 	fullURL.RawQuery = queryParams.Encode()
 
-	ctr.Logger.Debug(ctr.Ctx, "GET request to user profile endpoint URL created",
+	ctr.Logger.Debug(ctx, "GET request to user profile endpoint URL created",
 		logger.Value("url", fullURL.String()), logger.Value("on", "FindUserReq.CreateRequest"))
 
 	req, err := http.NewRequest(http.MethodGet, fullURL.String(), nil)
@@ -65,7 +66,7 @@ type GetUsersReq struct {
 	}
 }
 
-func (r GetUsersReq) CreateRequest(ctr *app.Container) (*http.Request, error) {
+func (r GetUsersReq) CreateRequest(ctx context.Context, ctr *app.Container) (*http.Request, error) {
 	baseURL := r.BaseEndpoint + "/user-profiles"
 
 	fullURL, err := url.Parse(baseURL)
@@ -86,7 +87,7 @@ func (r GetUsersReq) CreateRequest(ctr *app.Container) (*http.Request, error) {
 	}
 	fullURL.RawQuery = queryParams.Encode()
 
-	ctr.Logger.Debug(ctr.Ctx, "GET request to user profiles endpoint URL created",
+	ctr.Logger.Debug(ctx, "GET request to user profiles endpoint URL created",
 		logger.Value("url", fullURL.String()), logger.Value("on", "GetUsersReq.CreateRequest"))
 
 	req, err := http.NewRequest(http.MethodGet, fullURL.String(), nil)

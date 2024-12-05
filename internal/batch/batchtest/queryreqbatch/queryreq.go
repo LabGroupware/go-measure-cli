@@ -1,6 +1,7 @@
 package queryreqbatch
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -44,7 +45,7 @@ type QueryRequest struct {
 	} `yaml:"dataOutputFilter"`
 }
 
-func ValidateQueryReq(ctr *app.Container, req QueryRequest, validated *ValidatedQueryRequest) error {
+func ValidateQueryReq(ctx context.Context, ctr *app.Container, req QueryRequest, validated *ValidatedQueryRequest) error {
 	queryType := NewQueryTypeFromString(req.EndpointType)
 	if queryType == 0 {
 		return fmt.Errorf("invalid query type: %s", req.EndpointType)
@@ -87,7 +88,7 @@ func ValidateQueryReq(ctr *app.Container, req QueryRequest, validated *Validated
 		op = *req.Break.StatusCode.Op
 		value = *req.Break.StatusCode.Value
 	}
-	statusCodeMatcher, err := statusCodeMatherFactory(ctr, op, value)
+	statusCodeMatcher, err := statusCodeMatherFactory(ctx, ctr, op, value)
 	if err != nil {
 		return fmt.Errorf("failed to create status code matcher: %w", err)
 	}
@@ -113,7 +114,7 @@ func ValidateQueryReq(ctr *app.Container, req QueryRequest, validated *Validated
 		op = *req.ExcludeStatusFilter.Op
 		value = *req.ExcludeStatusFilter.Value
 	}
-	statusCodeMatcher, err = statusCodeMatherFactory(ctr, op, value)
+	statusCodeMatcher, err = statusCodeMatherFactory(ctx, ctr, op, value)
 	if err != nil {
 		return fmt.Errorf("failed to create status code matcher: %w", err)
 	}
@@ -130,7 +131,7 @@ func ValidateQueryReq(ctr *app.Container, req QueryRequest, validated *Validated
 
 type StatusCodeMatcher func(statusCode int) bool
 
-func statusCodeMatherFactory(ctr *app.Container, op string, value string) (StatusCodeMatcher, error) {
+func statusCodeMatherFactory(ctx context.Context, ctr *app.Container, op string, value string) (StatusCodeMatcher, error) {
 	switch op {
 	case "none":
 		return func(statusCode int) bool {
@@ -139,7 +140,7 @@ func statusCodeMatherFactory(ctr *app.Container, op string, value string) (Statu
 	case "eq":
 		statusCodeInt, err := strconv.Atoi(value)
 		if err != nil {
-			ctr.Logger.Error(ctr.Ctx, "failed to convert status code to int",
+			ctr.Logger.Error(ctx, "failed to convert status code to int",
 				logger.Value("error", err), logger.Value("on", "statusCodeMatherFactory"))
 			return nil, err
 		}
@@ -149,7 +150,7 @@ func statusCodeMatherFactory(ctr *app.Container, op string, value string) (Statu
 	case "ne":
 		statusCodeInt, err := strconv.Atoi(value)
 		if err != nil {
-			ctr.Logger.Error(ctr.Ctx, "failed to convert status code to int",
+			ctr.Logger.Error(ctx, "failed to convert status code to int",
 				logger.Value("error", err), logger.Value("on", "statusCodeMatherFactory"))
 			return nil, err
 		}
@@ -159,7 +160,7 @@ func statusCodeMatherFactory(ctr *app.Container, op string, value string) (Statu
 	case "lt":
 		statusCodeInt, err := strconv.Atoi(value)
 		if err != nil {
-			ctr.Logger.Error(ctr.Ctx, "failed to convert status code to int",
+			ctr.Logger.Error(ctx, "failed to convert status code to int",
 				logger.Value("error", err), logger.Value("on", "statusCodeMatherFactory"))
 			return nil, err
 		}
@@ -169,7 +170,7 @@ func statusCodeMatherFactory(ctr *app.Container, op string, value string) (Statu
 	case "le":
 		statusCodeInt, err := strconv.Atoi(value)
 		if err != nil {
-			ctr.Logger.Error(ctr.Ctx, "failed to convert status code to int",
+			ctr.Logger.Error(ctx, "failed to convert status code to int",
 				logger.Value("error", err), logger.Value("on", "statusCodeMatherFactory"))
 			return nil, err
 		}
@@ -179,7 +180,7 @@ func statusCodeMatherFactory(ctr *app.Container, op string, value string) (Statu
 	case "gt":
 		statusCodeInt, err := strconv.Atoi(value)
 		if err != nil {
-			ctr.Logger.Error(ctr.Ctx, "failed to convert status code to int",
+			ctr.Logger.Error(ctx, "failed to convert status code to int",
 				logger.Value("error", err), logger.Value("on", "statusCodeMatherFactory"))
 			return nil, err
 		}
@@ -189,7 +190,7 @@ func statusCodeMatherFactory(ctr *app.Container, op string, value string) (Statu
 	case "ge":
 		statusCodeInt, err := strconv.Atoi(value)
 		if err != nil {
-			ctr.Logger.Error(ctr.Ctx, "failed to convert status code to int",
+			ctr.Logger.Error(ctx, "failed to convert status code to int",
 				logger.Value("error", err), logger.Value("on", "statusCodeMatherFactory"))
 			return nil, err
 		}
@@ -202,7 +203,7 @@ func statusCodeMatherFactory(ctr *app.Container, op string, value string) (Statu
 		for _, v := range statusCodeStrings {
 			statusCodeInt, err := strconv.Atoi(v)
 			if err != nil {
-				ctr.Logger.Error(ctr.Ctx, "failed to convert status code to int",
+				ctr.Logger.Error(ctx, "failed to convert status code to int",
 					logger.Value("error", err), logger.Value("on", "statusCodeMatherFactory"))
 				return nil, err
 			}
@@ -222,7 +223,7 @@ func statusCodeMatherFactory(ctr *app.Container, op string, value string) (Statu
 		for _, v := range statusCodeStrings {
 			statusCodeInt, err := strconv.Atoi(v)
 			if err != nil {
-				ctr.Logger.Error(ctr.Ctx, "failed to convert status code to int",
+				ctr.Logger.Error(ctx, "failed to convert status code to int",
 					logger.Value("error", err), logger.Value("on", "statusCodeMatherFactory"))
 				return nil, err
 			}
@@ -243,13 +244,13 @@ func statusCodeMatherFactory(ctr *app.Container, op string, value string) (Statu
 		}
 		min, err := strconv.Atoi(statusCodeStrings[0])
 		if err != nil {
-			ctr.Logger.Error(ctr.Ctx, "failed to convert status code to int",
+			ctr.Logger.Error(ctx, "failed to convert status code to int",
 				logger.Value("error", err), logger.Value("on", "statusCodeMatherFactory"))
 			return nil, err
 		}
 		max, err := strconv.Atoi(statusCodeStrings[1])
 		if err != nil {
-			ctr.Logger.Error(ctr.Ctx, "failed to convert status code to int",
+			ctr.Logger.Error(ctx, "failed to convert status code to int",
 				logger.Value("error", err), logger.Value("on", "statusCodeMatherFactory"))
 			return nil, err
 		}
@@ -263,13 +264,13 @@ func statusCodeMatherFactory(ctr *app.Container, op string, value string) (Statu
 		}
 		min, err := strconv.Atoi(statusCodeStrings[0])
 		if err != nil {
-			ctr.Logger.Error(ctr.Ctx, "failed to convert status code to int",
+			ctr.Logger.Error(ctx, "failed to convert status code to int",
 				logger.Value("error", err), logger.Value("on", "statusCodeMatherFactory"))
 			return nil, err
 		}
 		max, err := strconv.Atoi(statusCodeStrings[1])
 		if err != nil {
-			ctr.Logger.Error(ctr.Ctx, "failed to convert status code to int",
+			ctr.Logger.Error(ctx, "failed to convert status code to int",
 				logger.Value("error", err), logger.Value("on", "statusCodeMatherFactory"))
 			return nil, err
 		}
@@ -282,7 +283,7 @@ func statusCodeMatherFactory(ctr *app.Container, op string, value string) (Statu
 			return preRequireRegex.MatchString(strconv.Itoa(statusCode))
 		}, nil
 	default:
-		ctr.Logger.Error(ctr.Ctx, "unknown operator",
+		ctr.Logger.Error(ctx, "unknown operator",
 			logger.Value("operator", op), logger.Value("on", "statusCodeMatherFactory"))
 		return nil, fmt.Errorf("unknown operator: %s", op)
 	}

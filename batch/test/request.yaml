@@ -1,38 +1,16 @@
 type: MassQuery
-prefetch:
+metrics:
   enabled: true
   requests:
-    - id: fetchOneUser
-      endpointType: GetUsers
-      queryParam:
-        limit: [1]
-        offset: [0]
-        cursor: [""]
-        pagination: ["offset"]
-      pathVariables: {}
-      dependsOn: []
-      vars:
-        - id: userId
-          jmesPath: "data.listData[0].userId"
-          onError: "cancel" # cancel or random or ignore or empty
-    - id: fetchRelationOrg
-      endpointType: GetOrganizations
-      queryParam:
-        limit: [1]
-        offset: [0]
-        pagination: ["offset"]
-        sortField: ["name"]
-        sortOrder: ["asc"]
-        hasUserFilter: [true]
-        filterUserIDs: ["{{userId}}"]
-        userFilterType: ["all"]
-        with: []
-      pathVariables: {}
-      dependsOn: ["fetchOneUser"]
-      vars:
-        - id: orgId
-          jmesPath: "data.listData[0].organizationId"
-          onError: "empty"
+    - id: "request1"
+      type: "prometheus"
+      url: "http://prometheus:9090/api/v1/query"
+      query: |
+        sum(rate(http_server_requests_seconds_count{uri="/api/v1/teams", status="200"}[1m]))
+      interval: 10s
+      data:
+        - key: "team"
+          jmesPath: "data[0].team"
 data:
   requests:
     - endpointType: GetTeams
@@ -58,9 +36,9 @@ data:
       break:
         time: 2m
         count: 3
-        sysError: true
-        parseError: true
-        writeError: true
+        # sysError: true
+        # parseError: true
+        # writeError: true
         statusCode:
           op: eq
           value: 500

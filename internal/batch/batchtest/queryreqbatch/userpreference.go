@@ -1,6 +1,7 @@
 package queryreqbatch
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/LabGroupware/go-measure-tui/internal/api/domain"
@@ -14,6 +15,7 @@ import (
 type FindUserPreferenceFactory struct{}
 
 func (f FindUserPreferenceFactory) Factory(
+	ctx context.Context,
 	ctr *app.Container,
 	id int,
 	request *ValidatedQueryRequest,
@@ -51,7 +53,7 @@ func (f FindUserPreferenceFactory) Factory(
 		close(resChan)
 	}
 
-	runAsyncProcessing(ctr, id, request, termChan, resChan, consumer)
+	runAsyncProcessing(ctx, ctr, id, request, termChan, resChan, consumer)
 
 	return queryreq.RequestContent[queryreq.FindUserPreferenceReq, response.ResponseDto[domain.UserPreferenceDto]]{
 		Req:          req,

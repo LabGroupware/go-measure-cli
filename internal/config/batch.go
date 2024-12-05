@@ -1,7 +1,8 @@
 package config
 
 type BatchConfig struct {
-	Test BatchTestConfig `mapstructure:"test"`
+	Test    BatchTestConfig `mapstructure:"test"`
+	Metrics MetricsConfig   `mapstructure:"metrics"`
 }
 
 type BatchTestConfig struct {
@@ -10,5 +11,9 @@ type BatchTestConfig struct {
 }
 
 type BatchMassQueryConfig struct {
+	Output string `mapstructure:"output"`
+}
+
+type MetricsConfig struct {
 	Output string `mapstructure:"output"`
 }

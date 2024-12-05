@@ -1,6 +1,7 @@
 package queryreq
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -27,11 +28,11 @@ type ResponseContent[Res any] struct {
 
 type QueryReq interface {
 	// CreateRequest creates the http.Request object for the query
-	CreateRequest(ctr *app.Container) (*http.Request, error)
+	CreateRequest(ctx context.Context, ctr *app.Container) (*http.Request, error)
 }
 
 type QueryExecutor interface {
-	QueryExecute(ctr *app.Container) (chan<- struct{}, error)
+	QueryExecute(ctx context.Context, ctr *app.Container) (chan<- struct{}, error)
 }
 
 type RequestCountLimit struct {
@@ -48,14 +49,15 @@ type RequestContent[Req QueryReq, Res any] struct {
 }
 
 func (q RequestContent[Req, Res]) QueryExecute(
+	ctx context.Context,
 	ctr *app.Container,
 ) (chan<- struct{}, error) {
 
 	terminateChan := make(chan struct{})
 
-	req, err := q.Req.CreateRequest(ctr)
+	req, err := q.Req.CreateRequest(ctx, ctr)
 	if err != nil {
-		ctr.Logger.Error(ctr.Ctx, "failed to create request",
+		ctr.Logger.Error(ctx, "failed to create request",
 			logger.Value("error", err), logger.Value("on", "RequestContent.QueryExecute"))
 		close(terminateChan)
 		return nil, err
@@ -75,12 +77,7 @@ func (q RequestContent[Req, Res]) QueryExecute(
 		for {
 			select {
 			case <-terminateChan:
-				ctr.Logger.Info(ctr.Ctx, "request processing is interrupted due to termination",
-					logger.Value("on", "RequestContent.QueryExecute"), logger.Value("url", req.URL))
-
-				return
-			case <-ctr.Ctx.Done():
-				ctr.Logger.Info(ctr.Ctx, "request processing is interrupted due to context termination",
+				ctr.Logger.Info(ctx, "request processing is interrupted due to termination",
 					logger.Value("on", "RequestContent.QueryExecute"), logger.Value("url", req.URL))
 
 				return
@@ -88,12 +85,7 @@ func (q RequestContent[Req, Res]) QueryExecute(
 				if count > 0 && waitForResponse {
 					select {
 					case <-terminateChan:
-						ctr.Logger.Info(ctr.Ctx, "request processing is interrupted due to termination",
-							logger.Value("on", "RequestContent.QueryExecute"), logger.Value("url", req.URL))
-
-						return
-					case <-ctr.Ctx.Done():
-						ctr.Logger.Info(ctr.Ctx, "request processing is interrupted due to context termination",
+						ctr.Logger.Info(ctx, "request processing is interrupted due to termination",
 							logger.Value("on", "RequestContent.QueryExecute"), logger.Value("url", req.URL))
 
 						return
@@ -103,7 +95,7 @@ func (q RequestContent[Req, Res]) QueryExecute(
 
 				count++
 				if q.CountLimit.Enabled && count >= q.CountLimit.Count {
-					ctr.Logger.Info(ctr.Ctx, "request processing is interrupted due to count limit",
+					ctr.Logger.Info(ctx, "request processing is interrupted due to count limit",
 						logger.Value("on", "RequestContent.QueryExecute"), logger.Value("url", req.URL))
 					countLimitOver = true
 				}
@@ -125,24 +117,19 @@ func (q RequestContent[Req, Res]) QueryExecute(
 						},
 					}
 
-					ctr.Logger.Debug(ctr.Ctx, "sending request",
+					ctr.Logger.Debug(ctx, "sending request",
 						logger.Value("on", "RequestContent.QueryExecute"), logger.Value("url", req.URL), logger.Value("count", count))
 					startTime := time.Now()
 					resp, err := client.Do(asyncReq)
 					endTime := time.Now()
-					ctr.Logger.Debug(ctr.Ctx, "received response",
+					ctr.Logger.Debug(ctx, "received response",
 						logger.Value("on", "RequestContent.QueryExecute"), logger.Value("url", req.URL), logger.Value("count", count))
 					if err != nil {
-						ctr.Logger.Error(ctr.Ctx, "response error",
+						ctr.Logger.Error(ctx, "response error",
 							logger.Value("error", err), logger.Value("on", "RequestContent.QueryExecute"), logger.Value("url", req.URL))
 						select {
 						case <-terminateChan:
-							ctr.Logger.Info(ctr.Ctx, "request processing is interrupted due to termination",
-								logger.Value("on", "RequestContent.QueryExecute"), logger.Value("url", req.URL))
-
-							return
-						case <-ctr.Ctx.Done():
-							ctr.Logger.Info(ctr.Ctx, "request processing is interrupted due to context termination",
+							ctr.Logger.Info(ctx, "request processing is interrupted due to termination",
 								logger.Value("on", "RequestContent.QueryExecute"), logger.Value("url", req.URL))
 
 							return
@@ -164,17 +151,13 @@ func (q RequestContent[Req, Res]) QueryExecute(
 					var response Res
 					responseByte, err := io.ReadAll(resp.Body)
 					if err != nil {
-						ctr.Logger.Error(ctr.Ctx, "failed to read response",
+						ctr.Logger.Error(ctx, "failed to read response",
 							logger.Value("error", err), logger.Value("on", "RequestContent.QueryExecute"), logger.Value("url", req.URL))
 						select {
 						case <-terminateChan:
-							ctr.Logger.Info(ctr.Ctx, "request processing is interrupted due to termination",
+							ctr.Logger.Info(ctx, "request processing is interrupted due to termination",
 								logger.Value("on", "RequestContent.QueryExecute"), logger.Value("url", req.URL))
 
-							return
-						case <-ctr.Ctx.Done():
-							ctr.Logger.Info(ctr.Ctx, "request processing is interrupted due to context termination",
-								logger.Value("on", "RequestContent.QueryExecute"), logger.Value("url", req.URL))
 							return
 						case q.ResChan <- ResponseContent[Res]{
 							Success:        false,
@@ -191,15 +174,11 @@ func (q RequestContent[Req, Res]) QueryExecute(
 					}
 					err = json.Unmarshal(responseByte, &response)
 					if err != nil {
-						ctr.Logger.Error(ctr.Ctx, "failed to parse response",
+						ctr.Logger.Error(ctx, "failed to parse response",
 							logger.Value("error", err), logger.Value("on", "RequestContent.QueryExecute"), logger.Value("url", req.URL))
 						select {
 						case <-terminateChan:
-							ctr.Logger.Info(ctr.Ctx, "request processing is interrupted due to termination",
-								logger.Value("on", "RequestContent.QueryExecute"), logger.Value("url", req.URL))
-							return
-						case <-ctr.Ctx.Done():
-							ctr.Logger.Info(ctr.Ctx, "request processing is interrupted due to context termination",
+							ctr.Logger.Info(ctx, "request processing is interrupted due to termination",
 								logger.Value("on", "RequestContent.QueryExecute"), logger.Value("url", req.URL))
 							return
 						case q.ResChan <- ResponseContent[Res]{
@@ -217,7 +196,7 @@ func (q RequestContent[Req, Res]) QueryExecute(
 						return
 					}
 
-					ctr.Logger.Debug(ctr.Ctx, "response OK",
+					ctr.Logger.Debug(ctx, "response OK",
 						logger.Value("on", "RequestContent.QueryExecute"), logger.Value("url", req.URL))
 					responseContent := ResponseContent[Res]{
 						Success:        true,
@@ -233,27 +212,18 @@ func (q RequestContent[Req, Res]) QueryExecute(
 					case q.ResChan <- responseContent:
 						// previousResponse = &responseContent
 					case <-terminateChan:
-						ctr.Logger.Info(ctr.Ctx, "request processing is interrupted due to termination",
-							logger.Value("on", "RequestContent.QueryExecute"), logger.Value("url", req.URL))
-						return
-					case <-ctr.Ctx.Done():
-						ctr.Logger.Info(ctr.Ctx, "request processing is interrupted due to context termination",
+						ctr.Logger.Info(ctx, "request processing is interrupted due to termination",
 							logger.Value("on", "RequestContent.QueryExecute"), logger.Value("url", req.URL))
 						return
 					}
 				}(reqClone, countLimitOver)
 
 				if countLimitOver {
-					select {
-					case <-terminateChan:
-						ctr.Logger.Info(ctr.Ctx, "request processing is interrupted due to termination",
-							logger.Value("on", "RequestContent.QueryExecute"), logger.Value("url", req.URL))
-						return
-					case <-ctr.Ctx.Done():
-						ctr.Logger.Info(ctr.Ctx, "request processing is interrupted due to context termination",
-							logger.Value("on", "RequestContent.QueryExecute"), logger.Value("url", req.URL))
-						return
-					}
+					<-terminateChan
+
+					ctr.Logger.Info(ctx, "request processing is interrupted due to termination",
+						logger.Value("on", "RequestContent.QueryExecute"), logger.Value("url", req.URL))
+					return
 				}
 			}
 		}

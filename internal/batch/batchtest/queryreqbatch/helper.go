@@ -1,6 +1,7 @@
 package queryreqbatch
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -42,12 +43,14 @@ type writeSendData struct {
 }
 
 type ResponseDataConsumer func(
+	ctx context.Context,
 	ctr *app.Container,
 	id int,
 	data WriteData,
 ) error
 
 func runResponseHandler[Res any](
+	ctx context.Context,
 	ctr *app.Container,
 	id int,
 	request *ValidatedQueryRequest,
@@ -72,7 +75,7 @@ func runResponseHandler[Res any](
 			delete(sentUid, uid)
 			count--
 		case <-writeErrChan:
-			ctr.Logger.Warn(ctr.Ctx, "Term Condition: Write Error",
+			ctr.Logger.Warn(ctx, "Term Condition: Write Error",
 				logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
 			for len(sentUid) > 0 {
 				uid := <-uidChan
@@ -89,22 +92,22 @@ func runResponseHandler[Res any](
 					delete(sentUid, uid)
 					sentLen--
 				case <-writeErrChan:
-					ctr.Logger.Warn(ctr.Ctx, "write error occurred",
+					ctr.Logger.Warn(ctx, "write error occurred",
 						logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
 					writeErr = true
 				}
 			}
 			if writeErr {
-				ctr.Logger.Warn(ctr.Ctx, "Term Condition: Write Error",
+				ctr.Logger.Warn(ctx, "Term Condition: Write Error",
 					logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
 				termChan <- ByWriteError
 				return
 			}
-			ctr.Logger.Info(ctr.Ctx, "Term Condition: Time",
+			ctr.Logger.Info(ctx, "Term Condition: Time",
 				logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
 			termChan <- ByTimeout
 			return
-		case <-ctr.Ctx.Done():
+		case <-ctx.Done():
 			sentLen := len(sentUid)
 			writeErr := false
 			for sentLen > 0 {
@@ -113,18 +116,18 @@ func runResponseHandler[Res any](
 					delete(sentUid, uid)
 					sentLen--
 				case <-writeErrChan:
-					ctr.Logger.Warn(ctr.Ctx, "write error occurred",
+					ctr.Logger.Warn(ctx, "write error occurred",
 						logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
 					writeErr = true
 				}
 			}
 			if writeErr {
-				ctr.Logger.Warn(ctr.Ctx, "Term Condition: Write Error",
+				ctr.Logger.Warn(ctx, "Term Condition: Write Error",
 					logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
 				termChan <- ByWriteError
 				return
 			}
-			ctr.Logger.Info(ctr.Ctx, "Term Condition: Context Done",
+			ctr.Logger.Info(ctx, "Term Condition: Context Done",
 				logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
 			termChan <- ByContext
 			return
@@ -133,7 +136,7 @@ func runResponseHandler[Res any](
 			var response any
 			err := json.Unmarshal(v.ByteResponse, &response)
 			if err != nil {
-				ctr.Logger.Error(ctr.Ctx, "The response is not a valid JSON",
+				ctr.Logger.Error(ctx, "The response is not a valid JSON",
 					logger.Value("error", err), logger.Value("on", "runResponseHandler"))
 			}
 
@@ -141,7 +144,7 @@ func runResponseHandler[Res any](
 				jmesPathQuery := request.DataOutputFilter.JMESPath
 				result, err := jmespath.Search(jmesPathQuery, response)
 				if err != nil {
-					ctr.Logger.Error(ctr.Ctx, "failed to search jmespath",
+					ctr.Logger.Error(ctx, "failed to search jmespath",
 						logger.Value("error", err), logger.Value("on", "runResponseHandler"))
 				}
 				if result != nil {
@@ -150,7 +153,7 @@ func runResponseHandler[Res any](
 							mustWrite = true
 						}
 					} else {
-						ctr.Logger.Warn(ctr.Ctx, "The result of the jmespath query is not a boolean",
+						ctr.Logger.Warn(ctx, "The result of the jmespath query is not a boolean",
 							logger.Value("on", "runResponseHandler"))
 					}
 				}
@@ -159,7 +162,7 @@ func runResponseHandler[Res any](
 			}
 
 			if request.ExcludeStatusFilter(v.StatusCode) {
-				ctr.Logger.Info(ctr.Ctx, "Status output filter found",
+				ctr.Logger.Info(ctx, "Status output filter found",
 					logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
 				mustWrite = false
 			}
@@ -170,7 +173,7 @@ func runResponseHandler[Res any](
 					jmesPathQuery := request.DataOutput.JMESPath
 					result, err := jmespath.Search(jmesPathQuery, response)
 					if err != nil {
-						ctr.Logger.Error(ctr.Ctx, "failed to search jmespath",
+						ctr.Logger.Error(ctx, "failed to search jmespath",
 							logger.Value("error", err), logger.Value("on", "runResponseHandler"))
 					}
 					data = result
@@ -196,7 +199,7 @@ func runResponseHandler[Res any](
 						uid:       uid,
 						writeData: writeData,
 					}:
-					case <-ctr.Ctx.Done():
+					case <-ctx.Done():
 						return
 					}
 					break
@@ -212,19 +215,19 @@ func runResponseHandler[Res any](
 						delete(sentUid, uid)
 						sentLen--
 					case <-writeErrChan:
-						ctr.Logger.Warn(ctr.Ctx, "write error occurred",
+						ctr.Logger.Warn(ctx, "write error occurred",
 							logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
 						// writeErr = true
 					}
 				}
 				// if writeErr {
-				// 	ctr.Logger.Warn(ctr.Ctx, "Term Condition: Write Error",
+				// 	ctr.Logger.Warn(ctx, "Term Condition: Write Error",
 				// 		logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
 				// 	termChan <- ByWriteError
 				// 	return
 				// }
 
-				ctr.Logger.Warn(ctr.Ctx, "Term Condition: Request Creation Error",
+				ctr.Logger.Warn(ctx, "Term Condition: Request Creation Error",
 					logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
 				termChan <- ByCreateRequestError
 				return
@@ -239,24 +242,24 @@ func runResponseHandler[Res any](
 							delete(sentUid, uid)
 							sentLen--
 						case <-writeErrChan:
-							ctr.Logger.Warn(ctr.Ctx, "write error occurred",
+							ctr.Logger.Warn(ctx, "write error occurred",
 								logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
 							// writeErr = true
 						}
 					}
 					// if writeErr {
-					// 	ctr.Logger.Warn(ctr.Ctx, "Term Condition: Write Error",
+					// 	ctr.Logger.Warn(ctx, "Term Condition: Write Error",
 					// 		logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
 					// 	termChan <- ByWriteError
 					// 	return
 					// }
 
-					ctr.Logger.Warn(ctr.Ctx, "Term Condition: System Error",
+					ctr.Logger.Warn(ctx, "Term Condition: System Error",
 						logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
 					termChan <- BySystemError
 					return
 				} else {
-					ctr.Logger.Warn(ctr.Ctx, "System error occurred",
+					ctr.Logger.Warn(ctx, "System error occurred",
 						logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
 				}
 			}
@@ -270,23 +273,23 @@ func runResponseHandler[Res any](
 							delete(sentUid, uid)
 							sentLen--
 						case <-writeErrChan:
-							ctr.Logger.Warn(ctr.Ctx, "write error occurred",
+							ctr.Logger.Warn(ctx, "write error occurred",
 								logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
 							// writeErr = true
 						}
 					}
 					// if writeErr {
-					// 	ctr.Logger.Warn(ctr.Ctx, "Term Condition: Write Error",
+					// 	ctr.Logger.Warn(ctx, "Term Condition: Write Error",
 					// 		logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
 					// 	termChan <- ByWriteError
 					// 	return
 					// }
-					ctr.Logger.Warn(ctr.Ctx, "Term Condition: Response Parse Error",
+					ctr.Logger.Warn(ctx, "Term Condition: Response Parse Error",
 						logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
 					termChan <- ByParseResponseError
 					return
 				} else {
-					ctr.Logger.Warn(ctr.Ctx, "Parse error occurred",
+					ctr.Logger.Warn(ctx, "Parse error occurred",
 						logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
 				}
 			}
@@ -299,19 +302,19 @@ func runResponseHandler[Res any](
 						delete(sentUid, uid)
 						sentLen--
 					case <-writeErrChan:
-						ctr.Logger.Warn(ctr.Ctx, "write error occurred",
+						ctr.Logger.Warn(ctx, "write error occurred",
 							logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
 						writeErr = true
 					}
 				}
 				if writeErr {
-					ctr.Logger.Warn(ctr.Ctx, "Term Condition: Write Error",
+					ctr.Logger.Warn(ctx, "Term Condition: Write Error",
 						logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
 					termChan <- ByWriteError
 					return
 				}
 
-				ctr.Logger.Info(ctr.Ctx, "Term Condition: Count Limit",
+				ctr.Logger.Info(ctx, "Term Condition: Count Limit",
 					logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
 				termChan <- ByCount
 				return
@@ -320,7 +323,7 @@ func runResponseHandler[Res any](
 				jmesPathQuery := request.Break.ResponseBody.JMESPath
 				result, err := jmespath.Search(jmesPathQuery, response)
 				if err != nil {
-					ctr.Logger.Error(ctr.Ctx, "failed to search jmespath",
+					ctr.Logger.Error(ctx, "failed to search jmespath",
 						logger.Value("error", err), logger.Value("on", "runResponseHandler"))
 				}
 				if result != nil {
@@ -332,19 +335,19 @@ func runResponseHandler[Res any](
 							delete(sentUid, uid)
 							sentLen--
 						case <-writeErrChan:
-							ctr.Logger.Warn(ctr.Ctx, "write error occurred",
+							ctr.Logger.Warn(ctx, "write error occurred",
 								logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
 							writeErr = true
 						}
 					}
 					if writeErr {
-						ctr.Logger.Warn(ctr.Ctx, "Term Condition: Write Error",
+						ctr.Logger.Warn(ctx, "Term Condition: Write Error",
 							logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
 						termChan <- ByWriteError
 						return
 					}
 
-					ctr.Logger.Info(ctr.Ctx, "Term Condition: Response Body",
+					ctr.Logger.Info(ctx, "Term Condition: Response Body",
 						logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
 					termChan <- ByResponseBodyMatch
 					return
@@ -359,19 +362,19 @@ func runResponseHandler[Res any](
 						delete(sentUid, uid)
 						sentLen--
 					case <-writeErrChan:
-						ctr.Logger.Warn(ctr.Ctx, "write error occurred",
+						ctr.Logger.Warn(ctx, "write error occurred",
 							logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
 						writeErr = true
 					}
 				}
 				if writeErr {
-					ctr.Logger.Warn(ctr.Ctx, "Term Condition: Write Error",
+					ctr.Logger.Warn(ctx, "Term Condition: Write Error",
 						logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
 					termChan <- ByWriteError
 					return
 				}
 
-				ctr.Logger.Info(ctr.Ctx, "Term Condition: Status Code",
+				ctr.Logger.Info(ctx, "Term Condition: Status Code",
 					logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
 				termChan <- ByStatusCodeMatch
 				return
@@ -381,6 +384,7 @@ func runResponseHandler[Res any](
 }
 
 func runAsyncProcessing[Res any](
+	ctx context.Context,
 	ctr *app.Container,
 	id int,
 	request *ValidatedQueryRequest,
@@ -392,7 +396,7 @@ func runAsyncProcessing[Res any](
 	wroteUidChan := make(chan uuid.UUID)
 	writeErrChan := make(chan struct{})
 	go func() {
-		runResponseHandler(ctr, id, request, termChan, writeErrChan, wroteUidChan, resChan, writeChan)
+		runResponseHandler(ctx, ctr, id, request, termChan, writeErrChan, wroteUidChan, resChan, writeChan)
 	}()
 
 	go func() {
@@ -402,10 +406,10 @@ func runAsyncProcessing[Res any](
 		for {
 			select {
 			case d := <-writeChan:
-				ctr.Logger.Debug(ctr.Ctx, "Writing data",
+				ctr.Logger.Debug(ctx, "Writing data",
 					logger.Value("id", id), logger.Value("data", d), logger.Value("on", "runAsyncProcessing"))
-				if err := consumer(ctr, id, d.writeData); err != nil {
-					ctr.Logger.Error(ctr.Ctx, "failed to write data",
+				if err := consumer(ctx, ctr, id, d.writeData); err != nil {
+					ctr.Logger.Error(ctx, "failed to write data",
 						logger.Value("error", err), logger.Value("on", "runAsyncProcessing"))
 					if request.Break.WriteError {
 						writeErrChan <- struct{}{}
@@ -414,7 +418,7 @@ func runAsyncProcessing[Res any](
 					}
 				}
 				wroteUidChan <- d.uid
-			case <-ctr.Ctx.Done():
+			case <-ctx.Done():
 				return
 			}
 		}

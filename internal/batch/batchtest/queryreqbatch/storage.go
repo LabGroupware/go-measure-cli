@@ -1,6 +1,7 @@
 package queryreqbatch
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 
@@ -16,6 +17,7 @@ import (
 type FindFileObjectFactory struct{}
 
 func (f FindFileObjectFactory) Factory(
+	ctx context.Context,
 	ctr *app.Container,
 	id int,
 	request *ValidatedQueryRequest,
@@ -53,7 +55,7 @@ func (f FindFileObjectFactory) Factory(
 		close(resChan)
 	}
 
-	runAsyncProcessing(ctr, id, request, termChan, resChan, consumer)
+	runAsyncProcessing(ctx, ctr, id, request, termChan, resChan, consumer)
 
 	return queryreq.RequestContent[queryreq.FindFileObjectReq, response.ResponseDto[domain.FileObjectDto]]{
 		Req:          req,
@@ -67,6 +69,7 @@ func (f FindFileObjectFactory) Factory(
 type GetFileObjectsFactory struct{}
 
 func (f GetFileObjectsFactory) Factory(
+	ctx context.Context,
 	ctr *app.Container,
 	id int,
 	request *ValidatedQueryRequest,
@@ -85,7 +88,7 @@ func (f GetFileObjectsFactory) Factory(
 		case "limit":
 			limitInt, err := strconv.Atoi(param[0])
 			if err != nil {
-				ctr.Logger.Warn(ctr.Ctx, "Failed to convert limit to int",
+				ctr.Logger.Warn(ctx, "Failed to convert limit to int",
 					logger.Value("error", err))
 				continue
 			}
@@ -93,7 +96,7 @@ func (f GetFileObjectsFactory) Factory(
 		case "offset":
 			offsetInt, err := strconv.Atoi(param[0])
 			if err != nil {
-				ctr.Logger.Warn(ctr.Ctx, "Failed to convert offset to int",
+				ctr.Logger.Warn(ctx, "Failed to convert offset to int",
 					logger.Value("error", err))
 				continue
 			}
@@ -109,7 +112,7 @@ func (f GetFileObjectsFactory) Factory(
 		case "withCount":
 			withCountBool, err := strconv.ParseBool(param[0])
 			if err != nil {
-				ctr.Logger.Warn(ctr.Ctx, "Failed to convert withCount to bool",
+				ctr.Logger.Warn(ctx, "Failed to convert withCount to bool",
 					logger.Value("error", err))
 				continue
 			}
@@ -117,7 +120,7 @@ func (f GetFileObjectsFactory) Factory(
 		case "hasBucketFilter":
 			hasBucketFilterBool, err := strconv.ParseBool(param[0])
 			if err != nil {
-				ctr.Logger.Warn(ctr.Ctx, "Failed to convert hasBucketFilter to bool",
+				ctr.Logger.Warn(ctx, "Failed to convert hasBucketFilter to bool",
 					logger.Value("error", err))
 				continue
 			}
@@ -136,7 +139,7 @@ func (f GetFileObjectsFactory) Factory(
 		close(resChan)
 	}
 
-	runAsyncProcessing(ctr, id, request, termChan, resChan, consumer)
+	runAsyncProcessing(ctx, ctr, id, request, termChan, resChan, consumer)
 
 	return queryreq.RequestContent[queryreq.GetFileObjectsReq, response.ListResponseDto[domain.FileObjectDto]]{
 		Req:          req,
