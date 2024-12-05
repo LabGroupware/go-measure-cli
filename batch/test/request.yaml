@@ -4,17 +4,18 @@ metrics:
   requests:
     - id: "request1"
       type: "prometheus"
-      url: "http://prometheus:9090/api/v1/query"
+      url: "http://localhost:9090/api/v1/query"
       query: |
-        sum(rate(http_server_requests_seconds_count{uri="/api/v1/teams", status="200"}[1m]))
-      interval: 10s
+        node_memory_Active_bytes
+      interval: 2s
       data:
-        - key: "team"
-          jmesPath: "data[0].team"
+        - key: "memory_active"
+          jmesPath: "data.result[*].value[1]"
+          onNil: "ignore" # cancel or ignore(default)
 data:
   requests:
     - endpointType: GetTeams
-      interval: 1ms
+      interval: 5s
       awaitPrevResponse: false
       queryParam:
         limit: [10]
@@ -38,10 +39,10 @@ data:
         - time
       break:
         time: 2m
-        count: 30
-        sysError: true
-        parseError: true
-        writeError: true
+        count: 3
+        # sysError: true
+        # parseError: true
+        # writeError: true
         statusCode:
           op: eq
           value: 500

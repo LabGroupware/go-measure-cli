@@ -56,6 +56,7 @@ func MassQueryBatch(ctx context.Context, ctr *app.Container, massQuery MassQuery
 			id int,
 			data queryreqbatch.WriteData,
 		) error {
+			fmt.Println("Writing data to csv", id, data, "on runAsyncProcessing")
 			writer := csv.NewWriter(threadExecutors[i].outputFile)
 			ctr.Logger.Debug(ctx, "Writing data to csv",
 				logger.Value("id", id), logger.Value("data", data), logger.Value("on", "runAsyncProcessing"))

@@ -10,6 +10,7 @@ import (
 	"github.com/LabGroupware/go-measure-tui/internal/api/request/queryreq"
 	"github.com/LabGroupware/go-measure-tui/internal/app"
 	"github.com/LabGroupware/go-measure-tui/internal/logger"
+	"gopkg.in/yaml.v3"
 )
 
 type PrometheusMetricsFetcher struct {
@@ -24,13 +25,11 @@ func (r PrometheusMetricsFetcher) CreateRequest(ctx context.Context, ctr *app.Co
 func (p *PrometheusMetricsFetcher) Fetch(
 	ctx context.Context,
 	ctr *app.Container,
-) (any, error) {
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
+	writer MetricsWriter,
+) (<-chan TermType, error) {
 
 	// INFO: close on executor, because only it will write to this channel
 	resChan := make(chan queryreq.ResponseContent[any])
-	// INFO: close on factor.Factory(response handler), because only it will write to this channel
 	termChan := make(chan TermType)
 
 	req := queryreq.RequestContent[PrometheusMetricsFetcher, any]{
@@ -49,14 +48,26 @@ func (p *PrometheusMetricsFetcher) Fetch(
 	go func() {
 		defer close(termChan)
 
-		<-termChan
-		cancel()
-		ctr.Logger.Info(ctx, "Prometheus Query End For Term",
-			logger.Value("on", "PrometheusMetricsFetcher.Fetch"))
+		for {
+			select {
+			case <-ctx.Done():
+				ctr.Logger.Info(ctx, "Prometheus Query End For Term",
+					logger.Value("on", "PrometheusMetricsFetcher.Fetch"))
+				termChan <- TermTypeContext
+				return
+			case res := <-resChan:
+				err := writer(ctx, ctr, res)
+				if err != nil {
+					ctr.Logger.Error(ctx, "failed to write metrics",
+						logger.Value("error", err), logger.Value("on", "PrometheusMetricsFetcher.Fetch"))
+					termChan <- TermWriteError
+					return
+				}
+			}
+		}
 	}()
 
-	return nil, nil
-
+	return termChan, nil
 }
 
 type PrometheusMetricsBatchRequestConfig struct {
@@ -68,8 +79,15 @@ type PrometheusMetricsBatchRequestConfig struct {
 	Data     []MetricsBatchRequestDataConfig `yaml:"data"`
 }
 
-func (p *PrometheusMetricsBatchRequestConfig) FetcherFactory(ctx context.Context, ctr *app.Container) (MetricsFetcher, error) {
+func (p *PrometheusMetricsBatchRequestConfig) Init(conf []byte) error {
+	err := yaml.Unmarshal(conf, p)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal yaml: %w", err)
+	}
+	return nil
+}
 
+func (p *PrometheusMetricsBatchRequestConfig) FetcherFactory(ctx context.Context, ctr *app.Container) (MetricsFetcher, error) {
 	baseURL := fmt.Sprintf("%s/api/v1/query", p.URL)
 	fullURL, err := url.Parse(baseURL)
 	if err != nil {

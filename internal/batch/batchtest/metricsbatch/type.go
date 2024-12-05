@@ -2,10 +2,19 @@ package metricsbatch
 
 import (
 	"context"
-	"time"
 
+	"github.com/LabGroupware/go-measure-tui/internal/api/request/queryreq"
 	"github.com/LabGroupware/go-measure-tui/internal/app"
 )
+
+type BatchConfigWithRawMetrics struct {
+	Metrics MetricsBatchRawConfig `yaml:"metrics"`
+}
+
+type MetricsBatchRawConfig struct {
+	Enabled  bool  `yaml:"enabled"`
+	Requests []any `yaml:"requests"`
+}
 
 type MetricsBatchConfig struct {
 	Enabled  bool                        `yaml:"enabled"`
@@ -13,27 +22,15 @@ type MetricsBatchConfig struct {
 }
 
 type MetricsBatchRequestConfig struct {
-	ID       string                          `yaml:"id"`
-	Type     string                          `yaml:"type"`
-	Data     []MetricsBatchRequestDataConfig `yaml:"data"`
-	Interval string                          `yaml:"interval"`
-}
-
-func (m *MetricsBatchRequestConfig) Validate(ctx context.Context, ctr *app.Container, validated *ValidatedMetricsBatchRequestConfig) error {
-	validated.ID = m.ID
-	return nil
-}
-
-type ValidatedMetricsBatchRequestConfig struct {
-	ID       string
-	Type     MetricsType
-	Data     []MetricsBatchRequestDataConfig
-	Interval time.Duration
+	ID   string                          `yaml:"id"`
+	Type string                          `yaml:"type"`
+	Data []MetricsBatchRequestDataConfig `yaml:"data"`
 }
 
 type MetricsBatchRequestDataConfig struct {
 	Key      string `yaml:"key"`
-	JmesPath string `yaml:"jmesPath"`
+	JMESPath string `yaml:"jmesPath"`
+	OnNil    string `yaml:"onNil"`
 }
 
 type MetricsType string
@@ -42,8 +39,18 @@ const (
 	MetricsTypePrometheus MetricsType = "prometheus"
 )
 
+func NewMetricsTypeFromStr(s string) MetricsType {
+	return MetricsType(s)
+}
+
+type MetricsWriter func(
+	ctx context.Context,
+	ctr *app.Container,
+	data queryreq.ResponseContent[any],
+) error
+
 type MetricsFetcher interface {
-	Fetch(ctx context.Context, ctr *app.Container) (any, error)
+	Fetch(ctx context.Context, ctr *app.Container, writer MetricsWriter) (<-chan TermType, error)
 }
 
 type TermType int
@@ -51,5 +58,5 @@ type TermType int
 const (
 	_ TermType = iota
 	TermTypeContext
-	TermTypeTerm
+	TermWriteError
 )

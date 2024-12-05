@@ -7,6 +7,7 @@ import (
 )
 
 type MetricsFetcherFactory interface {
+	Init(conf []byte) error
 	FetcherFactory(ctx context.Context, ctr *app.Container) (MetricsFetcher, error)
 }
 

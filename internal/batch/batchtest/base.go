@@ -95,7 +95,16 @@ func baseExecute(
 		if err != nil {
 			return fmt.Errorf("failed to create directory: %v", err)
 		}
-		metricsbatch.PrefetchBatch(ctx, ctr, conf.Metrics, conf.Type, metricsOutputRoot)
+		if err := metricsbatch.MetricsFetchBatch(
+			ctx,
+			ctr,
+			conf.Metrics,
+			bytes.NewReader([]byte(result)),
+			conf.Type,
+			metricsOutputRoot,
+		); err != nil {
+			return fmt.Errorf("failed to execute metrics fetch: %v", err)
+		}
 	}
 
 	switch conf.Type {
