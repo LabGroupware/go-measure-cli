@@ -1,26 +1,36 @@
 type: SocketSubscribe
-data:
-  request:
-    endpointType: CreateOrganization
-    body:
-      name: "team1"
-      plan: "STANDARD"
-      userIds: ["<..<userId>..>"]
-    pathVariables: {}
-    timeout: 1m
-    successBreak:
-      - count
-      - time
-    break:
-      time: 2m
-      count: 3
-      # sysError: true
-      # parseError: true
-      # writeError: true
-      statusCode:
-        op: eq
-        value: 500
-    # dataOutput:
-    #   jmesPath: "code"
-    # dataOutputFilter:
-    #   jmesPath: "code == '0002:0003'"
+output:
+  enabled: true
+subscribes:
+  - aggregateType: "org.cresplanex.nova.service.job.Aggregate.Job"
+    aggregateId:
+      - "jobId_1"
+      - "jobId_2"
+    eventTypes:
+      - "JOB_PROCESSE"
+      - "JOB_SUCCESS"
+      - "JOB_FAILED"
+actions:
+  - id: "output_process"
+    types: ["output"]
+    eventTypes: ["JOB_PROCESSE"]
+    data:
+      - key: "jobId_1"
+        jmesPath: "data.jobId"
+        onError: "ignore" # ignore, error
+        onNil: "ignore" # ignore, error
+  - id: "store_success"
+    types: ["store"]
+    eventTypes: ["JOB_SUCCESS"]
+    data:
+      - key: "jobId_1"
+        jmesPath: "data.jobId"
+        onError: "ignore" # ignore, error
+        onNil: "ignore" # ignore, error
+successTerm: ["time", "event"]
+termCondition:
+  time: 10m
+  error: ["parse_error", "unmarshal_error", "read_error", "send_error"]
+  event: ["JOB_FAILED"]
+  data:
+    jmesPath: "data.teams[?length(users) >= `5`] | length(@) >= `1`"

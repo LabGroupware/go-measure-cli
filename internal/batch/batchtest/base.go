@@ -17,6 +17,7 @@ import (
 	"github.com/LabGroupware/go-measure-tui/internal/batch/batchtest/oneexecbatch"
 	"github.com/LabGroupware/go-measure-tui/internal/batch/batchtest/prefetchbatch"
 	"github.com/LabGroupware/go-measure-tui/internal/batch/batchtest/randomstore"
+	"github.com/LabGroupware/go-measure-tui/internal/batch/batchtest/socketsubscribe"
 	"github.com/LabGroupware/go-measure-tui/internal/logger"
 	"gopkg.in/yaml.v3"
 )
@@ -100,11 +101,6 @@ func baseExecute(
 		return match
 	})
 
-	store.Range(func(key, value interface{}) bool {
-		fmt.Println(key, value)
-		return true
-	})
-
 	var yamlData map[string]interface{}
 
 	if err := yaml.Unmarshal([]byte(result), &yamlData); err != nil {
@@ -137,7 +133,7 @@ func baseExecute(
 
 	if conf.Output.Enabled {
 		switch conf.Type {
-		case "MassExecute", "Pipeline":
+		case "MassExecute", "Pipeline", "SocketSubscribe":
 			err := os.MkdirAll(outputRoot, os.ModePerm)
 			if err != nil {
 				return fmt.Errorf("failed to create directory: %v", err)
@@ -195,8 +191,15 @@ func baseExecute(
 		if err := massexecutorbatch.MassExecuteBatch(ctx, ctr, massExec, outputRoot); err != nil {
 			return fmt.Errorf("failed to execute mass execute: %v", err)
 		}
-	case "WaitSaga":
-
+	case "SocketSubscribe":
+		var socketSubscribe socketsubscribe.SocketSubscribeConfig
+		decoder := yaml.NewDecoder(reader)
+		if err := decoder.Decode(&socketSubscribe); err != nil {
+			return fmt.Errorf("failed to decode yaml: %v", err)
+		}
+		if err := socketsubscribe.SocketSubscribe(ctx, ctr, socketSubscribe, store, outputRoot); err != nil {
+			return fmt.Errorf("failed to execute socket subscribe: %v", err)
+		}
 		return fmt.Errorf("not implemented")
 	case "Pipeline":
 		var pipeline PipelineConfig

@@ -43,24 +43,24 @@ func (h *DetailEventResponseMessageHandler) RegisterHandleFunc(eventType job.Job
 	h.SpecificEventHandleFuncMap[eventType] = handler
 }
 
-func (h *DetailEventResponseMessageHandler) HandleMessage(ws *WebSocket, msg *EventResponseMessage, raw []byte) {
+func (h *DetailEventResponseMessageHandler) HandleMessage(ws *WebSocket, msg *EventResponseMessage, raw []byte) error {
 	switch msg.EventType {
 	case EventTypesJobBegan, EventTypesJobProcessed, EventTypesJobSuccess, EventTypesJobFailed:
 		var rawData EventResponseMessageWithData[job.JobRawData]
 		if err := utils.UnmarshalJSON(raw, &rawData); err != nil {
-			fmt.Printf("failed to unmarshal job event data: %v\n", err)
-			return
+			return fmt.Errorf("failed to unmarshal job event data: %v", err)
 		}
 		jobTypeMapper := NewJobDataTypeMapper()
 		if t, ok := jobTypeMapper[rawData.Data.JobEventType]; ok {
 			data := reflect.New(t).Interface()
 			if err := utils.UnmarshalJSON(raw, &data); err != nil {
-				fmt.Printf("failed to unmarshal job began data: %v\n", err)
-				return
+				return fmt.Errorf("failed to unmarshal job began data: %v", err)
 			}
 			if v, ok := h.SpecificEventHandleFuncMap[rawData.Data.JobEventType]; ok {
 				v.Handle(ws, data, raw)
 			}
 		}
 	}
+
+	return nil
 }

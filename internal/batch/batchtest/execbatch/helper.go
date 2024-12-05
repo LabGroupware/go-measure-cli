@@ -348,30 +348,37 @@ func runResponseHandler[Res any](
 						logger.Value("error", err), logger.Value("on", "runResponseHandler"))
 				}
 				if result != nil {
-					sentLen := len(sentUid)
-					writeErr := false
-					for sentLen > 0 {
-						select {
-						case uid := <-uidChan:
-							delete(sentUid, uid)
-							sentLen--
-						case <-writeErrChan:
-							ctr.Logger.Warn(ctx, "write error occurred",
-								logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
-							writeErr = true
-						}
-					}
-					if writeErr {
-						ctr.Logger.Warn(ctx, "Term Condition: Write Error",
-							logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
-						termChan <- ByWriteError
-						return
-					}
+					if v, ok := result.(bool); ok {
+						if v {
+							sentLen := len(sentUid)
+							writeErr := false
+							for sentLen > 0 {
+								select {
+								case uid := <-uidChan:
+									delete(sentUid, uid)
+									sentLen--
+								case <-writeErrChan:
+									ctr.Logger.Warn(ctx, "write error occurred",
+										logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
+									writeErr = true
+								}
+							}
+							if writeErr {
+								ctr.Logger.Warn(ctx, "Term Condition: Write Error",
+									logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
+								termChan <- ByWriteError
+								return
+							}
 
-					ctr.Logger.Info(ctx, "Term Condition: Response Body",
-						logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
-					termChan <- ByResponseBodyMatch
-					return
+							ctr.Logger.Info(ctx, "Term Condition: Response Body",
+								logger.Value("id", id), logger.Value("count", count), logger.Value("on", "runResponseHandler"))
+							termChan <- ByResponseBodyMatch
+							return
+						}
+					} else {
+						ctr.Logger.Warn(ctx, "The result of the jmespath query is not a boolean",
+							logger.Value("on", "runResponseHandler"))
+					}
 				}
 			}
 			if request.Break.StatusCodeMatcher(v.StatusCode) {

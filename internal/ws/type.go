@@ -1,0 +1,16 @@
+package ws
+
+type TerminateType int
+
+const (
+	_ TerminateType = iota
+	TerminateTypeConnectionClosed
+	TerminateTypeReadMsgError
+	TerminateTypeUnmarshalJSONError
+	TerminateTypeParseMsgError
+	TerminateTypeCannotParseMsgHandlerError
+	TerminateTypeSubscribeMsgHandlerError
+	TerminateTypeUnsubscribeMsgHandlerError
+	TerminateTypeUnsupportedMsgHandlerError
+	TerminateTypeEventMsgHandlerError
+)
