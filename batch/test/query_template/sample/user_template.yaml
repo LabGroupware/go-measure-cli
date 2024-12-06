@@ -3,31 +3,31 @@ output:
   enabled: true
 data:
   requests:
-    - endpointType: FindUser
-      interval: 1s
-      awaitPrevResponse: false
-      queryParam:
-        with:
-          - userPreference
-          - organizations
-          - organizations.teams
-          - teams
-          - ownedOrganizations
-          - chargeTasks
-      pathVariables:
-        userId: 12345
-      successBreak:
-        - count
-        - time
-      break:
-        time: 2m
-        count: 10
-        sysError: true
-        parseError: true
-        writeError: true
-        statusCode:
-          op: ne
-          value: 200
+    # - endpointType: FindUser
+    #   interval: 1s
+    #   awaitPrevResponse: false
+    #   queryParam:
+    #     with:
+    #       - userPreference
+    #       - organizations
+    #       - organizations.teams
+    #       - teams
+    #       - ownedOrganizations
+    #       - chargeTasks
+    #   pathVariables:
+    #     userId: 12345
+    #   successBreak:
+    #     - count
+    #     - time
+    #   break:
+    #     time: 2m
+    #     count: 10
+    #     sysError: true
+    #     parseError: true
+    #     writeError: true
+    #     statusCode:
+    #       op: ne
+    #       value: 200
         # responseBody:
         #   jmesPath: "data.teams[?length(users) >= `5`] | length(@) >= `1`"
       # dataOutput:
@@ -48,20 +48,20 @@ data:
         sortField: ["name"]
         sortOrder: ["asc"]
         withCount: [true]
-        with:
-          - userPreference
-          - organizations
-          - organizations.teams
-          - teams
-          - ownedOrganizations
-          - chargeTasks
+        # with:
+        #   - userPreference
+        #   - organizations
+        #   - organizations.teams
+        #   - teams
+        #   - ownedOrganizations
+        #   - chargeTasks
       pathVariables: {}
       successBreak:
         - count
         - time
       break:
         time: 2m
-        count: 5
+        count: 1
         sysError: true
         parseError: true
         writeError: true

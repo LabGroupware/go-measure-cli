@@ -1,0 +1,47 @@
+type: SocketSubscribe
+output:
+  enabled: true
+subscribes:
+  - aggregateType: "org.cresplanex.nova.service.job.Aggregate.Job"
+    aggregateId:
+      - "<..<createUserProfileJobId_loopCount>..>"
+    eventTypes:
+      - "JOB_PROCESSED"
+      - "JOB_SUCCESS"
+      - "JOB_FAILED"
+actions:
+  - id: "output_success"
+    types: ["output"]
+    eventTypes: ["JOB_PROCESSED", "JOB_FAILED", "JOB_SUCCESS"]
+    data:
+      - key: "LastActionCode"
+        jmesPath: "completedActions[-1].actionCode"
+        onError: "ignore" # ignore, error
+        onNil: "ignore" # ignore, error
+      - key: "LastActionSuccess"
+        jmesPath: "completedActions[-1].success"
+        onError: "ignore" # ignore, error
+        onNil: "ignore" # ignore, error
+      - key: "LastActionDatetime"
+        jmesPath: "completedActions[-1].datetime"
+        onError: "ignore" # ignore, error
+        onNil: "ignore" # ignore, error
+  - id: "store_success"
+    types: ["store"]
+    eventTypes: ["JOB_SUCCESS"]
+    data:
+      - key: "userPreferenceId_<..<loopCount>..>"
+        jmesPath: "data.userPreference.userPreferenceId"
+        onError: "ignore" # ignore, error
+        onNil: "ignore" # ignore, error
+      - key: "userProfileId_<..<loopCount>..>"
+        jmesPath: "data.userProfile.userProfileId"
+        onError: "ignore" # ignore, error
+        onNil: "ignore" # ignore, error
+successTerm: ["event"]
+termCondition:
+  time: 10m
+  error: ["parse_error", "unmarshal_error", "read_error", "send_error"]
+  event: ["JOB_SUCCESS"]
+  # data:
+  #   jmesPath: "data.teams[?length(users) >= `5`] | length(@) >= `1`"

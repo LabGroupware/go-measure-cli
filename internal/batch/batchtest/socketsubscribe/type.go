@@ -1,12 +1,12 @@
 package socketsubscribe
 
 type SocketSubscribeConfig struct {
-	Type        string                             `json:"type"`
-	Output      BatchTestOutput                    `json:"output"`
-	Subscribes  []SocketSubscribeSubscribeConfig   `json:"subscribes"`
-	Actions     []SocketSubscribeActionConfig      `json:"actions"`
-	SuccessTerm []string                           `json:"successTerm"`
-	Term        SocketSubscribeTermConditionConfig `json:"termCondition"`
+	Type        string                             `yaml:"type"`
+	Output      BatchTestOutput                    `yaml:"output"`
+	Subscribes  []SocketSubscribeSubscribeConfig   `yaml:"subscribes"`
+	Actions     []SocketSubscribeActionConfig      `yaml:"actions"`
+	SuccessTerm []string                           `yaml:"successTerm"`
+	Term        SocketSubscribeTermConditionConfig `yaml:"termCondition"`
 }
 
 type BatchTestOutput struct {
@@ -14,34 +14,34 @@ type BatchTestOutput struct {
 }
 
 type SocketSubscribeSubscribeConfig struct {
-	AggregateType string   `json:"aggregateType"`
-	AggregateId   []string `json:"aggregateId"`
-	EventTypes    []string `json:"eventTypes"`
+	AggregateType string   `yaml:"aggregateType"`
+	AggregateId   []string `yaml:"aggregateId"`
+	EventTypes    []string `yaml:"eventTypes"`
 }
 
 type SocketSubscribeActionConfig struct {
-	ID         string                            `json:"id"`
-	Types      []string                          `json:"types"`
-	EventTypes []string                          `json:"eventTypes"`
-	Data       []SocketSubscribeActionDataConfig `json:"data"`
+	ID         string                            `yaml:"id"`
+	Types      []string                          `yaml:"types"`
+	EventTypes []string                          `yaml:"eventTypes"`
+	Data       []SocketSubscribeActionDataConfig `yaml:"data"`
 }
 
 type SocketSubscribeActionDataConfig struct {
-	Key      string `json:"key"`
-	JMESPath string `json:"jmesPath"`
-	OnNil    string `json:"onNil"`
-	OnError  string `json:"onError"`
+	Key      string `yaml:"key"`
+	JMESPath string `yaml:"jmesPath"`
+	OnNil    string `yaml:"onNil"`
+	OnError  string `yaml:"onError"`
 }
 
 type SocketSubscribeTermConditionConfig struct {
-	Time  *string                                `json:"time"`
-	Error []string                               `json:"error"`
-	Event []string                               `json:"event"`
-	Data  SocketSubscribeTermConditionDataConfig `json:"data"`
+	Time  *string                                `yaml:"time"`
+	Error []string                               `yaml:"error"`
+	Event []string                               `yaml:"event"`
+	Data  SocketSubscribeTermConditionDataConfig `yaml:"data"`
 }
 
 type SocketSubscribeTermConditionDataConfig struct {
-	JMESPath *string `json:"jmesPath"`
+	JMESPath *string `yaml:"jmesPath"`
 }
 
 type ErrorTypeForTerm string

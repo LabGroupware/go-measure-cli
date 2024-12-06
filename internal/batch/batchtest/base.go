@@ -200,7 +200,6 @@ func baseExecute(
 		if err := socketsubscribe.SocketSubscribe(ctx, ctr, socketSubscribe, store, outputRoot); err != nil {
 			return fmt.Errorf("failed to execute socket subscribe: %v", err)
 		}
-		return fmt.Errorf("not implemented")
 	case "Pipeline":
 		var pipeline PipelineConfig
 		decoder := yaml.NewDecoder(reader)
@@ -212,7 +211,6 @@ func baseExecute(
 			return fmt.Errorf("failed to execute pipeline: %v", err)
 		}
 	default:
-
 		return fmt.Errorf("unknown type")
 	}
 

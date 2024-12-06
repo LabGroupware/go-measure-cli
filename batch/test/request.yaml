@@ -7,13 +7,13 @@ subscribes:
       - "jobId_1"
       - "jobId_2"
     eventTypes:
-      - "JOB_PROCESSE"
+      - "JOB_PROCESSED"
       - "JOB_SUCCESS"
       - "JOB_FAILED"
 actions:
   - id: "output_process"
     types: ["output"]
-    eventTypes: ["JOB_PROCESSE"]
+    eventTypes: ["JOB_PROCESSED"]
     data:
       - key: "jobId_1"
         jmesPath: "data.jobId"

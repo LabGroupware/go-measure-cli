@@ -44,6 +44,8 @@ func SocketSubscribe(
 		}
 	}
 
+	socketStart := time.Now()
+
 	actionsFileMap := make(map[string]*os.File)
 
 	if conf.Output.Enabled {
@@ -57,7 +59,7 @@ func SocketSubscribe(
 				defer file.Close()
 				actionsFileMap[action.ID] = file
 
-				header := []string{"EventType", "ReceivedDatetime"}
+				header := []string{"EventType", "StartTime", "ReceivedDatetime", "TotalTime"}
 				for _, data := range action.Data {
 					header = append(header, data.Key)
 				}
@@ -72,8 +74,13 @@ func SocketSubscribe(
 
 	msgHandler := func(s *ws.WebSocket, msg *ws.EventResponseMessage, raw []byte) error {
 		fmt.Printf("event response: %s\n", msg.EventType)
+		fmt.Printf("event data: %s\n", msg.Data)
 
 		for _, action := range conf.Actions {
+			if !ws.ContainsEventType(action.EventTypes, msg.EventType) {
+				continue
+			}
+
 			dataMap := make(map[string]string)
 
 			for _, dataConf := range action.Data {
@@ -115,7 +122,12 @@ func SocketSubscribe(
 			if ContainsSocketActionType(action.Types, SocketActionTypeOutput) {
 				file := actionsFileMap[action.ID]
 				writer := csv.NewWriter(file)
-				data := []string{msg.EventType.String(), time.Now().Format(time.RFC3339)}
+				data := []string{
+					msg.EventType.String(),
+					socketStart.Format(time.RFC3339),
+					time.Now().Format(time.RFC3339),
+					fmt.Sprintf("%dms", time.Since(socketStart).Milliseconds()),
+				}
 
 				for _, dataConf := range action.Data {
 					data = append(data, dataMap[dataConf.Key])
@@ -130,26 +142,9 @@ func SocketSubscribe(
 
 			if ContainsSocketActionType(action.Types, SocketActionTypeStore) {
 				for k, v := range dataMap {
+					ctr.Logger.Info(ctx, "store data",
+						logger.Value("key", k), logger.Value("value", v))
 					store.Store(k, v)
-				}
-			}
-
-			if ws.ContainsEventType(action.EventTypes, msg.EventType) {
-				for _, data := range action.Data {
-					if data.JMESPath != "" {
-						jmesPathQuery := data.JMESPath
-						result, err := jmespath.Search(jmesPathQuery, msg.Data)
-						if err != nil {
-							ctr.Logger.Error(ctx, "failed to search jmespath",
-								logger.Value("error", err), logger.Value("on", "SocketSubscribe"))
-						}
-						if result != nil {
-							if v, ok := result.(string); ok {
-								store.Store(data.Key, v)
-								return nil
-							}
-						}
-					}
 				}
 			}
 		}
@@ -200,8 +195,7 @@ func SocketSubscribe(
 			logger.Value("error", err))
 		return fmt.Errorf("failed to connect to socket: %v", err)
 	}
-
-	defer sock.Close()
+	// defer sock.Close() // TODO: uncomment this line
 
 	for _, sub := range conf.Subscribes {
 		if err := sock.Subscribe(

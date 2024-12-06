@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"os"
-	"os/signal"
 
 	"github.com/LabGroupware/go-measure-tui/internal/app"
 	"github.com/LabGroupware/go-measure-tui/internal/logger"
@@ -35,6 +33,9 @@ func NewWebSocket() *WebSocket {
 		UnsubscribeMsgHandler: DefaultUnsubscribeResponseMessageHandleFunc,
 		UnsupportedMsgHandler: DefaultUnsupportedResponseMessageHandleFunc,
 		EventMsgHandler:       DefaultEventResponseMessageHandleFunc,
+		subscribeMsgMem:       NewSubscribeMessageMemory(),
+		unsubscribeMsgMem:     NewUnsubscribeMessageMemory(),
+		SubscribeMemory:       NewSubscribeMemory(),
 	}
 }
 
@@ -59,14 +60,14 @@ func (ws *WebSocket) Connect(ctx context.Context, ctr *app.Container, conf Conne
 	ws.conn = conn
 
 	// Clean up the connection when the function returns
-	interrupt := make(chan os.Signal, 1)
-	signal.Notify(interrupt, os.Interrupt)
+	// interrupt := make(chan os.Signal, 1)
+	// signal.Notify(interrupt, os.Interrupt)
 
 	done := make(chan TerminateType)
 
 	go func() {
 		// defer close(done)
-		defer ws.conn.Close()
+		// defer ws.conn.Close()
 		for {
 			var msg ResponseMessage
 			_, content, err := ws.conn.ReadMessage()
@@ -84,6 +85,7 @@ func (ws *WebSocket) Connect(ctx context.Context, ctr *app.Container, conf Conne
 					return
 				}
 			}
+			fmt.Println(string(content))
 			err = utils.UnmarshalJSON(content, &msg)
 			if err != nil {
 				ctr.Logger.Error(ctx, "failed to unmarshal JSON",

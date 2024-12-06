@@ -148,6 +148,7 @@ func (r CreateTeamReq) CreateRequest(ctx context.Context, ctr *app.Container) (*
 		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
 	}
 
+	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 	r.AuthToken.SetAuthHeader(req)
 
@@ -185,6 +186,7 @@ func (r AddUsersTeamReq) CreateRequest(ctx context.Context, ctr *app.Container) 
 		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
 	}
 
+	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 	r.AuthToken.SetAuthHeader(req)
 
