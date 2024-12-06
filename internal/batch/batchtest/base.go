@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/LabGroupware/go-measure-tui/internal/app"
 	"github.com/LabGroupware/go-measure-tui/internal/batch/batchtest/massexecutorbatch"
@@ -52,17 +53,31 @@ func baseExecute(
 	}
 
 	if _, err := file.Seek(0, 0); err != nil {
+		if err := wait(ctx, ctr, conf, SleepAfterFailedExec); err != nil {
+			return fmt.Errorf("failed to wait: %v", err)
+		}
 		return fmt.Errorf("failed to seek file: %v", err)
+	}
+
+	if err := wait(ctx, ctr, conf, SleepAfterInit); err != nil {
+		return fmt.Errorf("failed to wait: %v", err)
 	}
 
 	if conf.Prefetch.Enabled {
 		var replacements = make(map[string]string)
 		if replacements, err = prefetchbatch.PrefetchBatch(ctx, ctr, conf.Prefetch, store); err != nil {
+			if err := wait(ctx, ctr, conf, SleepAfterFailedExec); err != nil {
+				return fmt.Errorf("failed to wait: %v", err)
+			}
 			return fmt.Errorf("failed to execute prefetch: %v", err)
 		}
 
 		ctr.Logger.Debug(ctx, "replacements set",
 			logger.Value("replacements", replacements))
+	}
+
+	if err := wait(ctx, ctr, conf, SleepAfterPrefetch); err != nil {
+		return fmt.Errorf("failed to wait: %v", err)
 	}
 
 	var buffer bytes.Buffer
@@ -71,7 +86,9 @@ func baseExecute(
 		buffer.WriteString(scanner.Text() + "\n")
 	}
 	if err := scanner.Err(); err != nil {
-
+		if err := wait(ctx, ctr, conf, SleepAfterFailedExec); err != nil {
+			return fmt.Errorf("failed to wait: %v", err)
+		}
 		return fmt.Errorf("failed to read file: %w", err)
 	}
 
@@ -109,11 +126,18 @@ func baseExecute(
 	var yamlData map[string]interface{}
 
 	if err := yaml.Unmarshal([]byte(result), &yamlData); err != nil {
+		if err := wait(ctx, ctr, conf, SleepAfterFailedExec); err != nil {
+			return fmt.Errorf("failed to wait: %v", err)
+		}
 		return fmt.Errorf("failed to parse as YAML: %w", err)
 	}
 
 	ctr.Logger.Debug(ctx, "replaced content",
 		logger.Value("content", yamlData))
+
+	if err := wait(ctx, ctr, conf, SleepAfterReplace); err != nil {
+		return fmt.Errorf("failed to wait: %v", err)
+	}
 
 	reader := bytes.NewReader([]byte(result))
 
@@ -122,6 +146,9 @@ func baseExecute(
 			logger.Value("metrics", conf.Metrics))
 		err = os.MkdirAll(metricsOutputRoot, os.ModePerm)
 		if err != nil {
+			if err := wait(ctx, ctr, conf, SleepAfterFailedExec); err != nil {
+				return fmt.Errorf("failed to wait: %v", err)
+			}
 			return fmt.Errorf("failed to create directory: %v", err)
 		}
 		if err := metricsbatch.MetricsFetchBatch(
@@ -132,15 +159,25 @@ func baseExecute(
 			conf.Type,
 			metricsOutputRoot,
 		); err != nil {
+			if err := wait(ctx, ctr, conf, SleepAfterFailedExec); err != nil {
+				return fmt.Errorf("failed to wait: %v", err)
+			}
 			return fmt.Errorf("failed to execute metrics fetch: %v", err)
 		}
 	}
 
+	if err := wait(ctx, ctr, conf, SleepAfterMetrics); err != nil {
+		return fmt.Errorf("failed to wait: %v", err)
+	}
+
 	if conf.Output.Enabled {
 		switch conf.Type {
-		case "MassExecute", "Pipeline", "SocketSubscribe":
+		case "MassExecute", "Pipeline", "SocketSubscribe", "SocketConnectAndSubscribe":
 			err := os.MkdirAll(outputRoot, os.ModePerm)
 			if err != nil {
+				if err := wait(ctx, ctr, conf, SleepAfterFailedExec); err != nil {
+					return fmt.Errorf("failed to wait: %v", err)
+				}
 				return fmt.Errorf("failed to create directory: %v", err)
 			}
 		}
@@ -151,6 +188,9 @@ func baseExecute(
 		var randomStoreValue randomstore.RandomStoreValueConfig
 		decoder := yaml.NewDecoder(reader)
 		if err := decoder.Decode(&randomStoreValue); err != nil {
+			if err := wait(ctx, ctr, conf, SleepAfterFailedExec); err != nil {
+				return fmt.Errorf("failed to wait: %v", err)
+			}
 			return fmt.Errorf("failed to decode yaml: %v", err)
 		}
 		var values map[string]string
@@ -161,62 +201,129 @@ func baseExecute(
 			bytes.NewReader([]byte(result)),
 			store,
 		); err != nil {
+			if err := wait(ctx, ctr, conf, SleepAfterFailedExec); err != nil {
+				return fmt.Errorf("failed to wait: %v", err)
+			}
 			return fmt.Errorf("failed to execute random store value: %v", err)
 		}
-		store.Range(func(key, value interface{}) bool {
-			ctr.Logger.Debug(ctx, "current store value",
-				logger.Value("key", key), logger.Value("value", value))
-			return true
-		})
 		ctr.Logger.Info(ctx, "newValues",
 			logger.Value("values", values))
 	case "OneExecute":
 		var oneExec oneexecbatch.OneExecuteConfig
 		decoder := yaml.NewDecoder(reader)
 		if err := decoder.Decode(&oneExec); err != nil {
+			if err := wait(ctx, ctr, conf, SleepAfterFailedExec); err != nil {
+				return fmt.Errorf("failed to wait: %v", err)
+			}
 			return fmt.Errorf("failed to decode yaml: %v", err)
 		}
 		var values map[string]string
 		if values, err = oneexecbatch.OneExecuteBatch(ctx, ctr, oneExec, store); err != nil {
+			if err := wait(ctx, ctr, conf, SleepAfterFailedExec); err != nil {
+				return fmt.Errorf("failed to wait: %v", err)
+			}
 			return fmt.Errorf("failed to execute one execute: %v", err)
 		}
-		store.Range(func(key, value interface{}) bool {
-			ctr.Logger.Debug(ctx, "current store value",
-				logger.Value("key", key), logger.Value("value", value))
-			return true
-		})
 		ctr.Logger.Info(ctx, "newValues",
 			logger.Value("values", values))
 	case "MassExecute":
 		var massExec massexecutorbatch.MassExecute
 		decoder := yaml.NewDecoder(reader)
 		if err := decoder.Decode(&massExec); err != nil {
+			if err := wait(ctx, ctr, conf, SleepAfterFailedExec); err != nil {
+				return fmt.Errorf("failed to wait: %v", err)
+			}
 			return fmt.Errorf("failed to decode yaml: %v", err)
 		}
 		if err := massexecutorbatch.MassExecuteBatch(ctx, ctr, massExec, outputRoot); err != nil {
+			if err := wait(ctx, ctr, conf, SleepAfterFailedExec); err != nil {
+				return fmt.Errorf("failed to wait: %v", err)
+			}
 			return fmt.Errorf("failed to execute mass execute: %v", err)
+		}
+	case "SocketConnect":
+		var socketConnect socketsubscribe.SocketConnectConfig
+		decoder := yaml.NewDecoder(reader)
+		if err := decoder.Decode(&socketConnect); err != nil {
+			if err := wait(ctx, ctr, conf, SleepAfterFailedExec); err != nil {
+				return fmt.Errorf("failed to wait: %v", err)
+			}
+			return fmt.Errorf("failed to decode yaml: %v", err)
+		}
+		if err := socketsubscribe.SocketConnect(ctx, ctr, socketConnect, store, outputRoot); err != nil {
+			if err := wait(ctx, ctr, conf, SleepAfterFailedExec); err != nil {
+				return fmt.Errorf("failed to wait: %v", err)
+			}
+			return fmt.Errorf("failed to execute socket connect: %v", err)
 		}
 	case "SocketSubscribe":
 		var socketSubscribe socketsubscribe.SocketSubscribeConfig
 		decoder := yaml.NewDecoder(reader)
 		if err := decoder.Decode(&socketSubscribe); err != nil {
+			if err := wait(ctx, ctr, conf, SleepAfterFailedExec); err != nil {
+				return fmt.Errorf("failed to wait: %v", err)
+			}
 			return fmt.Errorf("failed to decode yaml: %v", err)
 		}
 		if err := socketsubscribe.SocketSubscribe(ctx, ctr, socketSubscribe, store, outputRoot); err != nil {
+			if err := wait(ctx, ctr, conf, SleepAfterFailedExec); err != nil {
+				return fmt.Errorf("failed to wait: %v", err)
+			}
+			return fmt.Errorf("failed to execute socket subscribe: %v", err)
+		}
+	case "SocketConnectAndSubscribe":
+		var socketSubscribe socketsubscribe.SocketConnectAndSubscribeConfig
+		decoder := yaml.NewDecoder(reader)
+		if err := decoder.Decode(&socketSubscribe); err != nil {
+			if err := wait(ctx, ctr, conf, SleepAfterFailedExec); err != nil {
+				return fmt.Errorf("failed to wait: %v", err)
+			}
+			return fmt.Errorf("failed to decode yaml: %v", err)
+		}
+		if err := socketsubscribe.SocketConnectAndSubscribe(ctx, ctr, socketSubscribe, store, outputRoot); err != nil {
+			if err := wait(ctx, ctr, conf, SleepAfterFailedExec); err != nil {
+				return fmt.Errorf("failed to wait: %v", err)
+			}
 			return fmt.Errorf("failed to execute socket subscribe: %v", err)
 		}
 	case "Pipeline":
 		var pipeline PipelineConfig
 		decoder := yaml.NewDecoder(reader)
 		if err := decoder.Decode(&pipeline); err != nil {
-
+			if err := wait(ctx, ctr, conf, SleepAfterFailedExec); err != nil {
+				return fmt.Errorf("failed to wait: %v", err)
+			}
 			return fmt.Errorf("failed to decode yaml: %v", err)
 		}
 		if err := pipelineBatch(ctx, ctr, pipeline, store, selfLoopCount, outputRoot, metricsOutputRoot); err != nil {
+			if err := wait(ctx, ctr, conf, SleepAfterFailedExec); err != nil {
+				return fmt.Errorf("failed to wait: %v", err)
+			}
 			return fmt.Errorf("failed to execute pipeline: %v", err)
 		}
 	default:
+		if err := wait(ctx, ctr, conf, SleepAfterFailedExec); err != nil {
+			return fmt.Errorf("failed to wait: %v", err)
+		}
 		return fmt.Errorf("unknown type")
+	}
+
+	if err := wait(ctx, ctr, conf, SleepAfterSuccessExec); err != nil {
+		return fmt.Errorf("failed to wait: %v", err)
+	}
+
+	return nil
+}
+
+func wait(ctx context.Context, ctr *app.Container, conf BatchTestType, after SleepAfterValue) error {
+	if v, wait := conf.RetrieveSleepValue(after); wait {
+		ctr.Logger.Debug(ctx, "sleeping after execute",
+			logger.Value("duration", v))
+		select {
+		case <-time.After(v):
+		case <-ctx.Done():
+			return fmt.Errorf("context canceled")
+		}
 	}
 
 	return nil

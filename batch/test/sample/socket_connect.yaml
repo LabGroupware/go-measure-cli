@@ -1,0 +1,15 @@
+type: SocketConnect
+output:
+  enabled: true
+id: "wait"
+successTerm: ["time"]
+termCondition:
+  time: 20s
+  error: ["parse_error", "unmarshal_error", "read_error", "send_error"]
+  # event:
+  #   - types: ["JOB_SUCCESS"]
+  #     # jmesPath: "completedActions[-1].success"
+  #     success: true
+  #   - types: ["JOB_FAILED"]
+  #     # jmesPath: "completedActions[-1].success"
+  #     success: false

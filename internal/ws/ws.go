@@ -13,29 +13,33 @@ import (
 
 // WebSocket is a struct that represents a WebSocket connection
 type WebSocket struct {
-	conn                  *websocket.Conn
-	CannotParseMsgHandler CannotParseResponseMessageHandleFunc
-	SubscribeMsgHandler   SubscribeResponseMessageHandleFunc
-	UnsubscribeMsgHandler UnsubscribeResponseMessageHandleFunc
-	UnsupportedMsgHandler UnsupportedResponseMessageHandleFunc
-	EventMsgHandler       EventResponseMessageHandleFunc
-	subscribeMsgMem       *SubscribeMessageMemory
-	unsubscribeMsgMem     *UnsubscribeMessageMemory
-	SubscribeMemory       *SubscribeMemory
+	conn                            *websocket.Conn
+	CannotParseMsgHandler           CannotParseResponseMessageHandleFunc
+	SubscribeMsgHandler             SubscribeResponseMessageHandleFunc
+	UnsubscribeMsgHandler           UnsubscribeResponseMessageHandleFunc
+	UnsupportedMsgHandler           UnsupportedResponseMessageHandleFunc
+	EventMsgHandler                 EventResponseMessageHandleFunc
+	subscribeMsgMem                 *SubscribeMessageMemory
+	unsubscribeMsgMem               *UnsubscribeMessageMemory
+	SubscribeMemory                 *SubscribeMemory
+	SubscribeConsumerMemory         *SubscribeConsumerMemory
+	SubscribeConsumerMemorySubIndex *SubscribeConsumerMemorySubIndex
 }
 
 // NewWebSocket creates a new WebSocket connection
 func NewWebSocket() *WebSocket {
 	return &WebSocket{
-		conn:                  nil,
-		CannotParseMsgHandler: DefaultCannotParseResponseMessageHandleFunc,
-		SubscribeMsgHandler:   DefaultSubscribeResponseMessageHandleFunc,
-		UnsubscribeMsgHandler: DefaultUnsubscribeResponseMessageHandleFunc,
-		UnsupportedMsgHandler: DefaultUnsupportedResponseMessageHandleFunc,
-		EventMsgHandler:       DefaultEventResponseMessageHandleFunc,
-		subscribeMsgMem:       NewSubscribeMessageMemory(),
-		unsubscribeMsgMem:     NewUnsubscribeMessageMemory(),
-		SubscribeMemory:       NewSubscribeMemory(),
+		conn:                            nil,
+		CannotParseMsgHandler:           DefaultCannotParseResponseMessageHandleFunc,
+		SubscribeMsgHandler:             DefaultSubscribeResponseMessageHandleFunc,
+		UnsubscribeMsgHandler:           DefaultUnsubscribeResponseMessageHandleFunc,
+		UnsupportedMsgHandler:           DefaultUnsupportedResponseMessageHandleFunc,
+		EventMsgHandler:                 DefaultEventResponseMessageHandleFunc,
+		subscribeMsgMem:                 NewSubscribeMessageMemory(),
+		unsubscribeMsgMem:               NewUnsubscribeMessageMemory(),
+		SubscribeMemory:                 NewSubscribeMemory(),
+		SubscribeConsumerMemory:         NewSubscribeConsumerMemory(),
+		SubscribeConsumerMemorySubIndex: NewSubscribeConsumerMemorySubIndex(),
 	}
 }
 
@@ -85,7 +89,6 @@ func (ws *WebSocket) Connect(ctx context.Context, ctr *app.Container, conf Conne
 					return
 				}
 			}
-			fmt.Println(string(content))
 			err = utils.UnmarshalJSON(content, &msg)
 			if err != nil {
 				ctr.Logger.Error(ctx, "failed to unmarshal JSON",
@@ -128,7 +131,13 @@ func (ws *WebSocket) Connect(ctx context.Context, ctr *app.Container, conf Conne
 				}
 				if v, ok := ws.subscribeMsgMem.Memory[subscribe.MessageID]; ok {
 					if subscribe.Success {
-						ws.SubscribeMemory.Memory[subscribe.SubscriptionID] = SubscribeMemoryData(v)
+						ws.SubscribeMemory.Memory[subscribe.SubscriptionID] = SubscribeMemoryData{
+							AggregateType: v.AggregateType,
+							AggregateIDs:  v.AggregateIDs,
+							EventTypes:    v.EventTypes,
+						}
+						ws.SubscribeConsumerMemory.Memory[v.ConsumerID] = subscribe.SubscriptionID
+						ws.SubscribeConsumerMemorySubIndex.Memory[subscribe.SubscriptionID] = v.ConsumerID
 						delete(ws.subscribeMsgMem.Memory, subscribe.MessageID)
 					}
 				}
@@ -155,6 +164,11 @@ func (ws *WebSocket) Connect(ctx context.Context, ctr *app.Container, conf Conne
 					if unsubscribe.Success {
 						for _, id := range v.SubscriptionIDs {
 							delete(ws.SubscribeMemory.Memory, id)
+
+							if consumerID, ok := ws.SubscribeConsumerMemorySubIndex.Memory[id]; ok {
+								delete(ws.SubscribeConsumerMemory.Memory, consumerID)
+								delete(ws.SubscribeConsumerMemorySubIndex.Memory, id)
+							}
 						}
 						delete(ws.unsubscribeMsgMem.Memory, unsubscribe.MessageID)
 					}
@@ -197,6 +211,7 @@ func (ws *WebSocket) Connect(ctx context.Context, ctr *app.Container, conf Conne
 						return
 					}
 				}
+				// fmt.Println("EventResponseMessage", event)
 				if ws.EventMsgHandler != nil {
 					if ws.EventMsgHandler(ws, &event, content); err != nil {
 						ctr.Logger.Error(ctx, "failed to handle EventResponseMessage",
@@ -223,7 +238,7 @@ func (ws *WebSocket) AllUnsubscribe() error {
 	return ws.SendUnsubscribeMessage(subscriptionIDs)
 }
 
-func (ws *WebSocket) SendSubscribeMessage(aggregateType AggregateType, aggregateIDs []string, eventTypes []EventType) error {
+func (ws *WebSocket) SendSubscribeMessage(consumerId string, aggregateType AggregateType, aggregateIDs []string, eventTypes []EventType) error {
 	msgID := utils.GenerateUniqueID()
 	msg := SubscribeMessage{
 		Type:      RequestTypeSubscribe,
@@ -234,7 +249,7 @@ func (ws *WebSocket) SendSubscribeMessage(aggregateType AggregateType, aggregate
 	if err != nil {
 		return fmt.Errorf("failed to send subscribe message: %w", err)
 	}
-	ws.subscribeMsgMem.Memory[msgID] = SubscribeMessageMemoryData{AggregateType: aggregateType, AggregateIDs: aggregateIDs, EventTypes: eventTypes}
+	ws.subscribeMsgMem.Memory[msgID] = SubscribeMessageMemoryData{ConsumerID: consumerId, AggregateType: aggregateType, AggregateIDs: aggregateIDs, EventTypes: eventTypes}
 	return nil
 }
 
@@ -251,6 +266,17 @@ func (ws *WebSocket) SendUnsubscribeMessage(subscriptionIDs []string) error {
 	}
 	ws.unsubscribeMsgMem.Memory[msgID] = UnsubscribeMessageMemoryData{SubscriptionIDs: subscriptionIDs}
 	return nil
+}
+
+func (ws *WebSocket) UnsubscribeByConsumerID(consumerID string) error {
+	var subscriptionID string
+	if id, ok := ws.SubscribeConsumerMemory.Memory[consumerID]; ok {
+		subscriptionID = id
+	} else {
+		return nil
+	}
+
+	return ws.SendUnsubscribeMessage([]string{subscriptionID})
 }
 
 func (ws *WebSocket) UnsubscribeFromAnyAggregate(aggregateType AggregateType, aggregateID []string) error {

@@ -18,6 +18,8 @@ func MassExecuteBatch(ctx context.Context, ctr *app.Container, massExec MassExec
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
+	fmt.Println("MassExecuteBatch Called!!")
+
 	concurrentCount := len(massExec.Data.Requests)
 
 	threadExecutors := make([]*MassiveExecThreadExecutor, concurrentCount)

@@ -1,4 +1,4 @@
-type: SocketSubscribe
+type: SocketConnectAndSubscribe
 output:
   enabled: true
 subscribes:

@@ -1,0 +1,11 @@
+type: Pipeline
+output:
+  enabled: true
+concurrency: 0
+files:
+  - id: "create_user_profile"
+    file: "cmd_template/create_user_profile_template.yaml"
+    noLoopOverride: true
+  - id: "wait_create_user_profile_job"
+    file: "socket/sock_sub.yaml"
+    noLoopOverride: true

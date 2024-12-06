@@ -1,6 +1,7 @@
 package ws
 
 type SubscribeMessageMemoryData struct {
+	ConsumerID    string
 	AggregateType AggregateType
 	AggregateIDs  []string
 	EventTypes    []EventType
@@ -43,5 +44,25 @@ type SubscribeMemory struct {
 func NewSubscribeMemory() *SubscribeMemory {
 	return &SubscribeMemory{
 		Memory: make(map[string]SubscribeMemoryData),
+	}
+}
+
+type SubscribeConsumerMemory struct {
+	Memory map[string]string
+}
+
+func NewSubscribeConsumerMemory() *SubscribeConsumerMemory {
+	return &SubscribeConsumerMemory{
+		Memory: make(map[string]string),
+	}
+}
+
+type SubscribeConsumerMemorySubIndex struct {
+	Memory map[string]string
+}
+
+func NewSubscribeConsumerMemorySubIndex() *SubscribeConsumerMemorySubIndex {
+	return &SubscribeConsumerMemorySubIndex{
+		Memory: make(map[string]string),
 	}
 }

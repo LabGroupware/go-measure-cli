@@ -1,0 +1,36 @@
+type: SocketConnectAndSubscribe
+output:
+  enabled: true
+subscribes:
+  - aggregateType: "org.cresplanex.nova.service.job.Aggregate.Job"
+    aggregateId:
+      - "jobId_1"
+      - "jobId_2"
+    eventTypes:
+      - "JOB_PROCESSED"
+      - "JOB_SUCCESS"
+      - "JOB_FAILED"
+actions:
+  - id: "output_process"
+    types: ["output"]
+    eventTypes: ["JOB_PROCESSED"]
+    data:
+      - key: "jobId_1"
+        jmesPath: "data.jobId"
+        onError: "ignore" # ignore, error
+        onNil: "ignore" # ignore, error
+  - id: "store_success"
+    types: ["store"]
+    eventTypes: ["JOB_SUCCESS"]
+    data:
+      - key: "jobId_1"
+        jmesPath: "data.jobId"
+        onError: "ignore" # ignore, error
+        onNil: "ignore" # ignore, error
+successTerm: ["time", "event"]
+termCondition:
+  time: 10m
+  error: ["parse_error", "unmarshal_error", "read_error", "send_error"]
+  event: ["JOB_FAILED"]
+  data:
+    jmesPath: "data.teams[?length(users) >= `5`] | length(@) >= `1`"

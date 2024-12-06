@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/csv"
 	"fmt"
-	"os"
 	"sync"
 	"time"
 
@@ -14,24 +13,16 @@ import (
 	"github.com/jmespath/go-jmespath"
 )
 
-type DataTypeChan int
-
-const (
-	_ DataTypeChan = iota
-	DataTypeChanSuccessEvent
-	DataTypeChanFailEvent
-	DataChanError
-)
-
-func SocketSubscribe(
+func SocketConnect(
 	ctx context.Context,
 	ctr *app.Container,
-	conf SocketSubscribeConfig,
+	conf SocketConnectConfig,
 	store *sync.Map,
 	outputRoot string,
 ) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
+	defer fmt.Println("Socket Closed------------------------------------------------------------")
 
 	dataTermChan := make(chan DataTypeChan)
 	var breakTime time.Duration
@@ -46,35 +37,36 @@ func SocketSubscribe(
 
 	socketStart := time.Now()
 
-	actionsFileMap := sync.Map{}
-
-	if conf.Output.Enabled {
-		for _, action := range conf.Actions {
-			if ContainsSocketActionType(action.Types, SocketActionTypeOutput) {
-				logFilePath := fmt.Sprintf("%s/socket_subscribe_%s.csv", outputRoot, action.ID)
-				file, err := os.Create(logFilePath)
-				if err != nil {
-					return fmt.Errorf("failed to create file: %v", err)
-				}
-				defer file.Close()
-				actionsFileMap.Store(action.ID, file)
-
-				header := []string{"EventType", "StartTime", "ReceivedDatetime", "TotalTime"}
-				for _, data := range action.Data {
-					header = append(header, data.Key)
-				}
-				writer := csv.NewWriter(file)
-				if err := writer.Write(header); err != nil {
-					return fmt.Errorf("failed to write header: %v", err)
-				}
-				writer.Flush()
-			}
-		}
-	}
-
 	msgHandler := func(s *ws.WebSocket, msg *ws.EventResponseMessage, raw []byte) error {
 
-		for _, action := range conf.Actions {
+		sock, err := GlobalSock.FindSocket(conf.ID)
+		if err != nil {
+			ctr.Logger.Error(ctx, "failed to find socket",
+				logger.Value("error", err))
+			return fmt.Errorf("failed to find socket: %v", err)
+		}
+
+		var selfConsumer string
+		for _, consumer := range sock.Consumers {
+			if v, ok := sock.ConsumerSelfEventFilterMap[consumer]; ok {
+				if v.JMESPath != nil {
+					if result, err := v.JMESPath.Search(msg.Data); err == nil && result != nil {
+						res, ok := result.(bool)
+						if ok && res {
+							selfConsumer = consumer
+							break
+						}
+					}
+				}
+			}
+		}
+
+		for _, action := range sock.GetActions() {
+
+			if actionConsumer, ok := sock.GetConsumerIDByActionID(action.ID); !ok || actionConsumer != selfConsumer {
+				continue
+			}
+
 			if !ws.ContainsEventType(action.EventTypes, msg.EventType) {
 				continue
 			}
@@ -118,8 +110,14 @@ func SocketSubscribe(
 			}
 
 			if ContainsSocketActionType(action.Types, SocketActionTypeOutput) {
-				f, _ := actionsFileMap.Load(action.ID)
-				file := f.(*os.File)
+				file, ok := sock.GetActionsFileMap(action.ID)
+				if !ok {
+					ctr.Logger.Error(ctx, "failed to get file",
+						logger.Value("actionID", action.ID))
+					dataTermChan <- DataChanError
+					return nil
+				}
+				// fmt.Println("Writing to file", file.Name())
 				writer := csv.NewWriter(file)
 				data := []string{
 					msg.EventType.String(),
@@ -144,6 +142,14 @@ func SocketSubscribe(
 					ctr.Logger.Info(ctx, "store data",
 						logger.Value("key", k), logger.Value("value", v))
 					store.Store(k, v)
+				}
+			}
+
+			if ContainsSocketActionType(action.Types, SocketActionTypeUnsubscribe) {
+				if err := sock.UnsubscribeNotifyByAction(ctx, action.ID); err != nil {
+					ctr.Logger.Error(ctx, "failed to unsubscribe notify",
+						logger.Value("error", err))
+					return fmt.Errorf("failed to unsubscribe notify: %v", err)
 				}
 			}
 		}
@@ -186,7 +192,14 @@ func SocketSubscribe(
 		return nil
 	}
 
-	sock, err := NewSocket(ctx, ctr, msgHandler)
+	subscribeHandler := func(ws *ws.WebSocket, msg *ws.SubscribeResponseMessage) error {
+		ctr.Logger.Debug(ctx, "subscribed",
+			logger.Value("subscription_id", msg.SubscriptionID))
+
+		return nil
+	}
+
+	sock, err := NewSocketWithSubscribeHandler(ctx, ctr, msgHandler, subscribeHandler)
 	if err != nil {
 		ctr.Logger.Error(ctx, "failed to create socket",
 			logger.Value("error", err))
@@ -203,22 +216,12 @@ func SocketSubscribe(
 			logger.Value("error", err))
 		return fmt.Errorf("failed to connect to socket: %v", err)
 	}
-	// defer sock.Close() // TODO: uncomment this line
 
-	for _, sub := range conf.Subscribes {
-		if err := sock.Subscribe(
-			ctx,
-			ws.AggregateType(sub.AggregateType),
-			sub.AggregateId,
-			ws.NewFromEventTypesString(sub.EventTypes),
-		); err != nil {
-			ctr.Logger.Error(ctx, "failed to subscribe",
-				logger.Value("error", err))
-			if ContainsTermError(conf.Term.Error, ErrorTypeForTermSendError) {
-				return fmt.Errorf("failed to subscribe: %v", err)
-			}
-		}
-	}
+	GlobalSock.AddSocket(
+		conf.ID,
+		NewSock(sock, conf.Output.Enabled),
+	)
+	defer GlobalSock.CloseSocket(conf.ID)
 
 	var timeout <-chan time.Time
 	if breakTime > 0 {

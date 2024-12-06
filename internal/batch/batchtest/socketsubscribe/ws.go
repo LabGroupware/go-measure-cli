@@ -47,16 +47,50 @@ func NewSocket(ctx context.Context, ctr *app.Container, msgHandler ws.EventRespo
 	}, nil
 }
 
+func NewSocketWithSubscribeHandler(
+	ctx context.Context,
+	ctr *app.Container,
+	msgHandler ws.EventResponseMessageHandleFunc,
+	subscribeHandler ws.SubscribeResponseMessageHandleFunc,
+) (*Socket, error) {
+	sock := ws.NewWebSocket()
+
+	sock.CannotParseMsgHandler = func(ws *ws.WebSocket, msg *ws.CannotParseResponseMessage) error {
+		ctr.Logger.Error(ctx, "cannot parse response",
+			logger.Value("message_id", msg.MessageID))
+
+		return nil
+	}
+	sock.SubscribeMsgHandler = subscribeHandler
+	sock.UnsubscribeMsgHandler = func(ws *ws.WebSocket, msg *ws.UnsubscribeResponseMessage) error {
+		ctr.Logger.Debug(ctx, "unsubscribed",
+			logger.Value("message_id", msg.MessageID))
+
+		return nil
+	}
+	sock.UnsupportedMsgHandler = func(ws *ws.WebSocket, msg *ws.UnsupportedResponseMessage) error {
+		ctr.Logger.Error(ctx, "unsupported response",
+			logger.Value("message_id", msg.MessageID))
+
+		return nil
+	}
+	sock.EventMsgHandler = msgHandler
+
+	return &Socket{
+		ws: sock,
+	}, nil
+}
+
 func (s *Socket) Subscribe(
 	ctx context.Context,
+	consumerID string,
 	aggregateType ws.AggregateType,
 	aggregateIDs []string,
 	eventTypes []ws.EventType,
 ) error {
-	if err := s.ws.SendSubscribeMessage(aggregateType, aggregateIDs, eventTypes); err != nil {
+	if err := s.ws.SendSubscribeMessage(consumerID, aggregateType, aggregateIDs, eventTypes); err != nil {
 		return fmt.Errorf("failed to send subscribe message: %v", err)
 	}
-
 	return nil
 }
 

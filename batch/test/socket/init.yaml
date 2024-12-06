@@ -1,0 +1,5 @@
+type: Pipeline
+concurrency: -1
+files:
+  - id: "gen_value"
+    file: "gen/gen_random.yaml"

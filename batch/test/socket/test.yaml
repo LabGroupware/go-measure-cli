@@ -1,0 +1,9 @@
+type: Pipeline
+output:
+  enabled: true
+concurrency: 0
+files:
+  - id: "init"
+    file: "socket/init.yaml"
+  - id: "exec"
+    file: "socket/test2.yaml"

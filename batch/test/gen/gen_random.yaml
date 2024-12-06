@@ -3,16 +3,16 @@ concurrency: -1
 files:
   - id: "gen_common"
     file: "gen/gen_common.yaml"
-    count: 30
+    count: 500
   - id: "gen_file"
     file: "gen/gen_file_values.yaml"
-    count: 30
+    count: 500
   - id: "gen_org"
     file: "gen/gen_org_values.yaml"
-    count: 10
+    count: 500
   - id: "gen_user"
     file: "gen/gen_user_values.yaml"
-    count: 30
+    count: 500
   - id: "gen_user_preference"
     file: "gen/gen_user_preference_values.yaml"
   - id: "gen_constants"

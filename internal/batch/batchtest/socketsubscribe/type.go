@@ -1,6 +1,29 @@
 package socketsubscribe
 
+type SocketConnectConfig struct {
+	Type        string                             `yaml:"type"`
+	Output      BatchTestOutput                    `yaml:"output"`
+	ID          string                             `yaml:"id"`
+	SuccessTerm []string                           `yaml:"successTerm"`
+	Term        SocketSubscribeTermConditionConfig `yaml:"termCondition"`
+}
+
 type SocketSubscribeConfig struct {
+	Type                        string                               `yaml:"type"`
+	Output                      BatchTestOutput                      `yaml:"output"`
+	ID                          string                               `yaml:"id"`
+	ConnectID                   string                               `yaml:"connectId"`
+	SelfEventFilter             SocketSubscribeSelfEventFilterConfig `yaml:"selfEventFilter"`
+	Subscribe                   SocketSubscribeSubscribeConfig       `yaml:"subscribe"`
+	SuccessUnsubscribeActionIDs []string                             `yaml:"successUnsubscribeActionIds"`
+	Actions                     []SocketSubscribeActionConfig        `yaml:"actions"`
+}
+
+type SocketSubscribeSelfEventFilterConfig struct {
+	JMESPath string `yaml:"jmesPath"`
+}
+
+type SocketConnectAndSubscribeConfig struct {
 	Type        string                             `yaml:"type"`
 	Output      BatchTestOutput                    `yaml:"output"`
 	Subscribes  []SocketSubscribeSubscribeConfig   `yaml:"subscribes"`
@@ -85,8 +108,9 @@ func ContainsSuccessTerm(terms []string, term SuccessTerm) bool {
 type SocketActionType string
 
 const (
-	SocketActionTypeStore  SocketActionType = "store"
-	SocketActionTypeOutput SocketActionType = "output"
+	SocketActionTypeStore       SocketActionType = "store"
+	SocketActionTypeOutput      SocketActionType = "output"
+	SocketActionTypeUnsubscribe SocketActionType = "unsubscribe"
 )
 
 func ContainsSocketActionType(types []string, actionType ...SocketActionType) bool {

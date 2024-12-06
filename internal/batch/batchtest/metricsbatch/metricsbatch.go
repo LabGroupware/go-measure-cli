@@ -100,6 +100,7 @@ func MetricsFetchBatch(
 							logger.Value("on", "metricsFetchBatch"))
 					}
 				}
+				// fmt.Println(result.([]any)[0])
 
 				records = append(records, fmt.Sprintf("%v", result))
 			}

@@ -1,0 +1,7 @@
+type: Pipeline
+concurrency: -1
+files:
+  - id: "sock_connect"
+    file: "socket/connect_socket.yaml"
+  - id: "exec"
+    file: "socket/test.yaml"
