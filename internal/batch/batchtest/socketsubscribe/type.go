@@ -34,14 +34,15 @@ type SocketSubscribeActionDataConfig struct {
 }
 
 type SocketSubscribeTermConditionConfig struct {
-	Time  *string                                `yaml:"time"`
-	Error []string                               `yaml:"error"`
-	Event []string                               `yaml:"event"`
-	Data  SocketSubscribeTermConditionDataConfig `yaml:"data"`
+	Time  *string                                   `yaml:"time"`
+	Error []string                                  `yaml:"error"`
+	Event []SocketSubscribeTermConditionEventConfig `yaml:"event"`
 }
 
-type SocketSubscribeTermConditionDataConfig struct {
-	JMESPath *string `yaml:"jmesPath"`
+type SocketSubscribeTermConditionEventConfig struct {
+	Types    []string `yaml:"types"`
+	Success  bool     `yaml:"success"`
+	JMESPath string   `yaml:"jmesPath"`
 }
 
 type ErrorTypeForTerm string

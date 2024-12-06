@@ -34,6 +34,11 @@ func baseExecute(
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
+	selfLoopCount := ""
+	if v, exists := threadOnlyStore.Load("loopCount"); exists {
+		selfLoopCount = v.(string)
+	}
+
 	file, err := os.Open(filepath.Join(ctr.Config.Batch.Test.Path, filename))
 	if err != nil {
 		return fmt.Errorf("failed to open file: %v", err)
@@ -207,7 +212,7 @@ func baseExecute(
 
 			return fmt.Errorf("failed to decode yaml: %v", err)
 		}
-		if err := pipelineBatch(ctx, ctr, pipeline, store, outputRoot, metricsOutputRoot); err != nil {
+		if err := pipelineBatch(ctx, ctr, pipeline, store, selfLoopCount, outputRoot, metricsOutputRoot); err != nil {
 			return fmt.Errorf("failed to execute pipeline: %v", err)
 		}
 	default:

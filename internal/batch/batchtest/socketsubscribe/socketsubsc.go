@@ -18,8 +18,8 @@ type DataTypeChan int
 
 const (
 	_ DataTypeChan = iota
-	DataTypeChanEvent
-	DataTypeChanData
+	DataTypeChanSuccessEvent
+	DataTypeChanFailEvent
 	DataChanError
 )
 
@@ -46,7 +46,7 @@ func SocketSubscribe(
 
 	socketStart := time.Now()
 
-	actionsFileMap := make(map[string]*os.File)
+	actionsFileMap := sync.Map{}
 
 	if conf.Output.Enabled {
 		for _, action := range conf.Actions {
@@ -57,7 +57,7 @@ func SocketSubscribe(
 					return fmt.Errorf("failed to create file: %v", err)
 				}
 				defer file.Close()
-				actionsFileMap[action.ID] = file
+				actionsFileMap.Store(action.ID, file)
 
 				header := []string{"EventType", "StartTime", "ReceivedDatetime", "TotalTime"}
 				for _, data := range action.Data {
@@ -73,8 +73,6 @@ func SocketSubscribe(
 	}
 
 	msgHandler := func(s *ws.WebSocket, msg *ws.EventResponseMessage, raw []byte) error {
-		fmt.Printf("event response: %s\n", msg.EventType)
-		fmt.Printf("event data: %s\n", msg.Data)
 
 		for _, action := range conf.Actions {
 			if !ws.ContainsEventType(action.EventTypes, msg.EventType) {
@@ -120,7 +118,8 @@ func SocketSubscribe(
 			}
 
 			if ContainsSocketActionType(action.Types, SocketActionTypeOutput) {
-				file := actionsFileMap[action.ID]
+				f, _ := actionsFileMap.Load(action.ID)
+				file := f.(*os.File)
 				writer := csv.NewWriter(file)
 				data := []string{
 					msg.EventType.String(),
@@ -149,29 +148,38 @@ func SocketSubscribe(
 			}
 		}
 
-		if ws.ContainsEventType(conf.Term.Event, msg.EventType) {
-			dataTermChan <- DataTypeChanEvent
-			return nil
-		}
+		for _, event := range conf.Term.Event {
+			if ws.ContainsEventType(event.Types, msg.EventType) {
+				var termType DataTypeChan
+				if event.Success {
+					termType = DataTypeChanSuccessEvent
+				} else {
+					termType = DataTypeChanFailEvent
+				}
 
-		if conf.Term.Data.JMESPath != nil {
-			jmesPathQuery := *conf.Term.Data.JMESPath
-			result, err := jmespath.Search(jmesPathQuery, msg.Data)
-			if err != nil {
-				ctr.Logger.Error(ctx, "failed to search jmespath",
-					logger.Value("error", err), logger.Value("on", "SocketSubscribe"))
-			}
-			if result != nil {
-				if v, ok := result.(bool); ok {
-					if v {
-						ctr.Logger.Info(ctx, "jmespath query result is true",
-							logger.Value("on", "SocketSubscribe"))
-						dataTermChan <- DataTypeChanData
-						return nil
+				if event.JMESPath != "" {
+					jmesPathQuery := event.JMESPath
+					result, err := jmespath.Search(jmesPathQuery, msg.Data)
+					if err != nil {
+						ctr.Logger.Error(ctx, "failed to search jmespath",
+							logger.Value("error", err), logger.Value("on", "SocketSubscribe"))
+					}
+					if result != nil {
+						if v, ok := result.(bool); ok {
+							if v {
+								ctr.Logger.Info(ctx, "jmespath query result is true",
+									logger.Value("on", "SocketSubscribe"))
+								dataTermChan <- termType
+								return nil
+							}
+						} else {
+							ctr.Logger.Warn(ctx, "The result of the jmespath query is not a boolean",
+								logger.Value("on", "SocketSubscribe"))
+						}
 					}
 				} else {
-					ctr.Logger.Warn(ctx, "The result of the jmespath query is not a boolean",
-						logger.Value("on", "SocketSubscribe"))
+					dataTermChan <- termType
+					return nil
 				}
 			}
 		}
@@ -239,19 +247,11 @@ func SocketSubscribe(
 		}
 	case dataType := <-dataTermChan:
 		switch dataType {
-		case DataTypeChanEvent:
-			if ContainsSuccessTerm(conf.SuccessTerm, SuccessTermEvent) {
-				ctr.Logger.Info(ctx, "event received")
-				return nil
-			}
-			ctr.Logger.Warn(ctx, "event received")
-			return fmt.Errorf("event received")
-		case DataTypeChanData:
-			if ContainsSuccessTerm(conf.SuccessTerm, SuccessTermData) {
-				ctr.Logger.Info(ctx, "data received")
-				return nil
-			}
-			ctr.Logger.Warn(ctx, "data received")
+		case DataTypeChanSuccessEvent:
+			ctr.Logger.Info(ctx, "success event received")
+			return nil
+		case DataTypeChanFailEvent:
+			ctr.Logger.Warn(ctx, "fail event received")
 			return fmt.Errorf("data received")
 		case DataChanError:
 			if ContainsSuccessTerm(conf.SuccessTerm, SuccessTermError) {

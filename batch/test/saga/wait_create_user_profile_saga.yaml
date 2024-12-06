@@ -3,7 +3,7 @@ concurrency: 0
 files:
   - id: "create_user_profile"
     file: "cmd_template/create_user_profile_template.yaml"
-    count: 1
+    noLoopOverride: true
   - id: "wait_create_user_profile_job"
     file: "socket/wait_create_user_profile_job.yaml"
-    count: 1
+    noLoopOverride: true

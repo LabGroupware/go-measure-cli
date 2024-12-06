@@ -1,9 +1,9 @@
 lang: "ja"
 logging:
   output:
-    - type: "stdout"
-      format: "text"
-      level: "debug"
+    # - type: "stdout"
+    #   format: "text"
+    #   level: "debug"
     # - type: "file"
     #   filename: "logs/app.log"
     #   format: "text"

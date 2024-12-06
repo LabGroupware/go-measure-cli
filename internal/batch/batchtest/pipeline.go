@@ -17,9 +17,10 @@ type PipelineConfig struct {
 }
 
 type PipelineFileConfig struct {
-	ID    string `yaml:"id"`
-	File  string `yaml:"file"`
-	Count int    `yaml:"count"`
+	ID             string `yaml:"id"`
+	File           string `yaml:"file"`
+	Count          int    `yaml:"count"`
+	NoLoopOverride bool   `yaml:"noLoopOverride"`
 }
 
 type executeRequest struct {
@@ -30,7 +31,15 @@ type executeRequest struct {
 	threadOnlyStore *sync.Map
 }
 
-func pipelineBatch(ctx context.Context, ctr *app.Container, conf PipelineConfig, store *sync.Map, testOutput, metricsOutput string) error {
+func pipelineBatch(
+	ctx context.Context,
+	ctr *app.Container,
+	conf PipelineConfig,
+	store *sync.Map,
+	rootLoopCount string,
+	testOutput,
+	metricsOutput string,
+) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -60,9 +69,12 @@ func pipelineBatch(ctx context.Context, ctr *app.Container, conf PipelineConfig,
 					metricsRootDir:  metricsDirPath,
 					threadOnlyStore: &sync.Map{},
 				}
-				requests[count].threadOnlyStore.Store("loopCount", fmt.Sprintf("%d", j))
-
-				count++
+				if f.NoLoopOverride {
+					requests[count].threadOnlyStore.Store("loopCount", rootLoopCount)
+				} else {
+					requests[count].threadOnlyStore.Store("loopCount", fmt.Sprintf("%d", j))
+					count++
+				}
 			}
 		} else {
 			testDirPath := fmt.Sprintf("%s/%s", testOutput, f.ID)
@@ -75,7 +87,11 @@ func pipelineBatch(ctx context.Context, ctr *app.Container, conf PipelineConfig,
 				threadOnlyStore: &sync.Map{},
 			}
 
-			requests[count].threadOnlyStore.Store("loopCount", fmt.Sprintf("%d", 0))
+			if f.NoLoopOverride {
+				requests[count].threadOnlyStore.Store("loopCount", rootLoopCount)
+			} else {
+				requests[count].threadOnlyStore.Store("loopCount", fmt.Sprintf("%d", 0))
+			}
 
 			count++
 		}
@@ -119,7 +135,7 @@ func pipelineBatch(ctx context.Context, ctr *app.Container, conf PipelineConfig,
 
 				sem <- struct{}{}
 
-				err := baseExecute(ctx, ctr, preReq.filename, store, req.threadOnlyStore, preReq.testRootDir, preReq.metricsRootDir)
+				err := baseExecute(ctx, ctr, preReq.filename, store, preReq.threadOnlyStore, preReq.testRootDir, preReq.metricsRootDir)
 
 				if err != nil {
 					atomicErr.Store(err)

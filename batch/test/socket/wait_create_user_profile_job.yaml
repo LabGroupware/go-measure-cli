@@ -42,6 +42,10 @@ successTerm: ["event"]
 termCondition:
   time: 10m
   error: ["parse_error", "unmarshal_error", "read_error", "send_error"]
-  event: ["JOB_SUCCESS"]
-  # data:
-  #   jmesPath: "data.teams[?length(users) >= `5`] | length(@) >= `1`"
+  event:
+    - types: ["JOB_SUCCESS"]
+      # jmesPath: "completedActions[-1].success"
+      success: true
+    - types: ["JOB_FAILED"]
+      # jmesPath: "completedActions[-1].success"
+      success: false
