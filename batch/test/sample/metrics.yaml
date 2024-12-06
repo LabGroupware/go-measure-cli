@@ -1,5 +1,6 @@
-type: Pipeline
-concurrency: -1
+type: MassExecute
+output:
+  enabled: true
 metrics:
   enabled: true
   requests:
@@ -31,8 +32,30 @@ metrics:
       data:
         - key: "MemoryUsage"
           jmesPath: "data.result[*].value[1] | [0]"
-files:
-  - id: "sock_connect"
-    file: "socket/connect_socket.yaml"
-  - id: "exec"
-    file: "socket/test.yaml"
+data:
+  requests:
+    - endpointType: GetUsers
+      interval: 10ms
+      awaitPrevResponse: false
+      queryParam:
+        limit: [20]
+        offset: [0]
+        cursor: [""]
+        pagination: [""]
+        sortField: ["name"]
+        sortOrder: ["asc"]
+        withCount: [true]
+        with:
+          - "userPreference"
+      pathVariables: {}
+      successBreak:
+        - count
+        # - time
+      break:
+        time: 5m
+        count: 200
+        sysError: true
+        parseError: true
+        writeError: true
+      dataOutput:
+        jmesPath: "code"

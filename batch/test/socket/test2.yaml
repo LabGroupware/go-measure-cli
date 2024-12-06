@@ -5,4 +5,4 @@ concurrency: -1
 files:
   - id: "exec"
     file: "socket/test3.yaml"
-    count: 100
+    count: 30

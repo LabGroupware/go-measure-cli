@@ -1,0 +1,33 @@
+type: MassExecute
+sleep:
+  enabled: true
+  values:
+    - duration: 3s
+      after: "init" # init, prefetch, replace, metricsBoot, successExec, errorExec
+output:
+  enabled: true
+data:
+  requests:
+    - endpointType: GetUsers
+      interval: 10ms
+      awaitPrevResponse: false
+      queryParam:
+        limit: [10]
+        offset: [0]
+        cursor: [""]
+        pagination: [""]
+        sortField: ["name"]
+        sortOrder: ["asc"]
+        withCount: [true]
+      pathVariables: {}
+      successBreak:
+        - count
+        # - time
+      break:
+        time: 5m
+        count: 50
+        sysError: true
+        parseError: true
+        writeError: true
+      dataOutput:
+        jmesPath: "code"

@@ -48,6 +48,8 @@ func (r FindTaskReq) CreateRequest(ctx context.Context, ctr *app.Container) (*ht
 		logger.Value("url", fullURL.String()), logger.Value("on", "FindTaskReq.CreateRequest"))
 
 	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Cache-Control", "no-cache")
+	req.Header.Set("Pragma", "no-cache")
 	r.AuthToken.SetAuthHeader(req)
 
 	return req, nil
@@ -132,6 +134,8 @@ func (r GetTasksReq) CreateRequest(ctx context.Context, ctr *app.Container) (*ht
 	}
 
 	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Cache-Control", "no-cache")
+	req.Header.Set("Pragma", "no-cache")
 	r.AuthToken.SetAuthHeader(req)
 
 	return req, nil

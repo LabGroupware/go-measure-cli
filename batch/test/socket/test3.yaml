@@ -1,4 +1,9 @@
 type: Pipeline
+sleep:
+  enabled: true
+  values:
+    - duration: 10s
+      after: "init" # init, prefetch, replace, metricsBoot, successExec, errorExec
 output:
   enabled: true
 concurrency: 0

@@ -17,7 +17,7 @@ selfEventFilter:
 actions:
   - id: "output_<..<loopCount>..>"
     types: ["output"]
-    eventTypes: ["JOB_PROCESSED"]
+    eventTypes: ["JOB_PROCESSED", "JOB_SUCCESS"]
     data:
       - key: "LastActionCode"
         jmesPath: "completedActions[-1].actionCode"
@@ -35,18 +35,18 @@ actions:
         jmesPath: "completedActions[-1].datetime"
         onError: "ignore" # ignore, error
         onNil: "ignore" # ignore, error
-  # - id: "store_success"
-  #   types: ["store"]
-  #   eventTypes: ["JOB_SUCCESS"]
-  #   data:
-  #     - key: "userPreferenceId_<..<loopCount>..>"
-  #       jmesPath: "data.userPreference.userPreferenceId"
-  #       onError: "ignore" # ignore, error
-  #       onNil: "ignore" # ignore, error
-  #     - key: "userProfileId_<..<loopCount>..>"
-  #       jmesPath: "data.userProfile.userProfileId"
-  #       onError: "ignore" # ignore, error
-  #       onNil: "ignore" # ignore, error
+  - id: "store_success"
+    types: ["store"]
+    eventTypes: ["JOB_SUCCESS"]
+    data:
+      - key: "userPreferenceId_<..<loopCount>..>"
+        jmesPath: "data.userPreference.userPreferenceId"
+        onError: "ignore" # ignore, error
+        onNil: "ignore" # ignore, error
+      - key: "userProfileId_<..<loopCount>..>"
+        jmesPath: "data.userProfile.userProfileId"
+        onError: "ignore" # ignore, error
+        onNil: "ignore" # ignore, error
   - id: "success_unsubscribe_<..<loopCount>..>"
     types: ["unsubscribe"]
     eventTypes: ["JOB_SUCCESS"]

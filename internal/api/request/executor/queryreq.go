@@ -106,7 +106,7 @@ func (q RequestContent[Req, Res]) RequestExecute(
 					}()
 
 					client := &http.Client{
-						Timeout: 10 * time.Second,
+						Timeout: 10 * time.Minute,
 						Transport: &utils.DelayedTransport{
 							Transport: http.DefaultTransport,
 							// Delay:     2 * time.Second,
