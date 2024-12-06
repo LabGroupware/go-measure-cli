@@ -81,7 +81,7 @@ func (r UpdateUserPreferenceReq) CreateRequest(ctx context.Context, ctr *app.Con
 		return nil, fmt.Errorf("failed to marshal request body: %w", err)
 	}
 
-	req, err := http.NewRequest(http.MethodGet, fullURL.String(), bytes.NewReader(bodyBytes))
+	req, err := http.NewRequest(http.MethodPut, fullURL.String(), bytes.NewReader(bodyBytes))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
 	}

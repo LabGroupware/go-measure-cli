@@ -1,0 +1,43 @@
+type: MassExecute
+output:
+  enabled: true
+data:
+  requests:
+    - endpointType: GetOrganizations
+      interval: 1s
+      awaitPrevResponse: false
+      queryParam:
+        limit: [10]
+        offset: [0]
+        cursor: [""]
+        pagination: ["offset"]
+        sortField: ["name"]
+        sortOrder: ["asc"]
+        withCount: [true]
+        hasOwnerFilter: [false]
+        filterOwnerIDs: []
+        hasPlanFilter: [false]
+        filterPlans: []
+        hasUserFilter: [false]
+        filterUserIDs: []
+        userFilterType: ["all"]
+        with:
+          - users
+          - users.userPreference
+          - owner
+          - teams
+          - teams.tasks
+      pathVariables: {}
+      successBreak:
+        - count
+        # - time
+      break:
+        time: 2m
+        count: 1
+        sysError: true
+        parseError: true
+        writeError: true
+      # dataOutput:
+      #   jmesPath: "code"
+      # dataOutputFilter:
+      #   jmesPath: "code == '0002:0003'"

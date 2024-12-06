@@ -10,7 +10,7 @@ prefetch:
         limit: [1]
         offset: [0]
         cursor: [""]
-        # sortField: ["name"]
+        sortField: ["name"]
         pagination: ["offset"]
         # with: ["userPreference"]
       pathVariables: {}
@@ -24,10 +24,10 @@ data:
     - endpointType: FindUser
       interval: 1s
       awaitPrevResponse: false
-      queryParam:
-        with:
-          - userPreference
-          - organizations
+      # queryParam:
+      #   with:
+      #     - userPreference
+      #     - organizations
       #     - organizations.teams
       #     - teams
       #     - ownedOrganizations

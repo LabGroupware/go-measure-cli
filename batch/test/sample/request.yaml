@@ -1,0 +1,64 @@
+type: MassExecute
+sleep:
+  enabled: true
+  values:
+    - duration: 3s
+      after: "init" # init, prefetch, replace, metricsBoot, successExec, errorExec
+output:
+  enabled: true
+metrics:
+  enabled: true
+  requests:
+    - id: "cpu_usage"
+      type: "prometheus"
+      url: "http://localhost:10090/api/v1/query"
+      query: 'rate(node_cpu_seconds_total{mode!="idle"}[1m]) * 100'
+      interval: 1s
+      data:
+        - key: "CPU0_iowait"
+          jmesPath: "data.result[?metric.mode=='iowait' && metric.cpu=='0'].value[1] | [0]"
+        - key: "CPU0_irq"
+          jmesPath: "data.result[?metric.mode=='irq' && metric.cpu=='0'].value[1] | [0]"
+        - key: "CPU0_nice"
+          jmesPath: "data.result[?metric.mode=='nice' && metric.cpu=='0'].value[1] | [0]"
+        - key: "CPU0_softirq"
+          jmesPath: "data.result[?metric.mode=='softirq' && metric.cpu=='0'].value[1] | [0]"
+        - key: "CPU0_steal"
+          jmesPath: "data.result[?metric.mode=='steal' && metric.cpu=='0'].value[1] | [0]"
+        - key: "CPU0_system"
+          jmesPath: "data.result[?metric.mode=='system' && metric.cpu=='0'].value[1] | [0]"
+        - key: "CPU0_user"
+          jmesPath: "data.result[?metric.mode=='user' && metric.cpu=='0'].value[1] | [0]"
+    - id: "memory_usage"
+      type: "prometheus"
+      url: "http://localhost:10090/api/v1/query"
+      query: "(node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100"
+      interval: 1s
+      data:
+        - key: "MemoryUsage"
+          jmesPath: "data.result[*].value[1] | [0]"
+data:
+  requests:
+    - endpointType: GetUsers
+      interval: 10ms
+      awaitPrevResponse: false
+      queryParam:
+        limit: [10]
+        offset: [0]
+        cursor: [""]
+        pagination: [""]
+        sortField: ["name"]
+        sortOrder: ["asc"]
+        withCount: [true]
+      pathVariables: {}
+      successBreak:
+        - count
+        # - time
+      break:
+        time: 5m
+        count: 50
+        sysError: true
+        parseError: true
+        writeError: true
+      dataOutput:
+        jmesPath: "code"

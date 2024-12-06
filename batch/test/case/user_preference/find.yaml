@@ -1,0 +1,52 @@
+type: MassExecute
+output:
+  enabled: true
+prefetch:
+  enabled: true
+  requests:
+    - id: fetchOneUserPreference
+      endpointType: GetUsers
+      queryParam:
+        limit: [1]
+        offset: [0]
+        cursor: [""]
+        sortField: ["name"]
+        pagination: ["offset"]
+        with: ["userPreference"]
+      pathVariables: {}
+      dependsOn: []
+      vars:
+        - id: userPreferenceId
+          jmesPath: "data.listData[0].userPreference.userPreferenceId"
+          onError: "cancel" # cancel or random or ignore or empty
+data:
+  requests:
+    - endpointType: FindUserPreference
+      interval: 1s
+      awaitPrevResponse: false
+      queryParam:
+        with: []
+      pathVariables:
+        # userPreferenceId: invalid
+        userPreferenceId: <..<userPreferenceId>..>
+      successBreak:
+        - count
+        # - time
+      break:
+        time: 2m
+        count: 1
+        sysError: true
+        parseError: true
+        writeError: true
+        # statusCode:
+        #   op: ne
+        #   value: 200
+        # responseBody:
+        #   jmesPath: "data.teams[?length(users) >= `5`] | length(@) >= `1`"
+      # dataOutput:
+      #   jmesPath: "jobId"
+      # excludeStatusFilter:
+      #   op: in
+      #   value: 400,401,403,404
+      # dataOutputFilter:
+      #   jmesPath: "data[?code != '000.000']"

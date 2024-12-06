@@ -1,0 +1,33 @@
+type: OneExecute
+output:
+  enabled: true
+prefetch:
+  enabled: true
+  requests:
+    - id: fetchOneUserPreference
+      endpointType: GetUsers
+      queryParam:
+        limit: [1]
+        offset: [0]
+        cursor: [""]
+        sortField: ["name"]
+        pagination: ["offset"]
+        with: ["userPreference"]
+      pathVariables: {}
+      dependsOn: []
+      vars:
+        - id: userPreferenceId
+          jmesPath: "data.listData[0].userPreference.userPreferenceId"
+          onError: "cancel" # cancel or random or ignore or empty
+request:
+  endpointType: UpdateUserPreference
+  body:
+    timezone: "Asia/Tokyo"
+    theme: "DARK"
+    language: "en"
+  pathVariables:
+    userPreferenceId: "<..<userPreferenceId>..>"
+  outputs:
+    - id: userId
+      jmesPath: "code"
+      onError: "cancel" # cancel or random or ignore or empty

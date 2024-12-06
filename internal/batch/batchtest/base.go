@@ -208,6 +208,7 @@ func baseExecute(
 		}
 		ctr.Logger.Info(ctx, "newValues",
 			logger.Value("values", values))
+		fmt.Println("newValues set complete", values)
 	case "OneExecute":
 		var oneExec oneexecbatch.OneExecuteConfig
 		decoder := yaml.NewDecoder(reader)
@@ -226,6 +227,7 @@ func baseExecute(
 		}
 		ctr.Logger.Info(ctx, "newValues",
 			logger.Value("values", values))
+		fmt.Println("newValues set complete", values)
 	case "MassExecute":
 		var massExec massexecutorbatch.MassExecute
 		decoder := yaml.NewDecoder(reader)

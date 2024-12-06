@@ -1,0 +1,89 @@
+type: MassExecute
+output:
+  enabled: true
+prefetch:
+  enabled: true
+  requests:
+    - id: fetchOneUserPreference
+      endpointType: GetUsers
+      queryParam:
+        limit: [5]
+        offset: [10]
+        cursor: [""]
+        sortField: ["create"]
+        pagination: ["offset"]
+        # with: ["userPreference"]
+      pathVariables: {}
+      dependsOn: []
+      vars:
+        - id: UserId_1
+          jmesPath: "data.listData[0].userId"
+          onError: "cancel" # cancel or random or ignore or empty
+        - id: UserId_2
+          jmesPath: "data.listData[1].userId"
+          onError: "cancel" # cancel or random or ignore or empty
+        - id: UserId_3
+          jmesPath: "data.listData[2].userId"
+          onError: "cancel" # cancel or random or ignore or empty
+data:
+  requests:
+    - endpointType: CreateOrganization
+      interval: 3s
+      awaitPrevResponse: false
+      queryParam: {}
+      pathVariables: {}
+      body:
+        name: "team1"
+        plan: "STANDARD"
+        userIds: ["<..<UserId_1>..>", "<..<UserId_2>..>"]
+      successBreak:
+        - count
+        # - time
+      break:
+        time: 2m
+        count: 1
+        sysError: true
+        parseError: true
+        writeError: true
+        # statusCode:
+        #   op: ne
+        #   value: 200
+        # responseBody:
+        #   jmesPath: "data.teams[?length(users) >= `5`] | length(@) >= `1`"
+      dataOutput:
+        jmesPath: "data.jobId"
+      # excludeStatusFilter:
+      #   op: in
+      #   value: 400,401,403,404
+      # dataOutputFilter:
+      #   jmesPath: "data[?code != '000.000']"
+    - endpointType: CreateOrganization
+      interval: 3s
+      awaitPrevResponse: false
+      queryParam: {}
+      pathVariables: {}
+      body:
+        name: "organization2"
+        plan: "invalid"
+        userIds: ["<..<UserId_1>..>", "<..<UserId_2>..>", "<..<UserId_3>..>"]
+      successBreak:
+        - count
+        # - time
+      break:
+        time: 2m
+        count: 1
+        sysError: true
+        parseError: true
+        writeError: true
+        # statusCode:
+        #   op: ne
+        #   value: 200
+        # responseBody:
+        #   jmesPath: "data.teams[?length(users) >= `5`] | length(@) >= `1`"
+      dataOutput:
+        jmesPath: "data.jobId"
+      # excludeStatusFilter:
+      #   op: in
+      #   value: 400,401,403,404
+      # dataOutputFilter:
+      #   jmesPath: "data[?code != '000.000']"

@@ -8,7 +8,7 @@ data:
       pathVariables:
         userPreferenceId: 12345
       body:
-        timeZone: "Asia/Tokyo"
+        timezone: "Asia/Tokyo"
         theme: "DARK"
         language: "ja"
       successBreak:

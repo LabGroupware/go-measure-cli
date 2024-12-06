@@ -1,0 +1,38 @@
+type: MassExecute
+output:
+  enabled: true
+data:
+  requests:
+    - endpointType: FindTeam
+      interval: 1s
+      awaitPrevResponse: false
+      # queryParam:
+      #   with:
+      #     - users
+      #     - users.userPreference
+      #     - organization
+      #     - tasks
+      #     - tasks.attachments
+      pathVariables:
+        teamId: 12345
+      successBreak:
+        - count
+        # - time
+      break:
+        time: 2m
+        count: 1
+        sysError: true
+        parseError: true
+        writeError: true
+        # statusCode:
+        #   op: ne
+        #   value: 200
+        # responseBody:
+        #   jmesPath: "data.teams[?length(users) >= `5`] | length(@) >= `1`"
+      dataOutput:
+        jmesPath: "code"
+      # excludeStatusFilter:
+      #   op: in
+      #   value: 400,401,403,404
+      # dataOutputFilter:
+      #   jmesPath: "data[?code != '000.000']"
