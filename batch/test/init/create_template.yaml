@@ -1,0 +1,22 @@
+type: Pipeline
+concurrency: 0
+files:
+  - id: "create_<..<entityLower>..>"
+    file: "cmd_template/create_<..<entityLower>..>_template.yaml"
+    noLoopOverride: true
+  - id: "wait_create_<..<entityLower>..>_job"
+    file: "common/socket_wait_job.yaml"
+    threadOnlyValues:
+      - key: "waitForAction"
+        value: "create_<..<entityLower>..>"
+      - key: "jobIdPrefix"
+        value: "create<..<entity>..>JobId"
+      - key: "storeIdPrefix"
+        value: "create<..<entity>..>Id"
+      - key: "storeJMESPath"
+        value: "data.<..<entityInitialLower>..>.<..<entityInitialLower>..>Id"
+      - key: "storeIdPrefix2"
+        value: ""
+      - key: "storeJMESPath2"
+        value: ""
+    noLoopOverride: true

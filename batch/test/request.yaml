@@ -27,7 +27,7 @@ data:
       queryParam:
         with:
           - userPreference
-          - organizations
+          # - organizations
       #     - organizations.teams
       #     - teams
       #     - ownedOrganizations

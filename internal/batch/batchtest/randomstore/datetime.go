@@ -3,6 +3,7 @@ package randomstore
 import (
 	"context"
 	"fmt"
+	"io"
 	"math/rand/v2"
 	"sync"
 	"time"
@@ -35,10 +36,10 @@ type RandomStoreValueDatetimeDataConfig struct {
 	Format string `yaml:"format"`
 }
 
-func (p *RandomStoreValueDatetimeDataConfig) Init(conf []byte) error {
-	err := yaml.Unmarshal(conf, p)
-	if err != nil {
-		return fmt.Errorf("failed to unmarshal yaml: %w", err)
+func (p *RandomStoreValueDatetimeDataConfig) Init(conf io.Reader) error {
+	decoder := yaml.NewDecoder(conf)
+	if err := decoder.Decode(p); err != nil {
+		return fmt.Errorf("failed to decode yaml: %w", err)
 	}
 	return nil
 }

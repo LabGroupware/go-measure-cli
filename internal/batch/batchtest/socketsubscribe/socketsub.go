@@ -21,7 +21,8 @@ func SocketSubscribe(
 	store *sync.Map,
 	outputRoot string,
 ) error {
-	defer fmt.Println("SocketSubscribe done 777777777777777777777777777777777777777777777")
+	defer fmt.Println("SocketSubscribe done", conf.ConnectID, "----", conf.ID)
+
 	s, err := GlobalSock.FindSocket(conf.ConnectID)
 	if err != nil {
 		ctr.Logger.Error(ctx, "failed to find socket",

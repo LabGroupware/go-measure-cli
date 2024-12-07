@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
+	"io"
 	"math/big"
 	"sync"
 
@@ -34,10 +35,10 @@ type RandomStoreValueIntDataConfig struct {
 	To   int    `yaml:"to"`
 }
 
-func (p *RandomStoreValueIntDataConfig) Init(conf []byte) error {
-	err := yaml.Unmarshal(conf, p)
-	if err != nil {
-		return fmt.Errorf("failed to unmarshal yaml: %w", err)
+func (p *RandomStoreValueIntDataConfig) Init(conf io.Reader) error {
+	decoder := yaml.NewDecoder(conf)
+	if err := decoder.Decode(p); err != nil {
+		return fmt.Errorf("failed to decode yaml: %w", err)
 	}
 	return nil
 }

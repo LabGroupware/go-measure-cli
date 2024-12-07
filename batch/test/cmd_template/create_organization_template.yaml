@@ -1,0 +1,13 @@
+type: OneExecute
+request:
+  endpointType: CreateOrganization
+  queryParam: {}
+  pathVariables: {}
+  body:
+    name: <..<name_loopCount>..>
+    plan: <..<organizationPlanRandom_loopCount>..>
+    userIds: ["<..<userId_loopCount>..>"]
+  outputs:
+    - id: createOrganizationJobId_<..<loopCount>..>
+      jmesPath: "data.jobId"
+      onError: "cancel" # cancel or random or ignore or empty

@@ -11,6 +11,11 @@ type MetricsFetcherFactory interface {
 	FetcherFactory(ctx context.Context, ctr *app.Container) (MetricsFetcher, error)
 }
 
-var metricsFetcherFactoryMap = map[MetricsType]MetricsFetcherFactory{
-	MetricsTypePrometheus: &PrometheusMetricsBatchRequestConfig{},
+func GetMetricsFetcherFactory(t MetricsType) MetricsFetcherFactory {
+	switch t {
+	case MetricsTypePrometheus:
+		return &PrometheusMetricsBatchRequestConfig{}
+	default:
+		return nil
+	}
 }

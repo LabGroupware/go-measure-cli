@@ -1,0 +1,22 @@
+type: Pipeline
+concurrency: 0
+files:
+  - id: "create_user_profile"
+    file: "cmd_template/create_user_profile_template.yaml"
+    noLoopOverride: true
+  - id: "wait_create_user_profile_job"
+    file: "common/socket_wait_job.yaml"
+    threadOnlyValues:
+      - key: "waitForAction"
+        value: "create_user_profile"
+      - key: "jobIdPrefix"
+        value: "createUserProfileJobId"
+      - key: "storeIdPrefix"
+        value: "createUserProfileId"
+      - key: "storeJMESPath"
+        value: "data.userProfile.userProfileId"
+      - key: "storeIdPrefix2"
+        value: "createUserPreferenceId"
+      - key: "storeJMESPath"
+        value: "data.userPreference.userPreferenceId"
+    noLoopOverride: true

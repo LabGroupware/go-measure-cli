@@ -15,5 +15,6 @@ files:
     count: 500
   - id: "gen_user_preference"
     file: "gen/gen_user_preference_values.yaml"
+    count: 500
   - id: "gen_constants"
     file: "gen/gen_constants.yaml"

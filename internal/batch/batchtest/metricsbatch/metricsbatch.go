@@ -33,7 +33,7 @@ func MetricsFetchBatch(
 	}
 
 	for i, req := range conf.Requests {
-		factor := metricsFetcherFactoryMap[NewMetricsTypeFromStr(req.Type)]
+		factor := GetMetricsFetcherFactory(NewMetricsTypeFromStr(req.Type))
 		if factor == nil {
 			return fmt.Errorf("unknown test type: %s", req.Type)
 		}

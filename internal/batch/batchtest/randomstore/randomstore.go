@@ -1,6 +1,7 @@
 package randomstore
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -27,17 +28,17 @@ func RandomStoreValueBatch(
 	}
 
 	for i, data := range conf.Data {
-		factor := randomGeneratorFactoryMap[data.Type]
+		factor := GetRandomGeneratorFactory(data.Type)
 		if factor == nil {
 			ctr.Logger.Error(ctx, "failed to find error")
 			return nil, fmt.Errorf("failed to find generator factory: %s", data.Type)
 		}
-		byteData, err := yaml.Marshal(rawData.Data[i])
-		if err != nil {
-			return nil, fmt.Errorf("failed to marshal yaml: %v", err)
+		var buf bytes.Buffer
+		if err := yaml.NewEncoder(&buf).Encode(rawData.Data[i]); err != nil {
+			return nil, fmt.Errorf("failed to encode yaml: %v", err)
 		}
 
-		if err := factor.Init(byteData); err != nil {
+		if err := factor.Init(&buf); err != nil {
 			ctr.Logger.Error(ctx, "failed to find error",
 				logger.Value("error", err))
 			return nil, fmt.Errorf("failed to init factory: %v", err)

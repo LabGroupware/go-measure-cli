@@ -1,0 +1,18 @@
+type: Pipeline
+concurrency: 0
+files:
+  - id: "<..<actionLower>..>"
+    file: "cmd_template/<..<actionLower>..>_template.yaml"
+    noLoopOverride: true
+  - id: "wait_<..<actionLower>..>_job"
+    file: "common/socket_wait_job.yaml"
+    threadOnlyValues:
+      - key: "waitForAction"
+        value: "<..<actionLower>..>"
+      - key: "jobIdPrefix"
+        value: "<..<action>..>JobId"
+      - key: "storeIdPrefix"
+        value: ""
+      - key: "storeJMESPath"
+        value: ""
+    noLoopOverride: true

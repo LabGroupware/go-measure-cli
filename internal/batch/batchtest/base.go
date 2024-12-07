@@ -35,6 +35,8 @@ func baseExecute(
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
+	fmt.Println("Execute...", filename)
+
 	selfLoopCount := ""
 	if v, exists := threadOnlyStore.Load("loopCount"); exists {
 		selfLoopCount = v.(string)
@@ -183,6 +185,8 @@ func baseExecute(
 		}
 	}
 
+	fmt.Println("Executing...", conf.Type)
+
 	switch conf.Type {
 	case "RandomStoreValue":
 		var randomStoreValue randomstore.RandomStoreValueConfig
@@ -310,6 +314,8 @@ func baseExecute(
 		return fmt.Errorf("unknown type")
 	}
 
+	fmt.Println("Execute complete", conf.Type)
+
 	if err := wait(ctx, ctr, conf, SleepAfterSuccessExec); err != nil {
 		return fmt.Errorf("failed to wait: %v", err)
 	}
@@ -321,11 +327,13 @@ func wait(ctx context.Context, ctr *app.Container, conf BatchTestType, after Sle
 	if v, wait := conf.RetrieveSleepValue(after); wait {
 		ctr.Logger.Debug(ctx, "sleeping after execute",
 			logger.Value("duration", v))
+		fmt.Println("sleeping for", v, "...")
 		select {
 		case <-time.After(v):
 		case <-ctx.Done():
 			return fmt.Errorf("context canceled")
 		}
+		fmt.Println("sleeping complete")
 	}
 
 	return nil

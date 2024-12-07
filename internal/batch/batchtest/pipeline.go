@@ -11,16 +11,22 @@ import (
 )
 
 type PipelineConfig struct {
-	Type       string               `yaml:"type"`
-	Concurrecy int                  `yaml:"concurrency"`
-	Files      []PipelineFileConfig `yaml:"files"`
+	Type        string               `yaml:"type"`
+	Concurrency int                  `yaml:"concurrency"`
+	Files       []PipelineFileConfig `yaml:"files"`
 }
 
 type PipelineFileConfig struct {
-	ID             string `yaml:"id"`
-	File           string `yaml:"file"`
-	Count          int    `yaml:"count"`
-	NoLoopOverride bool   `yaml:"noLoopOverride"`
+	ID               string                        `yaml:"id"`
+	File             string                        `yaml:"file"`
+	Count            int                           `yaml:"count"`
+	NoLoopOverride   bool                          `yaml:"noLoopOverride"`
+	ThreadOnlyValues []PipelineFileThreadOnlyValue `yaml:"threadOnlyValues"`
+}
+
+type PipelineFileThreadOnlyValue struct {
+	Key   string `yaml:"key"`
+	Value string `yaml:"value"`
 }
 
 type executeRequest struct {
@@ -55,7 +61,6 @@ func pipelineBatch(
 
 	var count int
 	for _, f := range conf.Files {
-
 		if f.Count > 1 {
 			for j := 0; j < f.Count; j++ {
 
@@ -71,8 +76,21 @@ func pipelineBatch(
 				}
 				if f.NoLoopOverride {
 					requests[count].threadOnlyStore.Store("loopCount", rootLoopCount)
+
+					if f.ThreadOnlyValues != nil {
+						for _, v := range f.ThreadOnlyValues {
+							requests[count].threadOnlyStore.Store(fmt.Sprintf("%v", v.Key), fmt.Sprintf("%v", v.Value))
+						}
+					}
 				} else {
 					requests[count].threadOnlyStore.Store("loopCount", fmt.Sprintf("%d", j))
+
+					if f.ThreadOnlyValues != nil {
+						for _, v := range f.ThreadOnlyValues {
+							requests[count].threadOnlyStore.Store(fmt.Sprintf("%v", v.Key), fmt.Sprintf("%v", v.Value))
+						}
+					}
+
 					count++
 				}
 			}
@@ -89,8 +107,20 @@ func pipelineBatch(
 
 			if f.NoLoopOverride {
 				requests[count].threadOnlyStore.Store("loopCount", rootLoopCount)
+
+				if f.ThreadOnlyValues != nil {
+					for _, v := range f.ThreadOnlyValues {
+						requests[count].threadOnlyStore.Store(fmt.Sprintf("%v", v.Key), fmt.Sprintf("%v", v.Value))
+					}
+				}
 			} else {
 				requests[count].threadOnlyStore.Store("loopCount", fmt.Sprintf("%d", 0))
+
+				if f.ThreadOnlyValues != nil {
+					for _, v := range f.ThreadOnlyValues {
+						requests[count].threadOnlyStore.Store(fmt.Sprintf("%v", v.Key), fmt.Sprintf("%v", v.Value))
+					}
+				}
 			}
 
 			count++
@@ -98,7 +128,7 @@ func pipelineBatch(
 	}
 
 	var sequential bool
-	concurrency := conf.Concurrecy
+	concurrency := conf.Concurrency
 	if concurrency < 0 {
 		concurrency = len(requests)
 	}

@@ -1,0 +1,14 @@
+type: OneExecute
+request:
+  endpointType: UpdateUserPreference
+  queryParam: {}
+  pathVariables:
+    userPreferenceId: "<..<createUserPreferenceId_loopCount>..>"
+  body:
+    timezone: "<..<userPreferenceTimezoneRandom_loopCount>..>"
+    theme: "<..<userPreferenceThemeRandom_loopCount>..>"
+    language: "<..<userPreferenceLanguageRandom_loopCount>..>"
+  outputs:
+    - id: updateUserPreferenceJobId_<..<loopCount>..>
+      jmesPath: "data.jobId"
+      onError: "cancel" # cancel or random or ignore or empty

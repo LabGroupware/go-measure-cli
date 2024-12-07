@@ -3,6 +3,7 @@ package randomstore
 import (
 	"context"
 	"fmt"
+	"io"
 	"math/rand/v2"
 	"sync"
 
@@ -26,15 +27,15 @@ func (p *RandomElementValueGenerator) Generate(ctx context.Context, ctr *app.Con
 }
 
 type RandomStoreValueElementDataConfig struct {
-	Key   string        `yaml:"key"`
-	Type  string        `yaml:"type"`
-	Value []interface{} `yaml:"value"`
+	Key   string `yaml:"key"`
+	Type  string `yaml:"type"`
+	Value []any  `yaml:"value"`
 }
 
-func (p *RandomStoreValueElementDataConfig) Init(conf []byte) error {
-	err := yaml.Unmarshal(conf, p)
-	if err != nil {
-		return fmt.Errorf("failed to unmarshal yaml: %w", err)
+func (p *RandomStoreValueElementDataConfig) Init(conf io.Reader) error {
+	decoder := yaml.NewDecoder(conf)
+	if err := decoder.Decode(p); err != nil {
+		return fmt.Errorf("failed to decode yaml: %w", err)
 	}
 	return nil
 }

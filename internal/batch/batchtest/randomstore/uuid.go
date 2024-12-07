@@ -3,6 +3,7 @@ package randomstore
 import (
 	"context"
 	"fmt"
+	"io"
 	"sync"
 
 	"github.com/LabGroupware/go-measure-tui/internal/app"
@@ -25,10 +26,10 @@ type RandomStoreValueUUIDDataConfig struct {
 	Type string `yaml:"type"`
 }
 
-func (p *RandomStoreValueUUIDDataConfig) Init(conf []byte) error {
-	err := yaml.Unmarshal(conf, p)
-	if err != nil {
-		return fmt.Errorf("failed to unmarshal yaml: %w", err)
+func (p *RandomStoreValueUUIDDataConfig) Init(conf io.Reader) error {
+	decoder := yaml.NewDecoder(conf)
+	if err := decoder.Decode(p); err != nil {
+		return fmt.Errorf("failed to decode yaml: %w", err)
 	}
 	return nil
 }

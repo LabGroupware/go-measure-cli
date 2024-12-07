@@ -3,7 +3,6 @@ package executor
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"time"
@@ -98,8 +97,6 @@ func (q RequestContent[Req, Res]) RequestExecute(
 				}
 
 				reqClone := cloneRequest(req)
-
-				fmt.Println("sending request...", req.Method, req.URL)
 
 				go func(asyncReq *http.Request, countOver bool) {
 					defer func() {

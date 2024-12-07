@@ -3,6 +3,7 @@ package randomstore
 import (
 	"context"
 	"fmt"
+	"io"
 	"math/rand/v2"
 	"strings"
 	"sync"
@@ -74,10 +75,10 @@ type RandomStoreValueStringDataConfig struct {
 	CharSet string `yaml:"charSet"` // "numeric,[!@#$%^&*],capital,lower"
 }
 
-func (p *RandomStoreValueStringDataConfig) Init(conf []byte) error {
-	err := yaml.Unmarshal(conf, p)
-	if err != nil {
-		return fmt.Errorf("failed to unmarshal yaml: %w", err)
+func (p *RandomStoreValueStringDataConfig) Init(conf io.Reader) error {
+	decoder := yaml.NewDecoder(conf)
+	if err := decoder.Decode(p); err != nil {
+		return fmt.Errorf("failed to decode yaml: %w", err)
 	}
 	return nil
 }

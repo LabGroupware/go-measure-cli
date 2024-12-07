@@ -81,8 +81,9 @@ func SocketConnect(
 					jmesPathQuery := dataConf.JMESPath
 					result, err = jmespath.Search(jmesPathQuery, msg.Data)
 					if err != nil {
+						fmt.Println(jmesPathQuery)
 						ctr.Logger.Error(ctx, "failed to search jmespath",
-							logger.Value("error", err), logger.Value("on", "SocketSubscribe"))
+							logger.Value("error", err), logger.Value("on", "SocketConnect"))
 						switch dataConf.OnError {
 						case "error":
 							dataTermChan <- DataChanError
