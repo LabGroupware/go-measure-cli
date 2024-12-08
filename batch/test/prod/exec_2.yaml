@@ -4,7 +4,7 @@ output:
 data:
   requests:
     - endpointType: CreateOrganization
-      interval: 500ms
+      interval: 100ms
       awaitPrevResponse: false
       queryParam: {}
       pathVariables: {}
