@@ -19,9 +19,10 @@ func SocketSubscribe(
 	ctr *app.Container,
 	conf SocketSubscribeConfig,
 	store *sync.Map,
+	selfLoopCount string,
 	outputRoot string,
 ) error {
-	defer fmt.Println("SocketSubscribe done", conf.ConnectID, "----", conf.ID)
+	defer fmt.Println("SocketSubscribe done", "----", conf.ID)
 
 	s, err := GlobalSock.FindSocket(conf.ConnectID)
 	if err != nil {
@@ -31,18 +32,15 @@ func SocketSubscribe(
 	}
 
 	if conf.Output.Enabled {
-		var actionIDs []string
 		for _, action := range conf.Actions {
 			if ContainsSocketActionType(action.Types, SocketActionTypeOutput) {
 				logFilePath := fmt.Sprintf("%s/socket_subscribe_%s.csv", outputRoot, action.ID)
-				fmt.Println("logFilePath: ", logFilePath)
 				file, err := os.Create(logFilePath)
 				if err != nil {
 					return fmt.Errorf("failed to create file: %v", err)
 				}
 				defer file.Close()
 				s.AddActionsFileMap(action.ID, file)
-				actionIDs = append(actionIDs, action.ID)
 
 				header := []string{"EventType", "StartTime", "ReceivedDatetime", "TotalTime"}
 				for _, data := range action.Data {
@@ -55,12 +53,9 @@ func SocketSubscribe(
 				writer.Flush()
 			}
 		}
-
-		defer s.RemovePluralActionsFileMap(actionIDs)
 	}
 
 	consumerID := uuid.New().String()
-	defer s.Unsubscribe(ctx, consumerID)
 
 	var path *jmespath.JMESPath
 
@@ -79,7 +74,7 @@ func SocketSubscribe(
 		conf.Subscribe.AggregateId,
 		ws.NewFromEventTypesString(conf.Subscribe.EventTypes),
 		conf.Actions,
-		SelfEventFilter{
+		&SelfEventFilter{
 			JMESPath: path,
 		},
 	)
@@ -88,12 +83,14 @@ func SocketSubscribe(
 			logger.Value("error", err))
 		return fmt.Errorf("failed to subscribe: %v", err)
 	}
+	// defer s.Unsubscribe(ctx, consumerID)
 
 	select {
 	case <-ctx.Done():
 		ctr.Logger.Warn(ctx, "context cancelled")
 		return fmt.Errorf("context cancelled")
 	case actionID := <-term:
+		fmt.Println("--------------actionID: ", actionID)
 		for _, action := range conf.SuccessUnsubscribeActionIDs {
 			if action == actionID {
 				ctr.Logger.Debug(ctx, "success unsubscribe",

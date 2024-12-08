@@ -1,0 +1,18 @@
+type: Pipeline
+concurrency: 0
+files:
+  - id: "gen_value"
+    file: "gen/gen_random.yaml"
+    threadOnlyValues:
+      - key: "count"
+        value: "<..<count>..>"
+  - id: "exec_1"
+    file: "prod/exec_1.yaml"
+    threadOnlyValues:
+      - key: "count"
+        value: "<..<count>..>"
+  # - id: "init_2"
+  #   file: "init/init_data_2.yaml"
+  #   threadOnlyValues:
+  #     - key: "insertCount"
+  #       value: "<..<insertCount>..>"

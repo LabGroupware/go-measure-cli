@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/LabGroupware/go-measure-tui/internal/api/request/executor"
 	"github.com/LabGroupware/go-measure-tui/internal/app"
@@ -76,8 +77,8 @@ func MetricsFetchBatch(
 			records = append(
 				records,
 				fmt.Sprintf("%v", data.Success),
-				data.StartTime.Format("2006-01-02 15:04:05"),
-				data.EndTime.Format("2006-01-02 15:04:05"),
+				data.StartTime.Format(time.RFC3339Nano),
+				data.EndTime.Format(time.RFC3339Nano),
 				fmt.Sprintf("%v", data.ResponseTime),
 				fmt.Sprintf("%v", data.StatusCode),
 			)
@@ -100,7 +101,6 @@ func MetricsFetchBatch(
 							logger.Value("on", "metricsFetchBatch"))
 					}
 				}
-				// fmt.Println(result.([]any)[0])
 
 				records = append(records, fmt.Sprintf("%v", result))
 			}

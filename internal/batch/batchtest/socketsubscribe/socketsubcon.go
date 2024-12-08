@@ -124,8 +124,8 @@ func SocketConnectAndSubscribe(
 				writer := csv.NewWriter(file)
 				data := []string{
 					msg.EventType.String(),
-					socketStart.Format(time.RFC3339),
-					time.Now().Format(time.RFC3339),
+					socketStart.Format(time.RFC3339Nano),
+					time.Now().Format(time.RFC3339Nano),
 					fmt.Sprintf("%dms", time.Since(socketStart).Milliseconds()),
 				}
 

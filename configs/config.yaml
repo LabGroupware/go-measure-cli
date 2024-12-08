@@ -23,20 +23,20 @@ auth:
   redirect_host: "http://localhost"
   redirect_port: "9800"
   redirect_path: "/auth/callback"
-  auth_url: "http://localhost:8090/oauth2/authorize"
-  token_url: "http://localhost:8090/oauth2/token"
-  # auth_url: "https://auth.state.api.cresplanex.org/oauth2/authorize"
-  # token_url: "https://auth.state.api.cresplanex.org/oauth2/token"
+  # auth_url: "http://localhost:8090/oauth2/authorize"
+  # token_url: "http://localhost:8090/oauth2/token"
+  auth_url: "https://auth.state.api.cresplanex.org/oauth2/authorize"
+  token_url: "https://auth.state.api.cresplanex.org/oauth2/token"
 credential:
   path: ".credentials/credential.yaml"
 
 web:
   api:
-    url: "http://localhost:8100"
-    # url: "https://web.api.state.api.cresplanex.org"
+    # url: "http://localhost:8100"
+    url: "https://web.state.api.cresplanex.org"
   websocket:
-    url: "ws://localhost:8110/ws"
-    # url: "wss://ws.state.api.cresplanex.org/ws"
+    # url: "ws://localhost:8110/ws"
+    url: "wss://ws.state.api.cresplanex.org/ws"
 
 batch:
   test:

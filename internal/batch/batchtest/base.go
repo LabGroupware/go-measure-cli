@@ -212,7 +212,6 @@ func baseExecute(
 		}
 		ctr.Logger.Info(ctx, "newValues",
 			logger.Value("values", values))
-		fmt.Println("newValues set complete", values)
 	case "OneExecute":
 		var oneExec oneexecbatch.OneExecuteConfig
 		decoder := yaml.NewDecoder(reader)
@@ -271,7 +270,7 @@ func baseExecute(
 			}
 			return fmt.Errorf("failed to decode yaml: %v", err)
 		}
-		if err := socketsubscribe.SocketSubscribe(ctx, ctr, socketSubscribe, store, outputRoot); err != nil {
+		if err := socketsubscribe.SocketSubscribe(ctx, ctr, socketSubscribe, store, selfLoopCount, outputRoot); err != nil {
 			if err := wait(ctx, ctr, conf, SleepAfterFailedExec); err != nil {
 				return fmt.Errorf("failed to wait: %v", err)
 			}
@@ -314,7 +313,7 @@ func baseExecute(
 		return fmt.Errorf("unknown type")
 	}
 
-	fmt.Println("Execute complete", conf.Type)
+	fmt.Println("Execute complete", conf.Type, filename)
 
 	if err := wait(ctx, ctr, conf, SleepAfterSuccessExec); err != nil {
 		return fmt.Errorf("failed to wait: %v", err)

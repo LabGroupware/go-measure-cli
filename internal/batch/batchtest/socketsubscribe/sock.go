@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/LabGroupware/go-measure-tui/internal/ws"
 	"github.com/jmespath/go-jmespath"
@@ -13,13 +14,12 @@ import (
 type sock struct {
 	mu                         *sync.Mutex
 	s                          *Socket
-	actions                    []SocketSubscribeActionConfig
 	actionsFileMap             *sync.Map
 	actionIndexToConsumerID    *sync.Map
-	consumerIndexToActionID    *sync.Map
-	ConsumerSelfEventFilterMap map[string]SelfEventFilter
-	consumerTermChanMap        map[string]chan<- string
-	Consumers                  []string
+	actionsToConsumerIDMap     *sync.Map
+	consumerSelfEventFilterMap *sync.Map
+	consumerTermChanMap        *sync.Map
+	consumerStarttimeMap       *sync.Map
 }
 
 type SelfEventFilter struct {
@@ -40,12 +40,12 @@ func NewSock(s *Socket, outputEnabled bool) *sock {
 	return &sock{
 		mu:                         &sync.Mutex{},
 		s:                          s,
-		actions:                    []SocketSubscribeActionConfig{},
 		actionsFileMap:             &sync.Map{},
 		actionIndexToConsumerID:    &sync.Map{},
-		consumerIndexToActionID:    &sync.Map{},
-		ConsumerSelfEventFilterMap: make(map[string]SelfEventFilter),
-		consumerTermChanMap:        make(map[string]chan<- string),
+		actionsToConsumerIDMap:     &sync.Map{},
+		consumerStarttimeMap:       &sync.Map{},
+		consumerSelfEventFilterMap: &sync.Map{},
+		consumerTermChanMap:        &sync.Map{},
 	}
 }
 
@@ -56,7 +56,7 @@ func (s *sock) Subscribe(
 	aggregateIDs []string,
 	eventTypes []ws.EventType,
 	actions []SocketSubscribeActionConfig,
-	selfEventFilter SelfEventFilter,
+	selfEventFilter *SelfEventFilter,
 ) (<-chan string, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -66,22 +66,49 @@ func (s *sock) Subscribe(
 	}
 	notifyChan := make(chan string)
 
-	s.addActions(consumerId, actions)
-	s.consumerTermChanMap[consumerId] = notifyChan
-	s.ConsumerSelfEventFilterMap[consumerId] = selfEventFilter
-	s.Consumers = append(s.Consumers, consumerId)
+	for _, action := range actions {
+		s.actionIndexToConsumerID.Store(action.ID, consumerId)
+	}
+	s.actionsToConsumerIDMap.Store(consumerId, actions)
+	s.consumerTermChanMap.Store(consumerId, notifyChan)
+	s.consumerSelfEventFilterMap.Store(consumerId, selfEventFilter)
+	s.consumerStarttimeMap.Store(consumerId, time.Now())
 
 	return notifyChan, nil
 }
 
-func (s *sock) addActions(consumerID string, actions []SocketSubscribeActionConfig) {
+func (s *sock) GetStartTimeByConsumerID(consumerID string) (time.Time, bool) {
 
-	s.actions = append(s.actions, actions...)
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-	for _, action := range actions {
-		s.actionIndexToConsumerID.Store(action.ID, consumerID)
-		s.consumerIndexToActionID.Store(consumerID, action.ID)
+	if startTime, ok := s.consumerStarttimeMap.Load(consumerID); ok {
+		return startTime.(time.Time), true
 	}
+
+	return time.Time{}, false
+}
+
+func (s *sock) GetOwnerFromData(data any) string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	var selfConsumer string
+
+	s.consumerSelfEventFilterMap.Range(func(k, v any) bool {
+		if v.(*SelfEventFilter).JMESPath != nil {
+			if result, err := v.(*SelfEventFilter).JMESPath.Search(data); err == nil && result != nil {
+				res, ok := result.(bool)
+				if ok && res {
+					selfConsumer = k.(string)
+					return false
+				}
+			}
+		}
+		return true
+	})
+
+	return selfConsumer
 }
 
 func (s *sock) UnsubscribeNotifyByAction(
@@ -91,17 +118,18 @@ func (s *sock) UnsubscribeNotifyByAction(
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	fmt.Println("Retrieved unsubscribe notify by action: lock", actionId)
-	defer fmt.Println("Released unsubscribe notify by action: unlock", actionId)
-
 	var consumerId string
 	var ok bool
 	if consumerId, ok = s.getConsumerIDByActionID(actionId); ok {
-		if v, ok := s.consumerTermChanMap[consumerId]; ok {
-			select {
-			case <-ctx.Done():
-				return fmt.Errorf("context cancelled")
-			case v <- actionId: // Notify
+		if v, ok := s.consumerTermChanMap.Load(consumerId); ok {
+			if v != nil {
+				if v, ok := v.(chan string); ok {
+					select {
+					case <-ctx.Done():
+						return fmt.Errorf("context cancelled")
+					case v <- actionId: // Notify
+					}
+				}
 			}
 			return nil
 		}
@@ -118,15 +146,6 @@ func (s *sock) getConsumerIDByActionID(actionID string) (string, bool) {
 	return "", false
 }
 
-func (s *sock) GetConsumerIDByActionID(actionID string) (string, bool) {
-
-	if consumerID, ok := s.actionIndexToConsumerID.Load(actionID); ok {
-		return consumerID.(string), true
-	}
-
-	return "", false
-}
-
 func (s *sock) Unsubscribe(
 	ctx context.Context,
 	consumerId string,
@@ -134,49 +153,34 @@ func (s *sock) Unsubscribe(
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	fmt.Println("Retrieved unsubscribe: lock")
-	defer fmt.Println("Released unsubscribe: unlock")
-
 	if err := s.s.ws.UnsubscribeByConsumerID(consumerId); err != nil {
 		return fmt.Errorf("failed to send unsubscribe message: %v", err)
 	}
+
 	s.removeActions(s.getActionsByConsumerID(consumerId))
 
-	for i, c := range s.Consumers {
-		if c == consumerId {
-			s.Consumers = append(s.Consumers[:i], s.Consumers[i+1:]...)
-		}
-	}
+	// s.DisplayDebug()
 
 	return nil
 }
 
 func (s *sock) getActionsByConsumerID(consumerID string) []SocketSubscribeActionConfig {
-	actions := []SocketSubscribeActionConfig{}
-	if actionID, ok := s.consumerIndexToActionID.Load(consumerID); ok {
-		for _, action := range s.actions {
-			if action.ID == actionID {
-				actions = append(actions, action)
-			}
-		}
+
+	if actions, ok := s.actionsToConsumerIDMap.Load(consumerID); ok {
+		return actions.([]SocketSubscribeActionConfig)
 	}
 
-	return actions
+	return []SocketSubscribeActionConfig{}
 }
 
 func (s *sock) removeActions(actions []SocketSubscribeActionConfig) {
+	actionIDs := []string{}
 	for _, action := range actions {
-		for i, a := range s.actions {
-			if a.ID == action.ID {
-				s.actions = append(s.actions[:i], s.actions[i+1:]...)
-			}
-		}
-
-		if consumerID, ok := s.actionIndexToConsumerID.Load(action.ID); ok {
-			s.actionIndexToConsumerID.Delete(action.ID)
-			s.consumerIndexToActionID.Delete(consumerID)
-		}
+		actionIDs = append(actionIDs, action.ID)
+		s.actionIndexToConsumerID.Delete(action.ID)
 	}
+
+	s.removePluralActionsFileMap(actionIDs)
 }
 
 func (s *sock) AddActionsFileMap(actionId string, file *os.File) {
@@ -197,17 +201,7 @@ func (s *sock) GetActionsFileMap(actionId string) (*os.File, bool) {
 	return nil, false
 }
 
-func (s *sock) RemoveActionsFileMap(actionId string) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	s.actionsFileMap.Delete(actionId)
-}
-
-func (s *sock) RemovePluralActionsFileMap(actionIds []string) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
+func (s *sock) removePluralActionsFileMap(actionIds []string) {
 	for _, actionId := range actionIds {
 		s.actionsFileMap.Delete(actionId)
 	}
@@ -218,13 +212,7 @@ func (s *sock) removeAllActionsFileMap() {
 }
 
 func (s *sock) removeAllActions() {
-	s.actions = []SocketSubscribeActionConfig{}
 	s.actionIndexToConsumerID = &sync.Map{}
-	s.consumerIndexToActionID = &sync.Map{}
-}
-
-func (s *sock) GetActions() []SocketSubscribeActionConfig {
-	return s.actions
 }
 
 func (s *globalSock) FindSocket(id string) (*sock, error) {

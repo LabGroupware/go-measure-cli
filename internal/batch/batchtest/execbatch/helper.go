@@ -180,8 +180,8 @@ func runResponseHandler[Res any](
 				uid := uuid.New()
 				writeData := WriteData{
 					Success:          v.Success,
-					SendDatetime:     v.StartTime.Format(time.RFC3339),
-					ReceivedDatetime: v.EndTime.Format(time.RFC3339),
+					SendDatetime:     v.StartTime.Format(time.RFC3339Nano),
+					ReceivedDatetime: v.EndTime.Format(time.RFC3339Nano),
 					Count:            count,
 					ResponseTime:     int(v.ResponseTime),
 					StatusCode:       strconv.Itoa(v.StatusCode),

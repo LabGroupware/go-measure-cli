@@ -15,4 +15,8 @@ files:
         value: ""
       - key: "storeJMESPath"
         value: ""
+      - key: "storeIdPrefix2"
+        value: ""
+      - key: "storeJMESPath2"
+        value: ""
     noLoopOverride: true

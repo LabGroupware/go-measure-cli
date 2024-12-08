@@ -3,7 +3,16 @@ concurrency: 0
 files:
   - id: "gen_value"
     file: "gen/gen_random.yaml"
-  # - id: "init_1"
-  #   file: "init/init_data_1.yaml"
-  # - id: "init_2"
-  #   file: "init/init_data_2.yaml"
+    threadOnlyValues:
+      - key: "count"
+        value: "<..<insertCount>..>"
+  - id: "init_1"
+    file: "init/init_data_1.yaml"
+    threadOnlyValues:
+      - key: "insertCount"
+        value: "<..<insertCount>..>"
+  - id: "init_2"
+    file: "init/init_data_2.yaml"
+    threadOnlyValues:
+      - key: "insertCount"
+        value: "<..<insertCount>..>"

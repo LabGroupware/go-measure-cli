@@ -1,19 +1,19 @@
 type: Pipeline
 concurrency: -1
 files:
-  # - id: "insert_organization"
-  #   file: "init/create_template.yaml"
-  #   count: 10
-  #   threadOnlyValues:
-  #     - key: "entityLower"
-  #       value: "organization"
-  #     - key: "entity"
-  #       value: "Organization"
-  #     - key: "entityInitialLower"
-  #       value: "organization"
+  - id: "insert_organization"
+    file: "init/create_template.yaml"
+    count: <..<insertCount>..>
+    threadOnlyValues:
+      - key: "entityLower"
+        value: "organization"
+      - key: "entity"
+        value: "Organization"
+      - key: "entityInitialLower"
+        value: "organization"
   - id: "update_user_preference"
     file: "init/action_template.yaml"
-    count: 10
+    count: <..<insertCount>..>
     threadOnlyValues:
       - key: "actionLower"
         value: "update_user_preference"

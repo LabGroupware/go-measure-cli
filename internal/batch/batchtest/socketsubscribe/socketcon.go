@@ -22,7 +22,7 @@ func SocketConnect(
 ) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
-	defer fmt.Println("Socket Closed------------------------------------------------------------")
+	defer fmt.Println("Socket Closed--------------------------------", conf.ID)
 
 	dataTermChan := make(chan DataTypeChan)
 	var breakTime time.Duration
@@ -35,8 +35,6 @@ func SocketConnect(
 		}
 	}
 
-	socketStart := time.Now()
-
 	msgHandler := func(s *ws.WebSocket, msg *ws.EventResponseMessage, raw []byte) error {
 
 		sock, err := GlobalSock.FindSocket(conf.ID)
@@ -46,27 +44,9 @@ func SocketConnect(
 			return fmt.Errorf("failed to find socket: %v", err)
 		}
 
-		var selfConsumer string
-		for _, consumer := range sock.Consumers {
-			if v, ok := sock.ConsumerSelfEventFilterMap[consumer]; ok {
-				if v.JMESPath != nil {
-					if result, err := v.JMESPath.Search(msg.Data); err == nil && result != nil {
-						res, ok := result.(bool)
-						if ok && res {
-							selfConsumer = consumer
-							break
-						}
-					}
-				}
-			}
-		}
+		selfConsumer := sock.GetOwnerFromData(msg.Data)
 
-		for _, action := range sock.GetActions() {
-
-			if actionConsumer, ok := sock.GetConsumerIDByActionID(action.ID); !ok || actionConsumer != selfConsumer {
-				continue
-			}
-
+		for _, action := range sock.getActionsByConsumerID(selfConsumer) {
 			if !ws.ContainsEventType(action.EventTypes, msg.EventType) {
 				continue
 			}
@@ -81,7 +61,6 @@ func SocketConnect(
 					jmesPathQuery := dataConf.JMESPath
 					result, err = jmespath.Search(jmesPathQuery, msg.Data)
 					if err != nil {
-						fmt.Println(jmesPathQuery)
 						ctr.Logger.Error(ctx, "failed to search jmespath",
 							logger.Value("error", err), logger.Value("on", "SocketConnect"))
 						switch dataConf.OnError {
@@ -118,13 +97,19 @@ func SocketConnect(
 					dataTermChan <- DataChanError
 					return nil
 				}
-				// fmt.Println("Writing to file", file.Name())
+				stTime, ok := sock.GetStartTimeByConsumerID(selfConsumer)
+				if !ok {
+					ctr.Logger.Error(ctx, "failed to get start time",
+						logger.Value("error", err))
+					dataTermChan <- DataChanError
+					return nil
+				}
 				writer := csv.NewWriter(file)
 				data := []string{
 					msg.EventType.String(),
-					socketStart.Format(time.RFC3339),
-					time.Now().Format(time.RFC3339),
-					fmt.Sprintf("%dms", time.Since(socketStart).Milliseconds()),
+					stTime.Format(time.RFC3339Nano),
+					time.Now().Format(time.RFC3339Nano),
+					fmt.Sprintf("%dms", time.Since(stTime).Milliseconds()),
 				}
 
 				for _, dataConf := range action.Data {
@@ -142,6 +127,7 @@ func SocketConnect(
 				for k, v := range dataMap {
 					ctr.Logger.Info(ctx, "store data",
 						logger.Value("key", k), logger.Value("value", v))
+					fmt.Println("store data", k, v, "in", action.ID)
 					store.Store(k, v)
 				}
 			}
@@ -190,6 +176,9 @@ func SocketConnect(
 				}
 			}
 		}
+
+		// sock.DisplayDebug()
+
 		return nil
 	}
 

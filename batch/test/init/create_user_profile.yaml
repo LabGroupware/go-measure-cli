@@ -17,6 +17,6 @@ files:
         value: "data.userProfile.userProfileId"
       - key: "storeIdPrefix2"
         value: "createUserPreferenceId"
-      - key: "storeJMESPath"
+      - key: "storeJMESPath2"
         value: "data.userPreference.userPreferenceId"
     noLoopOverride: true

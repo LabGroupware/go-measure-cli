@@ -89,6 +89,7 @@ func (ws *WebSocket) Connect(ctx context.Context, ctr *app.Container, conf Conne
 					return
 				}
 			}
+
 			err = utils.UnmarshalJSON(content, &msg)
 			if err != nil {
 				ctr.Logger.Error(ctx, "failed to unmarshal JSON",
@@ -211,6 +212,15 @@ func (ws *WebSocket) Connect(ctx context.Context, ctr *app.Container, conf Conne
 						return
 					}
 				}
+				// jmes := jmespath.MustCompile("data")
+				// data, err := jmes.Search(event)
+				// if err != nil {
+				// 	ctr.Logger.Error(ctx, "failed to search jmespath",
+				// 		logger.Value("error", err))
+				// }
+				// if data != nil {
+				// 	fmt.Println("EventResponseMessage", data)
+				// }
 				// fmt.Println("EventResponseMessage", event)
 				if ws.EventMsgHandler != nil {
 					if ws.EventMsgHandler(ws, &event, content); err != nil {
