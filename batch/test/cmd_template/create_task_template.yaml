@@ -1,0 +1,17 @@
+type: OneExecute
+request:
+  endpointType: CreateTask
+  queryParam: {}
+  pathVariables: {}
+  body:
+    teamId: <..<createTeamId_loopCount>..>
+    chargeUserId: <..<userId_loopCount>..>
+    title: <..<title_loopCount>..>
+    description: <..<description_loopCount>..>
+    startDatetime: "2021-01-01T00:00:00"
+    dueDatetime: "2021-01-02T00:00:00"
+    attachmentIds: ["<..<createFileObjectId_loopCount>..>"]
+  outputs:
+    - id: createTaskJobId_<..<loopCount>..>
+      jmesPath: "data.jobId"
+      onError: "cancel" # cancel or random or ignore or empty

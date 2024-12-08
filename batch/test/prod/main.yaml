@@ -116,8 +116,8 @@ metrics:
         - key: "StorageMemoryUsage"
           jmesPath: "data.result[?metric.namespace=='storage-service'].value[1] | [0]"
 files:
-  # - id: "sock_connect"
-  #   file: "common/connect_socket.yaml"
+  - id: "sock_connect"
+    file: "common/connect_socket.yaml"
   - id: "exec"
     file: "prod/exec.yaml"
     threadOnlyValues:

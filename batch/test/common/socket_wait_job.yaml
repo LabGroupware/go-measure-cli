@@ -17,7 +17,7 @@ selfEventFilter:
 actions:
   - id: "output_<..<waitForAction>..>_<..<loopCount>..>"
     types: ["output"]
-    eventTypes: ["JOB_PROCESSED", "JOB_SUCCESS"]
+    eventTypes: ["JOB_PROCESSED", "JOB_SUCCESS", "JOB_FAILED"]
     data:
       - key: "LastActionCode"
         jmesPath: "completedActions[-1].actionCode"

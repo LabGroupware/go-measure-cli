@@ -2,7 +2,7 @@ type: Pipeline
 concurrency: -1
 files:
   - id: "insert_organization"
-    file: "init/create_template.yaml"
+    file: "init/create2_template.yaml"
     count: <..<insertCount>..>
     threadOnlyValues:
       - key: "entityLower"
@@ -11,6 +11,8 @@ files:
         value: "Organization"
       - key: "entityInitialLower"
         value: "organization"
+      - key: "storeJMESPath"
+        value: "completedActions[?actionCode == 'CREATE_ORGANIZATION_AND_ADD_INITIAL_ORGANIZATION_USER'].data.organization.organizationId | [0]"
   - id: "update_user_preference"
     file: "init/action_template.yaml"
     count: <..<insertCount>..>

@@ -1,119 +1,119 @@
 type: Pipeline
 concurrency: -1
-metrics:
-  enabled: true
-  requests:
-    - id: "cpu_usage"
-      type: "prometheus"
-      # url: "http://localhost:10090/api/v1/query"
-      url: "https://prometheus.state.api.cresplanex.org/api/v1/query"
-      query: 'rate(node_cpu_seconds_total{mode!="idle"}[1m]) * 100'
-      interval: 1s
-      data:
-        - key: "CPU0_iowait"
-          jmesPath: "data.result[?metric.mode=='iowait' && metric.cpu=='0'].value[1] | [0]"
-        - key: "CPU0_irq"
-          jmesPath: "data.result[?metric.mode=='irq' && metric.cpu=='0'].value[1] | [0]"
-        - key: "CPU0_nice"
-          jmesPath: "data.result[?metric.mode=='nice' && metric.cpu=='0'].value[1] | [0]"
-        - key: "CPU0_softirq"
-          jmesPath: "data.result[?metric.mode=='softirq' && metric.cpu=='0'].value[1] | [0]"
-        - key: "CPU0_steal"
-          jmesPath: "data.result[?metric.mode=='steal' && metric.cpu=='0'].value[1] | [0]"
-        - key: "CPU0_system"
-          jmesPath: "data.result[?metric.mode=='system' && metric.cpu=='0'].value[1] | [0]"
-        - key: "CPU0_user"
-          jmesPath: "data.result[?metric.mode=='user' && metric.cpu=='0'].value[1] | [0]"
-    - id: "memory_usage"
-      type: "prometheus"
-      url: "https://prometheus.state.api.cresplanex.org/api/v1/query"
-      query: "(node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100"
-      interval: 1s
-      data:
-        - key: "MemoryUsage"
-          jmesPath: "data.result[*].value[1] | [0]"
-    - id: "load_average"
-      type: "prometheus"
-      url: "https://prometheus.state.api.cresplanex.org/api/v1/query"
-      # 1分間ロードアベレージ
-      query: "node_load1"
-      interval: 1s
-      data:
-        - key: "Load1"
-          jmesPath: "data.result[*].value[1] | [0]"
-    - id: "filesystem_usage"
-      type: "prometheus"
-      url: "https://prometheus.state.api.cresplanex.org/api/v1/query"
-      # 各ファイルシステムの使用率
-      query: "(node_filesystem_size_bytes{fstype!=\"tmpfs\",mountpoint!=\"/var/run\"} - node_filesystem_free_bytes{fstype!=\"tmpfs\",mountpoint!=\"/var/run\"}) / node_filesystem_size_bytes{fstype!=\"tmpfs\",mountpoint!=\"/var/run\"} * 100"
-      interval: 1s
-      data:
-        - key: "RootFSUsage"
-          jmesPath: "data.result[?metric.mountpoint=='/'].value[1] | [0]"
-        - key: "HomeFSUsage"
-          jmesPath: "data.result[?metric.mountpoint=='/home'].value[1] | [0]"
-    - id: "network_io"
-      type: "prometheus"
-      url: "https://prometheus.state.api.cresplanex.org/api/v1/query"
-      # ネットワークIFごとの受信/送信レート
-      query: "rate(node_network_receive_bytes_total[1m])"
-      interval: 1s
-      data:
-        - key: "eth0_rx_rate"
-          jmesPath: "data.result[?metric.device=='eth0'].value[1] | [0]"
-    - id: "network_io_tx"
-      type: "prometheus"
-      url: "https://prometheus.state.api.cresplanex.org/api/v1/query"
-      query: "rate(node_network_transmit_bytes_total[1m])"
-      interval: 1s
-      data:
-        - key: "eth0_tx_rate"
-          jmesPath: "data.result[?metric.device=='eth0'].value[1] | [0]"
-    - id: "disk_io_time"
-      type: "prometheus"
-      url: "https://prometheus.state.api.cresplanex.org/api/v1/query"
-      # ディスクIO待ち時間比率
-      query: "rate(node_disk_io_time_seconds_total[1m]) * 100"
-      interval: 1s
-      data:
-        - key: "sda_iotime"
-          jmesPath: "data.result[?metric.device=='sda'].value[1] | [0]"
-    - id: "disk_read"
-      type: "prometheus"
-      url: "https://prometheus.state.api.cresplanex.org/api/v1/query"
-      # ディスク読み取りバイト/秒
-      query: "rate(node_disk_read_bytes_total[1m])"
-      interval: 1s
-      data:
-        - key: "sda_read"
-          jmesPath: "data.result[?metric.device=='sda'].value[1] | [0]"
-    - id: "disk_write"
-      type: "prometheus"
-      url: "https://prometheus.state.api.cresplanex.org/api/v1/query"
-      # ディスク書き込みバイト/秒
-      query: "rate(node_disk_written_bytes_total[1m])"
-      interval: 1s
-      data:
-        - key: "sda_write"
-          jmesPath: "data.result[?metric.device=='sda'].value[1] | [0]"
-    - id: "tcp_connections"
-      type: "prometheus"
-      url: "https://prometheus.state.api.cresplanex.org/api/v1/query"
-      # 現在のTCP接続数（state=ESTABLISHED）
-      query: "sum(node_netstat_Tcp_CurrEstab)"
-      interval: 1s
-      data:
-        - key: "TcpCurrEstab"
-          jmesPath: "data.result[*].value[1] | [0]"
-    - id: "process_count"
-      type: "prometheus"
-      url: "https://prometheus.state.api.cresplanex.org/api/v1/query"
-      # 現在のプロセス数
-      query: "node_procs_running"
-      interval: 1s
-      data:
-        - key: "ProcsRunning"
-          jmesPath: "data.result[*].value[1] | [0]"
+# metrics:
+#   enabled: true
+#   requests:
+#     - id: "cpu_usage"
+#       type: "prometheus"
+#       # url: "http://localhost:10090/api/v1/query"
+#       url: "https://prometheus.state.api.cresplanex.org/api/v1/query"
+#       query: 'rate(node_cpu_seconds_total{mode!="idle"}[1m]) * 100'
+#       interval: 1s
+#       data:
+#         - key: "CPU0_iowait"
+#           jmesPath: "data.result[?metric.mode=='iowait' && metric.cpu=='0'].value[1] | [0]"
+#         - key: "CPU0_irq"
+#           jmesPath: "data.result[?metric.mode=='irq' && metric.cpu=='0'].value[1] | [0]"
+#         - key: "CPU0_nice"
+#           jmesPath: "data.result[?metric.mode=='nice' && metric.cpu=='0'].value[1] | [0]"
+#         - key: "CPU0_softirq"
+#           jmesPath: "data.result[?metric.mode=='softirq' && metric.cpu=='0'].value[1] | [0]"
+#         - key: "CPU0_steal"
+#           jmesPath: "data.result[?metric.mode=='steal' && metric.cpu=='0'].value[1] | [0]"
+#         - key: "CPU0_system"
+#           jmesPath: "data.result[?metric.mode=='system' && metric.cpu=='0'].value[1] | [0]"
+#         - key: "CPU0_user"
+#           jmesPath: "data.result[?metric.mode=='user' && metric.cpu=='0'].value[1] | [0]"
+#     - id: "memory_usage"
+#       type: "prometheus"
+#       url: "https://prometheus.state.api.cresplanex.org/api/v1/query"
+#       query: "(node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100"
+#       interval: 1s
+#       data:
+#         - key: "MemoryUsage"
+#           jmesPath: "data.result[*].value[1] | [0]"
+#     - id: "load_average"
+#       type: "prometheus"
+#       url: "https://prometheus.state.api.cresplanex.org/api/v1/query"
+#       # 1分間ロードアベレージ
+#       query: "node_load1"
+#       interval: 1s
+#       data:
+#         - key: "Load1"
+#           jmesPath: "data.result[*].value[1] | [0]"
+#     - id: "filesystem_usage"
+#       type: "prometheus"
+#       url: "https://prometheus.state.api.cresplanex.org/api/v1/query"
+#       # 各ファイルシステムの使用率
+#       query: "(node_filesystem_size_bytes{fstype!=\"tmpfs\",mountpoint!=\"/var/run\"} - node_filesystem_free_bytes{fstype!=\"tmpfs\",mountpoint!=\"/var/run\"}) / node_filesystem_size_bytes{fstype!=\"tmpfs\",mountpoint!=\"/var/run\"} * 100"
+#       interval: 1s
+#       data:
+#         - key: "RootFSUsage"
+#           jmesPath: "data.result[?metric.mountpoint=='/'].value[1] | [0]"
+#         - key: "HomeFSUsage"
+#           jmesPath: "data.result[?metric.mountpoint=='/home'].value[1] | [0]"
+#     - id: "network_io"
+#       type: "prometheus"
+#       url: "https://prometheus.state.api.cresplanex.org/api/v1/query"
+#       # ネットワークIFごとの受信/送信レート
+#       query: "rate(node_network_receive_bytes_total[1m])"
+#       interval: 1s
+#       data:
+#         - key: "eth0_rx_rate"
+#           jmesPath: "data.result[?metric.device=='eth0'].value[1] | [0]"
+#     - id: "network_io_tx"
+#       type: "prometheus"
+#       url: "https://prometheus.state.api.cresplanex.org/api/v1/query"
+#       query: "rate(node_network_transmit_bytes_total[1m])"
+#       interval: 1s
+#       data:
+#         - key: "eth0_tx_rate"
+#           jmesPath: "data.result[?metric.device=='eth0'].value[1] | [0]"
+#     - id: "disk_io_time"
+#       type: "prometheus"
+#       url: "https://prometheus.state.api.cresplanex.org/api/v1/query"
+#       # ディスクIO待ち時間比率
+#       query: "rate(node_disk_io_time_seconds_total[1m]) * 100"
+#       interval: 1s
+#       data:
+#         - key: "sda_iotime"
+#           jmesPath: "data.result[?metric.device=='sda'].value[1] | [0]"
+#     - id: "disk_read"
+#       type: "prometheus"
+#       url: "https://prometheus.state.api.cresplanex.org/api/v1/query"
+#       # ディスク読み取りバイト/秒
+#       query: "rate(node_disk_read_bytes_total[1m])"
+#       interval: 1s
+#       data:
+#         - key: "sda_read"
+#           jmesPath: "data.result[?metric.device=='sda'].value[1] | [0]"
+#     - id: "disk_write"
+#       type: "prometheus"
+#       url: "https://prometheus.state.api.cresplanex.org/api/v1/query"
+#       # ディスク書き込みバイト/秒
+#       query: "rate(node_disk_written_bytes_total[1m])"
+#       interval: 1s
+#       data:
+#         - key: "sda_write"
+#           jmesPath: "data.result[?metric.device=='sda'].value[1] | [0]"
+#     - id: "tcp_connections"
+#       type: "prometheus"
+#       url: "https://prometheus.state.api.cresplanex.org/api/v1/query"
+#       # 現在のTCP接続数（state=ESTABLISHED）
+#       query: "sum(node_netstat_Tcp_CurrEstab)"
+#       interval: 1s
+#       data:
+#         - key: "TcpCurrEstab"
+#           jmesPath: "data.result[*].value[1] | [0]"
+#     - id: "process_count"
+#       type: "prometheus"
+#       url: "https://prometheus.state.api.cresplanex.org/api/v1/query"
+#       # 現在のプロセス数
+#       query: "node_procs_running"
+#       interval: 1s
+#       data:
+#         - key: "ProcsRunning"
+#           jmesPath: "data.result[*].value[1] | [0]"
 files:
   - id: "sock_connect"
     file: "common/connect_socket.yaml"
@@ -121,4 +121,4 @@ files:
     file: "init/exec.yaml"
     threadOnlyValues:
       - key: "insertCount"
-        value: "10"
+        value: "1"

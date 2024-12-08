@@ -1,0 +1,13 @@
+type: Pipeline
+concurrency: -1
+files:
+  - id: "insert_task"
+    file: "init/create_template.yaml"
+    count: <..<insertCount>..>
+    threadOnlyValues:
+      - key: "entityLower"
+        value: "task"
+      - key: "entity"
+        value: "Task"
+      - key: "entityInitialLower"
+        value: "task"

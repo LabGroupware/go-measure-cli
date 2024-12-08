@@ -83,6 +83,7 @@ func executeRequest(
 				case "cancel":
 					ctr.Logger.Warn(ctx, "cancel value",
 						logger.Value("error", err), logger.Value("on", "runResponseHandler"))
+					fmt.Println("cancel value", data.RawData)
 					return fmt.Errorf("cancel value")
 				}
 			}

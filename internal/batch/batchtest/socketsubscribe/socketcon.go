@@ -44,6 +44,8 @@ func SocketConnect(
 			return fmt.Errorf("failed to find socket: %v", err)
 		}
 
+		// fmt.Println("Msg Data", msg.Data)
+
 		selfConsumer := sock.GetOwnerFromData(msg.Data)
 
 		for _, action := range sock.getActionsByConsumerID(selfConsumer) {
