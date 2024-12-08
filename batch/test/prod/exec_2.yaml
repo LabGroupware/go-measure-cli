@@ -4,7 +4,7 @@ output:
 data:
   requests:
     - endpointType: CreateOrganization
-      interval: 500ms
+      interval: 1s
       awaitPrevResponse: false
       queryParam: {}
       pathVariables: {}
@@ -13,11 +13,11 @@ data:
         plan: "STANDARD"
         userIds: ["200222a88203c125ce1c0be054151155"]
       successBreak:
-        # - count
+        - count
         - time
       break:
         time: 3m
-        # count: 10
+        count: 1
         sysError: true
         parseError: true
         writeError: true
