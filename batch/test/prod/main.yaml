@@ -122,4 +122,4 @@ files:
     file: "prod/exec.yaml"
     threadOnlyValues:
       - key: "count"
-        value: "1"
+        value: "10"
