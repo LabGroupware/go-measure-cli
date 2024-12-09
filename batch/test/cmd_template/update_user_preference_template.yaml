@@ -1,4 +1,38 @@
 type: OneExecute
+prefetch:
+  enabled: true
+  requests:
+    - id: fetchOneUserPreference
+      endpointType: GetUsers
+      queryParam:
+        limit: [1]
+        offset: [0]
+        cursor: [""]
+        pagination: ["offset"]
+      pathVariables: {}
+      dependsOn: []
+      vars:
+        - id: userId
+          jmesPath: "data.listData[0].userId"
+          onError: "cancel" # cancel or random or ignore or empty
+    - id: fetchRelationOrg
+      endpointType: GetOrganizations
+      queryParam:
+        limit: [1]
+        offset: [0]
+        pagination: ["offset"]
+        sortField: ["name"]
+        sortOrder: ["asc"]
+        hasUserFilter: [true]
+        filterUserIDs: ["<..<userId>..>"]
+        userFilterType: ["all"]
+        with: []
+      pathVariables: {}
+      dependsOn: ["fetchOneUser"]
+      vars:
+        - id: orgId
+          jmesPath: "data.listData[0].organizationId"
+          onError: "empty"
 request:
   endpointType: UpdateUserPreference
   queryParam: {}

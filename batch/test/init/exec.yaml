@@ -16,11 +16,11 @@ files:
   #   threadOnlyValues:
   #     - key: "insertCount"
   #       value: "<..<insertCount>..>"
-  - id: "init_2_a"
-    file: "init/init_data_2_a.yaml"
-    threadOnlyValues:
-      - key: "insertCount"
-        value: "<..<insertCount>..>"
+  # - id: "init_2_a"
+  #   file: "init/init_data_2_a.yaml"
+  #   threadOnlyValues:
+  #     - key: "insertCount"
+  #       value: "<..<insertCount>..>"
   # - id: "init_2_b"
   #   file: "init/init_data_2_b.yaml"
   #   threadOnlyValues:

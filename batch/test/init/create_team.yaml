@@ -10,5 +10,5 @@ files:
       - key: "waitForAction"
         value: "create_team"
       - key: "jobIdPrefix"
-        value: "createOrganizationJobId"
+        value: "createTeamJobId"
     noLoopOverride: true
