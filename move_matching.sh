@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # 使用法を表示
-if [ "$#" -ne 2 ]; then
-  echo "Usage: $0 <source_directory>" "<base_output_dir>"
+if [ "$#" -ne 1 ]; then
+  echo "Usage: $0 <source_directory>"
   exit 1
 fi
 
@@ -16,7 +16,7 @@ if [ ! -d "$source_directory" ]; then
 fi
 
 # ディレクトリ構造の定義と行数マッピング
-base_output_dir=$2
+base_output_dir="./datasets/wait_saga/thread_100"
 declare -A categories=(
   ["team"]=5
   ["file_object"]=4
