@@ -4,10 +4,13 @@ request:
   queryParam: {}
   pathVariables: {}
   body:
-    organizationId: <..<createOrganizationId_loopCount>..>
-    name: <..<name_loopCount>..>
+    # organizationId: <..<createOrganizationId_loopCount>..>
+    organizationId: "020a00a08283eb2de6c6d3b104501445"
+    # name: <..<name_loopCount>..>
+    name: "<..<uuid_loopCount>..>"
     description: <..<description_loopCount>..>
-    userIds: ["<..<userId_loopCount>..>"]
+    # userIds: ["<..<userId_loopCount>..>"]
+    userIds: ["eb6cf66d-8b75-4835-8cd5-d7bd27d654d6"]
   outputs:
     - id: createTeamJobId_<..<loopCount>..>
       jmesPath: "data.jobId"

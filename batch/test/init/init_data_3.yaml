@@ -1,15 +1,21 @@
 type: Pipeline
 concurrency: -1
+sleep:
+  enabled: true
+  values:
+    - duration: 10s
+      after: "init"
 files:
   - id: "insert_team"
-    file: "init/create2_template.yaml"
+    # file: "init/create2_template.yaml"
+    file: "init/create_team.yaml"
     count: <..<insertCount>..>
-    threadOnlyValues:
-      - key: "entityLower"
-        value: "team"
-      - key: "entity"
-        value: "Team"
-      - key: "entityInitialLower"
-        value: "team"
-      - key: "storeJMESPath"
-        value: "completedActions[?actionCode == 'CREATE_TEAM_AND_ADD_INITIAL_TEAM_USER'].data.team.teamId | [0]"
+    # threadOnlyValues:
+    #   - key: "entityLower"
+    #     value: "team"
+    #   - key: "entity"
+    #     value: "Team"
+    #   - key: "entityInitialLower"
+    #     value: "team"
+    #   - key: "storeJMESPath"
+    #     value: "completedActions[?actionCode == 'CREATE_TEAM_AND_ADD_INITIAL_TEAM_USER'].data.team.teamId | [0]"

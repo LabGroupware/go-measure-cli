@@ -4,13 +4,16 @@ request:
   queryParam: {}
   pathVariables: {}
   body:
-    teamId: <..<createTeamId_loopCount>..>
-    chargeUserId: <..<userId_loopCount>..>
+    # teamId: <..<createTeamId_loopCount>..>
+    teamId: "822a00aaa209eb0de4c4d93105045151"
+    # chargeUserId: <..<userId_loopCount>..>
+    chargeUserId: "eb6cf66d-8b75-4835-8cd5-d7bd27d654d6"
     title: <..<title_loopCount>..>
     description: <..<description_loopCount>..>
     startDatetime: "2021-01-01T00:00:00"
     dueDatetime: "2021-01-02T00:00:00"
-    attachmentIds: ["<..<createFileObjectId_loopCount>..>"]
+    # attachmentIds: ["<..<createFileObjectId_loopCount>..>"]
+    attachmentIds: ["a22a00a88281e9054cc6593101405004"]
   outputs:
     - id: createTaskJobId_<..<loopCount>..>
       jmesPath: "data.jobId"

@@ -35,6 +35,14 @@ actions:
         jmesPath: "completedActions[-1].datetime"
         onError: "ignore" # ignore, error
         onNil: "ignore" # ignore, error
+      - key: "ProcessStartDatetime"
+        jmesPath: "startedAt"
+        onError: "ignore" # ignore, error
+        onNil: "ignore" # ignore, error
+      - key: "ActionDatetime"
+        jmesPath: "timestamp"
+        onError: "ignore" # ignore, error
+        onNil: "ignore" # ignore, error
   - id: "store_success_<..<waitForAction>..>_<..<loopCount>..>"
     types: ["store"]
     eventTypes: ["JOB_SUCCESS"]

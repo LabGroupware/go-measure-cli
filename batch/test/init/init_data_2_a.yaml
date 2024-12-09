@@ -1,0 +1,21 @@
+type: Pipeline
+concurrency: -1
+sleep:
+  enabled: true
+  values:
+    - duration: 10s
+      after: "init"
+files:
+  - id: "insert_organization"
+    # file: "init/create2_template.yaml"
+    file: "init/create_organization.yaml"
+    count: <..<insertCount>..>
+    # threadOnlyValues:
+    #   - key: "entityLower"
+    #     value: "organization"
+    #   - key: "entity"
+    #     value: "Organization"
+    #   - key: "entityInitialLower"
+    #     value: "organization"
+    #   - key: "storeJMESPath"
+    #     value: "completedActions[?actionCode == 'CREATE_ORGANIZATION_AND_ADD_INITIAL_ORGANIZATION_USER'].data.organization.organizationId | [0]"

@@ -1,13 +1,19 @@
 type: Pipeline
 concurrency: -1
+sleep:
+  enabled: true
+  values:
+    - duration: 10s
+      after: "init"
 files:
   - id: "insert_task"
-    file: "init/create_template.yaml"
+    # file: "init/create_template.yaml"
+    file: "init/create_task.yaml"
     count: <..<insertCount>..>
-    threadOnlyValues:
-      - key: "entityLower"
-        value: "task"
-      - key: "entity"
-        value: "Task"
-      - key: "entityInitialLower"
-        value: "task"
+    # threadOnlyValues:
+    #   - key: "entityLower"
+    #     value: "task"
+    #   - key: "entity"
+    #     value: "Task"
+    #   - key: "entityInitialLower"
+    #     value: "task"

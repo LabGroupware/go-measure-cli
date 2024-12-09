@@ -121,4 +121,4 @@ files:
     file: "init/exec.yaml"
     threadOnlyValues:
       - key: "insertCount"
-        value: "1"
+        value: "100"

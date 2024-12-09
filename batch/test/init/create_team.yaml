@@ -1,0 +1,14 @@
+type: Pipeline
+concurrency: 0
+files:
+  - id: "create_team"
+    file: "cmd_template/create_team_template.yaml"
+    noLoopOverride: true
+  - id: "wait_create_team_job"
+    file: "common/socket_wait_job_no_store.yaml"
+    threadOnlyValues:
+      - key: "waitForAction"
+        value: "create_team"
+      - key: "jobIdPrefix"
+        value: "createOrganizationJobId"
+    noLoopOverride: true

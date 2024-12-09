@@ -4,7 +4,7 @@ output:
 id: "wait"
 successTerm: ["time"]
 termCondition:
-  time: 2m
+  time: 5m
   error: ["parse_error", "unmarshal_error", "read_error", "send_error"]
   # event:
   #   - types: ["JOB_SUCCESS"]

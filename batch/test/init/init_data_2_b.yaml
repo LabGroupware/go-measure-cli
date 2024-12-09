@@ -1,0 +1,17 @@
+type: Pipeline
+concurrency: -1
+sleep:
+  enabled: true
+  values:
+    - duration: 10s
+      after: "init"
+files:
+  - id: "update_user_preference"
+    # file: "init/action_template.yaml"
+    file: "init/update_user_preference.yaml"
+    count: <..<insertCount>..>
+    # threadOnlyValues:
+    #   - key: "actionLower"
+    #     value: "update_user_preference"
+    #   - key: "action"
+    #     value: "updateUserPreference"

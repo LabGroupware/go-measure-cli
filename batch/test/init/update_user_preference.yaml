@@ -1,0 +1,14 @@
+type: Pipeline
+concurrency: 0
+files:
+  - id: "update_user_preference"
+    file: "cmd_template/update_user_preference_template.yaml"
+    noLoopOverride: true
+  - id: "wait_update_user_preference_job"
+    file: "common/socket_wait_job_no_store.yaml"
+    threadOnlyValues:
+      - key: "waitForAction"
+        value: "update_user_preference"
+      - key: "jobIdPrefix"
+        value: "createOrganizationJobId"
+    noLoopOverride: true
