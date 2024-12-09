@@ -4,20 +4,20 @@ output:
 data:
   requests:
     - endpointType: CreateOrganization
-      interval: 1s
+      interval: 100ms
       awaitPrevResponse: false
       queryParam: {}
       pathVariables: {}
       body:
         name: "org1"
         plan: "STANDARD"
-        userIds: ["200222a88203c125ce1c0be054151155"]
+        userIds: ["89b64e52-5b59-4eaa-a288-99c0ead3a165"]
       successBreak:
-        - count
+        # - count
         - time
       break:
         time: 3m
-        count: 1
+        # count: 1
         sysError: true
         parseError: true
         writeError: true
