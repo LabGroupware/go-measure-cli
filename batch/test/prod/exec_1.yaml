@@ -3,4 +3,4 @@ concurrency: -1
 files:
   - id: "exec"
     file: "prod/exec_2.yaml"
-    count: <..<count>..>
+    count: <..<threadCount>..>

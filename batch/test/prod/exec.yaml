@@ -5,7 +5,7 @@ files:
     file: "gen/gen_random.yaml"
     threadOnlyValues:
       - key: "count"
-        value: "<..<count>..>"
+        value: "<..<threadCount>..>"
   - id: "exec_1"
     file: "prod/exec_1.yaml"
     threadOnlyValues:

@@ -16,7 +16,7 @@ if [ ! -d "$source_directory" ]; then
 fi
 
 # ディレクトリ構造の定義と行数マッピング
-base_output_dir="./datasets/wait_saga/thread_1"
+base_output_dir="./datasets/wait_saga/thread_1000"
 declare -A categories=(
   ["team"]=5
   ["file_object"]=4

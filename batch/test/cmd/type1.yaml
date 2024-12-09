@@ -1,0 +1,20 @@
+type: MassExecute
+output: 
+  enabled: true
+data:
+  requests:
+    - endpointType: CreateFileObject
+      interval: <..<interval>..>
+      awaitPrevResponse: false
+      queryParam: {}
+      body:
+        bucketId: <..<bucketId_loopCount>..>
+        name: <..<name_loopCount>..>
+        path: <..<path_loopCount>..>
+      successBreak:
+        - time
+      break:
+        time: <..<timeout>..>
+        sysError: true
+        parseError: true
+        writeError: true

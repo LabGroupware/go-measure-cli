@@ -1,0 +1,21 @@
+type: MassExecute
+output: 
+  enabled: true
+data:
+  requests:
+    - endpointType: CreateOrganization
+      interval: 100ms
+      awaitPrevResponse: false
+      queryParam: {}
+      pathVariables: {}
+      body:
+        name: "org1"
+        plan: "STANDARD"
+        userIds: ["89b64e52-5b59-4eaa-a288-99c0ead3a165"]
+      successBreak:
+        - time
+      break:
+        time: 3m
+        sysError: true
+        parseError: true
+        writeError: true
