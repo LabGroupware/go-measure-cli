@@ -34,6 +34,6 @@ find "$source_directory" -type f | while read -r file; do
     new_filename="${timestamp}_${filename}"
     # ファイルを移動しつつ名前を変更
     mv "$file" "$target_directory/$new_filename"
-    echo "Moved: $file to $target_directory/$new_filename"
+    # echo "Moved: $file to $target_directory/$new_filename"
   fi
 done
