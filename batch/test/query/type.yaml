@@ -1,0 +1,37 @@
+type: MassExecute
+output:
+  enabled: true
+data:
+  requests:
+    - endpointType: GetTeams
+      interval: <..<interval>..>
+      awaitPrevResponse: false
+      queryParam:
+        limit: [30]
+        offset: [0]
+        cursor: [""]
+        pagination: ["offset"]
+        # sortField: ["name"]
+        # sortOrder: ["asc"]
+        # withCount: [true]
+        # hasIsDefaultFilter: [false]
+        # filterIsDefault: [false]
+        # hasOrganizationFilter: [false]
+        # filterOrganizationIDs: []
+        # hasUserFilter: [false]
+        # filterUserIDs: []
+        # userFilterType: ["all"]
+        with: []
+          # - users
+          # - users.userPreference
+          # - organization
+      dataOutput:
+        jmesPath: "data.listData[0].teamId"
+      pathVariables: {}
+      successBreak:
+        - time
+      break:
+        time: <..<timeout>..>
+        sysError: true
+        parseError: true
+        writeError: true

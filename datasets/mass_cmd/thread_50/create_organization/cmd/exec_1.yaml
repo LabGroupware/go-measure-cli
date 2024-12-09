@@ -1,0 +1,11 @@
+type: Pipeline
+concurrency: -1
+files:
+  - id: "exec"
+    file: "cmd/type3.yaml"
+    count: <..<threadCount>..>
+    threadOnlyValues:
+      - key: "interval"
+        value: "<..<interval>..>"
+      - key: "timeout"
+        value: "<..<timeout>..>"

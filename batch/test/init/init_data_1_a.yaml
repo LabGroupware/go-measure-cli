@@ -1,11 +1,11 @@
 type: Pipeline
 concurrency: -1
 # concurrency: 0
-sleep: # For Wait Websocket Connection
-  enabled: true
-  values:
-    - duration: 5s
-      after: "init"
+# sleep: # For Wait Websocket Connection
+#   enabled: true
+#   values:
+#     - duration: 5s
+#       after: "init"
 files:
   - id: "insert_user"
     file: "init/create_user_profile.yaml"

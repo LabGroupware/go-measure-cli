@@ -6,7 +6,7 @@ request:
   body:
     name: <..<name_loopCount>..>
     plan: <..<organizationPlanRandom_loopCount>..>
-    userIds: ["eb6cf66d-8b75-4835-8cd5-d7bd27d654d6"]
+    userIds: ["123"]
     # userIds: ["<..<userId_loopCount>..>", "<..<userId_loopCount>..>"]
   outputs:
     - id: createOrganizationJobId_<..<loopCount>..>_<..<number>..>

@@ -1,0 +1,11 @@
+type: Pipeline
+concurrency: -1
+files:
+  - id: "exec"
+    file: "query/type.yaml"
+    count: <..<threadCount>..>
+    threadOnlyValues:
+      - key: "interval"
+        value: "<..<interval>..>"
+      - key: "timeout"
+        value: "<..<timeout>..>"
