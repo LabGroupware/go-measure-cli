@@ -1,0 +1,5 @@
+type: RandomStoreValue
+data:
+  - key: "organizationPlanRandom_<..<loopCount>..>_<..<number>..>"
+    type: "element"
+    value: ["BASIC", "STANDARD", "PREMIUM", "BASIC", "STANDARD", "PREMIUM", "BASIC", "STANDARD", "PREMIUM"]

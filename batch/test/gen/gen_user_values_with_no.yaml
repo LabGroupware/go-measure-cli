@@ -1,0 +1,7 @@
+type: RandomStoreValue
+data:
+  - key: "userId_<..<loopCount>..>_<..<number>..>"
+    type: "uuid"
+  - key: "userEmail_<..<loopCount>..>_<..<number>..>"
+    type: "constant"
+    value: "test_<..<loopCount>..>@example.com"

@@ -1,10 +1,11 @@
 type: Pipeline
-concurrency: -1
-sleep:
-  enabled: true
-  values:
-    - duration: 10s
-      after: "init"
+# concurrency: -1
+concurrency: 0
+# sleep:
+#   enabled: true
+#   values:
+#     - duration: 10s
+#       after: "init"
 files:
   - id: "insert_organization"
     # file: "init/create2_template.yaml"

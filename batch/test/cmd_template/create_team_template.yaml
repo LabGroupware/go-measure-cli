@@ -5,12 +5,12 @@ request:
   pathVariables: {}
   body:
     # organizationId: <..<createOrganizationId_loopCount>..>
-    organizationId: "020a00a08283eb2de6c6d3b104501445"
+    organizationId: "822a008a828be32dc4f8893551154500"
     # name: <..<name_loopCount>..>
     name: "<..<uuid_loopCount>..>"
     description: <..<description_loopCount>..>
     # userIds: ["<..<userId_loopCount>..>"]
-    userIds: ["eb6cf66d-8b75-4835-8cd5-d7bd27d654d6"]
+    userIds: ["21bc7174-5cd7-401a-a71f-418a48fb30da"]
   outputs:
     - id: createTeamJobId_<..<loopCount>..>
       jmesPath: "data.jobId"

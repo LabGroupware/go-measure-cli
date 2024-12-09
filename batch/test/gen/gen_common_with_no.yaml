@@ -1,0 +1,19 @@
+type: RandomStoreValue
+data:
+  - key: "name_<..<loopCount>..>_<..<number>..>"
+    type: "string"
+    charSet: "capital,lower"
+    length: 10
+  - key: "description_<..<loopCount>..>_<..<number>..>"
+    type: "string"
+    charSet: "capital,lower,numeric"
+    length: 50
+  - key: "title_<..<loopCount>..>_<..<number>..>"
+    type: "string"
+    charSet: "capital,lower"
+    length: 15
+  - key: "datetime_<..<loopCount>..>_<..<number>..>"
+    type: "datetime"
+    format: "2006-01-02 15:04:05"
+  - key: "uuid_<..<loopCount>..>_<..<number>..>"
+    type: "uuid"

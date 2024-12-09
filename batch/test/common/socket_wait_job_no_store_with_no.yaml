@@ -1,0 +1,51 @@
+type: SocketSubscribe
+output:
+  enabled: true
+id: "wait_<..<waitForAction>..>_job_sock_subscribe_<..<loopCount>..>_<..<number>..>"
+connectId: "wait-<..<number>..>"
+subscribe:
+  aggregateType: "org.cresplanex.nova.service.job.Aggregate.Job"
+  aggregateId:
+    - "<..<jobIdPrefix_loopCount_number>..>"
+  eventTypes:
+    - "JOB_PROCESSED"
+    - "JOB_SUCCESS"
+    - "JOB_FAILED"
+successUnsubscribeActionIds: ["success_unsubscribe_<..<waitForAction>..>_<..<loopCount>..>_<..<number>..>"]
+selfEventFilter:
+  jmesPath: "jobId == '<..<jobIdPrefix_loopCount_number>..>'"
+actions:
+  - id: "output_<..<waitForAction>..>_<..<loopCount>..>_<..<number>..>"
+    types: ["output"]
+    eventTypes: ["JOB_PROCESSED", "JOB_SUCCESS", "JOB_FAILED"]
+    data:
+      - key: "LastActionCode"
+        jmesPath: "completedActions[-1].actionCode"
+        onError: "ignore" # ignore, error
+        onNil: "ignore" # ignore, error
+      - key: "JobId"
+        jmesPath: "jobId"
+        onError: "ignore" # ignore, error
+        onNil: "ignore" # ignore, error
+      - key: "LastActionSuccess"
+        jmesPath: "completedActions[-1].success"
+        onError: "ignore" # ignore, error
+        onNil: "ignore" # ignore, error
+      - key: "LastActionDatetime"
+        jmesPath: "completedActions[-1].datetime"
+        onError: "ignore" # ignore, error
+        onNil: "ignore" # ignore, error
+      - key: "ProcessStartDatetime"
+        jmesPath: "startedAt"
+        onError: "ignore" # ignore, error
+        onNil: "ignore" # ignore, error
+      - key: "ActionDatetime"
+        jmesPath: "timestamp"
+        onError: "ignore" # ignore, error
+        onNil: "ignore" # ignore, error
+  - id: "success_unsubscribe_<..<waitForAction>..>_<..<loopCount>..>_<..<number>..>"
+    types: ["unsubscribe"]
+    eventTypes: ["JOB_SUCCESS"]
+  - id: "failed_unsubscribe_<..<waitForAction>..>_<..<loopCount>..>_<..<number>..>"
+    types: ["unsubscribe"]
+    eventTypes: ["JOB_FAILED"]

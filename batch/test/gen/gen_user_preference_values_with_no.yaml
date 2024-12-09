@@ -1,0 +1,32 @@
+type: RandomStoreValue
+data:
+  - key: "userPreferenceTimezoneRandom_<..<loopCount>..>_<..<number>..>"
+    type: "element"
+    value: 
+      - "UTC"
+      - "Asia/Tokyo"
+      - "America/New_York"
+      - "America/Los_Angeles"
+      - "Europe/Paris"
+      - "Asia/Kolkata"
+      - "Australia/Sydney"
+      - "Australia/Sydney"
+  - key: "userPreferenceThemeRandom_<..<loopCount>..>_<..<number>..>"
+    type: "element"
+    value:
+      - "system"
+      - "light"
+      - "dark"
+  - key: "userPreferenceLanguageRandom_<..<loopCount>..>_<..<number>..>"
+    type: "element"
+    value:
+      - "ar"
+      - "en"
+      - "ja"
+      - "zh"
+      - "ko"
+      - "de"
+      - "fr"
+      - "es"
+      - "it"
+      - "ru"

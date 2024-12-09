@@ -1,0 +1,7 @@
+type: RandomStoreValue
+data:
+  - key: "bucketId_<..<loopCount>..>_<..<number>..>"
+    type: "uuid"
+  - key: "path_<..<loopCount>..>_<..<number>..>"
+    type: "constant"
+    value: "test_<..<loopCount>..>_<..<number>..>/test"
