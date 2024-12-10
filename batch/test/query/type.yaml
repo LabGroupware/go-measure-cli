@@ -21,8 +21,8 @@ data:
         # hasUserFilter: [false]
         # filterUserIDs: []
         # userFilterType: ["all"]
-        with: []
-          # - users
+        with:
+          - users
           # - users.userPreference
           # - organization
       dataOutput:
