@@ -7,8 +7,29 @@ asdf plugin add golangci-lint
 asdf install
 ```
 
-curl -G https://prometheus.state.api.cresplanex.org/api/v1/query_range \
-  --data-urlencode "query=sum by(namespace) (rate(container_cpu_usage_seconds_total{container!='POD',container!='',namespace!='kube-system', image=~'docker.io/ablankz/.*',  image!='docker.io/ablankz/debezium:1.0.0', job='kubelet'}[3m]))" \
-  --data-urlencode "start=$(date -u -d '30 minutes ago' +%s)" \
-  --data-urlencode "end=$(date -u +%s)" \
-  --data-urlencode "step=30"
+ログイン
+``` sh
+go run main.go login --config configs/config.yaml
+```
+
+リフレッシュ
+```sh
+go run main.go refresh --config configs/config.yaml
+```
+
+実行
+```sh
+go run main.go batch test --config configs/config.yaml
+
+init/main.yaml
+```
+
+データの移動
+```sh
+./move_matching.sh bench/batch/
+```
+
+データ数
+``` sh
+./count_files.sh datasets/saga/
+```

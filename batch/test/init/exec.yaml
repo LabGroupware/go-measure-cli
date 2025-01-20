@@ -1,38 +1,43 @@
 type: Pipeline
 concurrency: 0
+sleep: # For Wait Websocket Connection
+  enabled: true
+  values:
+    - duration: 5s
+      after: "init"
 files:
   - id: "gen_value"
     file: "gen/gen_random.yaml"
     threadOnlyValues:
       - key: "count"
         value: "<..<insertCount>..>"
-  # create_user_profile
-  - id: "init_1_a"
-    file: "init/init_data_1_a.yaml"
-    threadOnlyValues:
-      - key: "insertCount"
-        value: "<..<insertCount>..>"
-  # create_file_object
-  - id: "init_1_b"
-    file: "init/init_data_1_b.yaml"
-    threadOnlyValues:
-      - key: "insertCount"
-        value: "<..<insertCount>..>"
+  # # create_user_profile
+  # - id: "init_1_a"
+  #   file: "init/init_data_1_a.yaml"
+  #   threadOnlyValues:
+  #     - key: "insertCount"
+  #       value: "<..<insertCount>..>"
+  # # create_file_object
+  # - id: "init_1_b"
+  #   file: "init/init_data_1_b.yaml"
+  #   threadOnlyValues:
+  #     - key: "insertCount"
+  #       value: "<..<insertCount>..>"
   # # create_organization
   # - id: "init_2_a"
   #   file: "init/init_data_2_a.yaml"
   #   threadOnlyValues:
   #     - key: "insertCount"
   #       value: "<..<insertCount>..>"
-  # # create_team
+  # create_team
   # - id: "init_3"
   #   file: "init/init_data_3.yaml"
   #   threadOnlyValues:
   #     - key: "insertCount"
   #       value: "<..<insertCount>..>"
-  # # create_task
-  # - id: "init_4"
-  #   file: "init/init_data_4.yaml"
-  #   threadOnlyValues:
-  #     - key: "insertCount"
-  #       value: "<..<insertCount>..>"
+  # create_task
+  - id: "init_4"
+    file: "init/init_data_4.yaml"
+    threadOnlyValues:
+      - key: "insertCount"
+        value: "<..<insertCount>..>"
