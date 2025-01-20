@@ -34,7 +34,7 @@ func SocketSubscribe(
 	if conf.Output.Enabled {
 		for _, action := range conf.Actions {
 			if ContainsSocketActionType(action.Types, SocketActionTypeOutput) {
-				logFilePath := fmt.Sprintf("%s/socket_subscribe_%s.csv", outputRoot, action.ID)
+				logFilePath := fmt.Sprintf("%s/socket_subscribe_%s_%s.csv", outputRoot, uuid.New(), action.ID)
 				file, err := os.Create(logFilePath)
 				if err != nil {
 					return fmt.Errorf("failed to create file: %v", err)

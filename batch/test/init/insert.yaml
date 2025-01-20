@@ -1,0 +1,9 @@
+type: Pipeline
+concurrency: 0
+files:
+  - id: "execSeq"
+    file: "init/exec.yaml"
+    # count: 10
+    threadOnlyValues:
+      - key: "insertCount"
+        value: "10"

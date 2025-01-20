@@ -23,7 +23,7 @@ files:
   #   threadOnlyValues:
   #     - key: "insertCount"
   #       value: "<..<insertCount>..>"
-  # # create_organization
+  # create_organization
   # - id: "init_2_a"
   #   file: "init/init_data_2_a.yaml"
   #   threadOnlyValues:

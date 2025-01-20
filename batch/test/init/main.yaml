@@ -4,7 +4,4 @@ files:
   - id: "sock_connect"
     file: "common/connect_socket.yaml"
   - id: "exec"
-    file: "init/exec.yaml"
-    threadOnlyValues:
-      - key: "insertCount"
-        value: "1000"
+    file: "init/insert.yaml"

@@ -16,7 +16,7 @@ if [ ! -d "$source_directory" ]; then
 fi
 
 # ディレクトリ構造の定義と行数マッピング
-base_output_dir="./datasets/saga/thread_1000"
+base_output_dir="./datasets/saga/thread_400"
 declare -A categories=(
   ["team"]=5
   ["file_object"]=4
@@ -26,14 +26,15 @@ declare -A categories=(
 )
 
 # ネストされたすべてのファイルを処理
-find "$source_directory" -type f -name "socket_subscribe_output_create_*_*.csv" | while read -r file; do
+find "$source_directory" -type f -name "socket_subscribe_*_output_create_*_*.csv" | while read -r file; do
   # 現在のタイムスタンプを取得
   timestamp=$(date "+%Y%m%d_%H%M%S")
 
   # ファイル名からカテゴリを抽出
   filename=$(basename "$file")
   echo $filename
-  category=$(echo "$filename" | sed -n 's/^socket_subscribe_output_create_\([a-z_]*\)_.*\.csv$/\1/p')
+  uid=$(echo "$filename" | sed -n 's/^socket_subscribe_\(.*\)_output_create_\([a-z_]*\)_.*\.csv$/\1/p')
+  category=$(echo "$filename" | sed -n 's/^socket_subscribe_\(.*\)_output_create_\([a-z_]*\)_.*\.csv$/\2/p')
   echo $category
 
   # カテゴリが定義されている場合のみ処理
@@ -50,7 +51,7 @@ find "$source_directory" -type f -name "socket_subscribe_output_create_*_*.csv" 
       mkdir -p "$target_dir"
 
       # 新しいファイル名を生成
-      new_filename="${timestamp}_${filename}"
+      new_filename="${timestamp}_${uid}_${filename}"
 
       # ファイルを移動
       mv "$file" "$target_dir/$new_filename"
